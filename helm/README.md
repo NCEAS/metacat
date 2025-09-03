@@ -318,7 +318,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 | --------------------------------- | --------------------------------------------------------------- | ------------------- |
 | `metacat.application.context`     | see global.metacatAppContext                                    | `metacat`           |
 | `metacat.auth.administrators`     | A semicolon-separated list of admin ORCID iDs                   | `""`                |
-| `metacat.database.connectionURI`  | postgres database URI, or lave blank to use sub-chart           | `""`                |
+| `metacat.database.connectionURI`  | postgres database URI (or blank if using CloudNative PG)        | `""`                |
 | `metacat.guid.doi.enabled`        | Allow users to publish Digital Object Identifiers at doi.org?   | `true`              |
 | `metacat.server.port`             | The http port exposed externally, if NOT using the ingress      | `""`                |
 | `metacat.server.name`             | The hostname for the server, as exposed by the ingress          | `localhost`         |
@@ -399,7 +399,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 | Name                        | Description                                                          | Value               |
 | --------------------------- | -------------------------------------------------------------------- | ------------------- |
 | `persistence.enabled`       | Enable metacat data persistence using Persistent Volume Claims       | `true`              |
-| `persistence.storageClass`  | Storage class of backing PV                                          | `local-path`        |
+| `persistence.storageClass`  | Override here or leave blank to use 'global.storageClass'            | `""`                |
 | `persistence.existingClaim` | Name of an existing Persistent Volume Claim to re-use                | `""`                |
 | `persistence.volumeName`    | Name of an existing Volume to use for volumeClaimTemplate            | `""`                |
 | `persistence.subPath`       | The subdirectory of the volume (see persistence.volumeName) to mount | `""`                |
@@ -408,62 +408,48 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 
 ### Networking & Monitoring
 
-| Name                                 | Description                                                              | Value             |
-| ------------------------------------ | ------------------------------------------------------------------------ | ----------------- |
-| `ingress.enabled`                    | Enable or disable the ingress                                            | `true`            |
-| `ingress.className`                  | ClassName of the ingress provider in your cluster                        | `nginx`           |
-| `ingress.annotations`                | `nginx.ingress.kubernetes.io` annotations                                | `see values.yaml` |
-| `ingress.defaultBackend.enabled`     | enable the optional defaultBackend                                       | `false`           |
-| `ingress.defaultBackend.enabled`     | enable the optional defaultBackend                                       | `false`           |
-| `ingress.rewriteRules`               | formatted text rewrite rules for the nginx ingress                       | `""`              |
-| `ingress.configurationSnippet`       | added to nginx ingress config...                                         | `see values.yaml` |
-| `ingress.tls`                        | The TLS configuration                                                    | `[]`              |
-| `ingress.rules`                      | The Ingress rules can be defined here or left blank to be auto-populated | `[]`              |
-| `ingress.d1CaCertSecretName`         | Name of Secret containing DataONE CA certificate chain                   | `d1-ca-chain`     |
-| `service.enabled`                    | Enable another optional service in addition to headless svc              | `false`           |
-| `service.type`                       | Kubernetes Service type. Defaults to ClusterIP if not set                | `LoadBalancer`    |
-| `service.clusterIP`                  | IP address of the service. Auto-generated if not set                     | `""`              |
-| `service.ports`                      | The port(s) to be exposed                                                | `[]`              |
-| `livenessProbe.enabled`              | Enable livenessProbe for Metacat container                               | `true`            |
-| `livenessProbe.httpGet.path`         | The url path to probe.                                                   | `/metacat/`       |
-| `livenessProbe.httpGet.port`         | The named containerPort to probe                                         | `metacat-web`     |
-| `livenessProbe.initialDelaySeconds`  | Initial delay seconds for livenessProbe                                  | `45`              |
-| `livenessProbe.periodSeconds`        | Period seconds for livenessProbe                                         | `15`              |
-| `livenessProbe.timeoutSeconds`       | Timeout seconds for livenessProbe                                        | `10`              |
-| `readinessProbe.enabled`             | Enable readinessProbe for Metacat container                              | `true`            |
-| `readinessProbe.httpGet.path`        | The url path to probe.                                                   | `/metacat/admin`  |
-| `readinessProbe.httpGet.port`        | The named containerPort to probe                                         | `metacat-web`     |
-| `readinessProbe.initialDelaySeconds` | Initial delay seconds for readinessProbe                                 | `45`              |
-| `readinessProbe.periodSeconds`       | Period seconds for readinessProbe                                        | `5`               |
-| `readinessProbe.timeoutSeconds`      | Timeout seconds for readinessProbe                                       | `5`               |
+| Name                              | Description                                                              | Value                            |
+| --------------------------------- | ------------------------------------------------------------------------ | -------------------------------- |
+| `ingress.enabled`                 | Enable or disable the ingress                                            | `true`                           |
+| `ingress.className`               | ClassName of the ingress provider in your cluster                        | `nginx`                          |
+| `ingress.annotations`             | `nginx.ingress.kubernetes.io` annotations                                | `see values.yaml`                |
+| `ingress.defaultBackend.enabled`  | enable the optional defaultBackend                                       | `false`                          |
+| `ingress.defaultBackend.enabled`  | enable the optional defaultBackend                                       | `false`                          |
+| `ingress.rewriteRules`            | formatted text rewrite rules for the nginx ingress                       | `""`                             |
+| `ingress.configurationSnippet`    | added to nginx ingress config...                                         | `see values.yaml`                |
+| `ingress.tls`                     | The TLS configuration                                                    | `[]`                             |
+| `ingress.rules`                   | The Ingress rules can be defined here or left blank to be auto-populated | `[]`                             |
+| `ingress.d1CaCertSecretName`      | Name of Secret containing DataONE CA certificate chain                   | `d1-ca-chain`                    |
+| `service.enabled`                 | Enable another optional service in addition to headless svc              | `false`                          |
+| `service.type`                    | Kubernetes Service type. Defaults to ClusterIP if not set                | `LoadBalancer`                   |
+| `service.clusterIP`               | IP address of the service. Auto-generated if not set                     | `""`                             |
+| `service.ports`                   | The port(s) to be exposed                                                | `[]`                             |
+| `startupProbe.enabled`            | Enable startupProbe for the Metacat container                            | `true`                           |
+| `startupProbe.httpGet.path`       | The url path to probe during startup                                     | `/metacat/d1/mn/v2/monitor/ping` |
+| `startupProbe.httpGet.port`       | The named containerPort to probe                                         | `metacat-web`                    |
+| `startupProbe.successThreshold`   | Min consecutive successes for probe to be successful                     | `1`                              |
+| `startupProbe.failureThreshold`   | No. of consecutive failures before the container restarted               | `30`                             |
+| `startupProbe.periodSeconds`      | Interval (in seconds) between startup checks                             | `10`                             |
+| `startupProbe.timeoutSeconds`     | Timeout (in seconds) for each startup check                              | `5`                              |
+| `livenessProbe.enabled`           | Enable livenessProbe for Metacat container                               | `false`                          |
+| `readinessProbe.enabled`          | Enable readinessProbe for Metacat container                              | `true`                           |
+| `readinessProbe.httpGet.path`     | The url path to probe.                                                   | `/metacat/d1/mn/v2/monitor/ping` |
+| `readinessProbe.httpGet.port`     | The named containerPort to probe                                         | `metacat-web`                    |
+| `readinessProbe.periodSeconds`    | Period seconds for readinessProbe                                        | `15`                             |
+| `readinessProbe.timeoutSeconds`   | Timeout seconds for readinessProbe                                       | `10`                             |
+| `readinessProbe.successThreshold` | Min consecutive successes for probe to be successful                     | `1`                              |
+| `readinessProbe.failureThreshold` | No. consecutive failures before container marked unhealthy               | `6`                              |
 
 ### Postgresql Sub-Chart
 
-| Name                                                        | Description                                                | Value                             |
-| ----------------------------------------------------------- | ---------------------------------------------------------- | --------------------------------- |
-| `postgresql.enabled`                                        | enable the postgresql sub-chart                            | `true`                            |
-| `postgresql.auth.username`                                  | Username for accessing the database used by metacat        | `metacat`                         |
-| `postgresql.auth.database`                                  | The name of the database used by metacat.                  | `metacat`                         |
-| `postgresql.auth.existingSecret`                            | Secrets location for postgres password                     | `${RELEASE_NAME}-metacat-secrets` |
-| `postgresql.auth.secretKeys.userPasswordKey`                | Identifies metacat db's account password                   | `POSTGRES_PASSWORD`               |
-| `postgresql.auth.secretKeys.adminPasswordKey`               | Dummy value - not used (see notes):                        | `POSTGRES_PASSWORD`               |
-| `postgresql.primary.containerSecurityContext.enabled`       | enable containerSecurityContext                            | `true`                            |
-| `postgresql.primary.containerSecurityContext.runAsUser`     | uid for container to run as                                | `59996`                           |
-| `postgresql.primary.containerSecurityContext.runAsGroup`    | gid for container to run as                                | `59996`                           |
-| `postgresql.primary.podSecurityContext.runAsNonRoot`        | pod defaults to run as non-root?                           | `true`                            |
-| `postgresql.primary.podSecurityContext.fsGroup`             | Group ID for the pod file system                           | `59996`                           |
-| `postgresql.primary.podSecurityContext.fsGroupChangePolicy` | ownership & perms mgmt                                     | `OnRootMismatch`                  |
-| `postgresql.primary.pgHbaConfiguration`                     | client authentication                                      | `see values.yaml`                 |
-| `postgresql.primary.extendedConfiguration`                  | Extended configuration, appended to defaults               | `max_connections = 250`           |
-| `postgresql.primary.persistence.enabled`                    | Enable data persistence using PVC                          | `true`                            |
-| `postgresql.primary.persistence.existingClaim`              | Existing PVC to re-use                                     | `""`                              |
-| `postgresql.primary.persistence.storageClass`               | Storage class of backing PV                                | `""`                              |
-| `postgresql.primary.persistence.size`                       | PVC Storage Request for postgres volume                    | `1Gi`                             |
-| `postgresql.postgresqlDataDir`                              | PostgreSQL data dir folder. Must be versioned              | `/bitnami/postgresql/17/main`     |
-| `postgresql.upgrader.enabled`                               | Enable initContainer for postgresql major version upgrades | `true`                            |
-| `postgresql.upgrader.persistence.existingClaim`             | PVC containing postgresql data files                       | `""`                              |
-| `postgresql.upgrader.securityContext.runAsUser`             | numerical User ID for the pod.                             | `59996`                           |
-| `postgresql.upgrader.securityContext.runAsGroup`            | numerical Group ID for the pod.                            | `59996`                           |
+| Name                            | Description                                               | Value             |
+| ------------------------------- | --------------------------------------------------------- | ----------------- |
+| `cnpg.database`                 | The name of the database used by metacat.                 | `metacat`         |
+| `cnpg.existingSecret`           | override name of Secret holding username and password     | `""`              |
+| `cnpg.postgresql.pg_hba`        | client authentication pg_hba.conf                         | `see values.yaml` |
+| `cnpg.postgresql.pg_ident`      | username mappings: pg_ident.conf                          | `see values.yaml` |
+| `cnpg.persistence.storageClass` | Override here or leave blank to use 'global.storageClass' | `""`              |
+| `cnpg.persistence.size`         | PVC Storage size request for postgres volumes             | `1Gi`             |
 
 ### Tomcat Configuration
 
@@ -510,25 +496,15 @@ of the [Metacat Administrators' Guide](https://knb.ecoinformatics.org/knb/docs/)
 ### Secrets
 
 Secret parameters (such as login credentials, auth tokens, private keys etc.) should be installed as
-kubernetes Secrets in the cluster. The file [admin/secrets.yaml](./admin/secrets.yaml) provides a
-template that you can complete and apply using `kubectl` -- for details, see the instructions in the
-comments inside that file. Please remember to NEVER ADD UNENCRYPTED SECRETS TO GITHUB!
+kubernetes Secrets in the cluster. The files [admin/secrets.yaml](./admin/secrets.yaml) and
+[admin/cloudnative-pg-secret.yaml](./admin/cloudnative-pg-secret.yaml) provide templates that you
+can complete and apply using `kubectl apply -f <filename>` -- for details, see the instructions in
+the comments inside those files. Please remember to NEVER ADD UNENCRYPTED SECRETS TO GITHUB!
 
 > [!IMPORTANT]
-> 1. The deployed Secrets name includes the release name as a prefix,
+> The names of the deployed Secrets include the release name as a prefix
 > (e.g. `my-release-metacat-secrets`), so it's important to ensure that the secrets name matches
 > the release name referenced whenever you use `helm` commands.
-> 2. The parameter `postgresql.auth.existingSecret` in [values.yaml](./values.yaml) must be set to
-> match the name of these installed secrets (which will change if the release name is changed).
-
-> [!WARNING]
-> Setting a password will be ignored on new installations in cases when a previous
-> PostgreSQL release was deleted through the helm command. In that case, the old PVC will have an
-> old password, and setting it through helm won't take effect. Deleting persistent volumes (PVs)
-> and redeploying will solve the issue (BUT TAKE CARE not to delete your data, and make sure you
-> have backups, first!). Refer to [issue 2061](https://github.com/bitnami/charts/issues/2061) for
-> more details
-
 
 ## User Interface
 

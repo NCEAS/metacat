@@ -1,0 +1,34 @@
+## Create a PostgreSQL cluster using the CloudNative-PG operator
+## (https://github.com/cloudnative-pg/cloudnative-pg)
+##
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ .Release.Name }}-cnpg
+  namespace: {{ .Release.Namespace }}
+spec:
+  instances: 3
+  bootstrap:
+    initdb:
+      database: {{ .Values.cnpg.database }}
+      owner: {{ include "metacat.postgresql.username" . }}
+      secret:
+        name: {{ include "metacat.cnpg.secret.name" . }}
+      encoding: UTF8
+      localeProvider: icu
+      icuLocale: en_US
+      localeCType: en_US.UTF-8
+      localeCollate: en_US.UTF-8
+  postgresql:
+    parameters:
+      {{- /* Ensure all parameter values are strings to satisfy CNPG's schema */ -}}
+      {{- range $k, $v := .Values.cnpg.postgresql.parameters }}
+        {{ $k }}: {{ $v | toString | quote }}
+      {{- end }}
+    pg_hba:
+      {{- toYaml .Values.cnpg.postgresql.pg_hba | nindent 6 }}
+    pg_ident:
+      {{- toYaml .Values.cnpg.postgresql.pg_ident | nindent 6 }}
+  storage:
+    storageClass: {{ default .Values.cnpg.persistence.storageClass .Values.global.storageClass }}
+    size: {{ .Values.cnpg.persistence.size }}

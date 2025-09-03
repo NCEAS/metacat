@@ -146,9 +146,31 @@ set postgresql HostName
 {{- define "metacat.postgresql.hostname" -}}
 {{- $dbUri := (index .Values.metacat "database.connectionURI") }}
 {{- if not $dbUri }}
-  {{- .Release.Name }}-postgresql-hl
+  {{- .Release.Name }}-cnpg-rw
 {{- else }}
   {{- regexFind "://[^/]+" $dbUri | trimPrefix "://" }}
+{{- end }}
+{{- end }}
+
+{{/*
+set postgresql UserName
+*/}}
+{{- define "metacat.postgresql.username" -}}
+{{- $secretName := ( include "metacat.cnpg.secret.name" . ) }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) | required (printf "Secret %s not found in namespace %s" $secretName .Release.Namespace) }}
+{{- $raw := index $secret.data "username" | required (printf "Key 'username' not found in Secret %s" $secretName) | toString -}}
+{{- $raw | b64dec -}}
+{{- end }}
+
+{{/*
+set postgresql Basic Auth Secret Name
+*/}}
+{{- define "metacat.cnpg.secret.name" -}}
+{{- $secretName := .Values.cnpg.existingSecret }}
+{{- if $secretName }}
+{{- $secretName }}
+{{- else }}
+{{- printf "%s-metacat-cnpg" .Release.Name }}
 {{- end }}
 {{- end }}
 
