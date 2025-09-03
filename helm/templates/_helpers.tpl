@@ -166,7 +166,7 @@ set postgresql UserName
 set postgresql Basic Auth Secret Name
 */}}
 {{- define "metacat.cnpg.secret.name" -}}
-{{- $secretName := .Values.cnpg.existingSecret }}
+{{- $secretName := .Values.database.existingSecret }}
 {{- if $secretName }}
 {{- $secretName }}
 {{- else }}

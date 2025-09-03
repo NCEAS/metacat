@@ -86,7 +86,7 @@ ingress:
     - hosts: [] # defaults to metacat.server.name
       secretName: ingress-nginx-tls-cert
 
-cnpg:
+database:
   persistence:
     size: 10Gi
   postgresql:

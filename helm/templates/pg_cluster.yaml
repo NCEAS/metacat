@@ -10,7 +10,7 @@ spec:
   instances: 3
   bootstrap:
     initdb:
-      database: {{ .Values.cnpg.database }}
+      database: {{ .Values.database.database }}
       owner: {{ include "metacat.postgresql.username" . }}
       secret:
         name: {{ include "metacat.cnpg.secret.name" . }}
@@ -22,13 +22,13 @@ spec:
   postgresql:
     parameters:
       {{- /* Ensure all parameter values are strings to satisfy CNPG's schema */ -}}
-      {{- range $k, $v := .Values.cnpg.postgresql.parameters }}
+      {{- range $k, $v := .Values.database.postgresql.parameters }}
         {{ $k }}: {{ $v | toString | quote }}
       {{- end }}
     pg_hba:
-      {{- toYaml .Values.cnpg.postgresql.pg_hba | nindent 6 }}
+      {{- toYaml .Values.database.postgresql.pg_hba | nindent 6 }}
     pg_ident:
-      {{- toYaml .Values.cnpg.postgresql.pg_ident | nindent 6 }}
+      {{- toYaml .Values.database.postgresql.pg_ident | nindent 6 }}
   storage:
-    storageClass: {{ default .Values.cnpg.persistence.storageClass .Values.global.storageClass }}
-    size: {{ .Values.cnpg.persistence.size }}
+    storageClass: {{ default .Values.database.persistence.storageClass .Values.global.storageClass }}
+    size: {{ .Values.database.persistence.size }}
