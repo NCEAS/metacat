@@ -5,9 +5,8 @@
 ##  helm install myrelease -n mynamespace ./helm -f ./helm/examples/values-dev-cluster-example.yaml
 ##
 ## or from pre-packaged chart:
-##  helm install myrelease -n mynamespace oci://ghcr.io/nceas/charts/metacat --version 2.1.3 \
-##       -f ./helm/examples/values-dev-cluster-example.yaml \
-##       --debug --render-subchart-notes
+##  helm install myrelease -n mynamespace -f ./helm/examples/values-dev-cluster-example.yaml \
+##       --debug --render-subchart-notes oci://ghcr.io/nceas/charts/metacat --version <myversion#>
 ##
 ## see values.yaml for full documentation on the following parameters
 ##
