@@ -993,12 +993,12 @@ readinessProbe:
 
 ## @section Postgresql Sub-Chart
 database:
-  ## @param cnpg.database The name of the database used by metacat.
+  ## @param database.dbName The name of the database used by metacat.
   ## Make sure metacat.database.connectionURI is using this value
   ##
-  database: metacat
+  dbName: metacat
 
-  ## @param cnpg.existingSecret override name of Secret holding username and password
+  ## @param database.existingSecret override name of Secret holding username and password
   ## This is the name of the Basic Auth Secret holding the PostgreSQL database username and
   ## password.
   ##
@@ -1009,18 +1009,26 @@ database:
   ##
   existingSecret: ""
 
-  ## PostgreSQL Configuration. This section allows customization of the settings usually found in:
-  ## - postgresql.conf: main run-time configuration file of PostgreSQL
-  ## - pg_hba.conf: clients authentication file
-  ## - pg_ident.conf: map external users to internal users
+  ## CloudNative-PG-specific (CNPG) Configuration. This section allows customization of the settings
+  ## for creation of a CNPG cluster, and also for the PostgreSQL config usually found in the
+  ## following files:
+  ##   - postgresql.conf: main run-time configuration file of PostgreSQL
+  ##   - pg_hba.conf: clients authentication file
+  ##   - pg_ident.conf: map external users to internal users
   ## See: https://cloudnative-pg.io/documentation/1.20/postgresql_conf/
   ##
-  postgresql:
-    ## @param cnpg.postgresql.pg_hba [default: see values.yaml] client authentication pg_hba.conf
+  cnpg:
+    ## @param database.cnpg.enabled Enable CloudNative-PG integration. Disable if using a different
+    ## Postgresql database.
+    ##
+    enabled: true
+
+    ## @param database.cnpg.pg_hba [default: see values.yaml] client authentication pg_hba.conf
     ## ref: https://cloudnative-pg.io/documentation/1.20/postgresql_conf/#the-pg_hba-section and
     ## https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
     ## We override the default pg_hba.conf with our own, to allow password auth, since this is the
     ## only method metacat currently supports (as of June 2023)
+    ##
     ##  TYPE        DATABASE      USER          ADDRESS         METHOD
     pg_hba:
       - host        metacat       metacat       0.0.0.0/0       password
@@ -1028,28 +1036,33 @@ database:
       - host        all           postgres      0.0.0.0/0       password
       - host        all           postgres      ::0/0           password
 
-    ## @param cnpg.postgresql.pg_ident [default: see values.yaml] username mappings: pg_ident.conf
+    ## @param database.cnpg.pg_ident [default: see values.yaml] username mappings: pg_ident.conf
     ## ref: https://cloudnative-pg.io/documentation/1.20/postgresql_conf/#the-pg_ident-section
     ## https://www.postgresql.org/docs/current/auth-username-maps.html
-    ## Allows metacat DB user to log in without specifying a password or hostname, using:
+    ## This allows the UNIX user 'postgres' (inside the container shell) to connect as database user
+    ## 'metacat' using peer authentication, no password and no hostname required. i.e. simply:
     ##   $ psql -U metacat
+    ## The user will only have the DB privileges of the `metacat` user, not the `postgres` superuser
+    ## The rule applies only for local (Unix domain socket) connections, from a shell inside the
+    ## container. Remote access still requires a password.
     ##
+    ##  MAP-NAME    SYS-USERNAME    DB-USERNAME
     pg_ident:
-      - local       postgres       metacat
+      - local       postgres        metacat
 
-    ## @skip cnpg.postgresql.parameters Extended configuration, appended to defaults
+    ## Extended configuration, appended to defaults
     ## ref: https://cloudnative-pg.io/documentation/1.20/postgresql_conf/#the-postgresql-section
-    ## max_connections must exceed metacat.database.maximumConnections, since some connections
-    ## will be reserved for superuser
     ##
     parameters:
-      ## cnpg.postgresql.parameters.max_connections override PG default of 200 max DB connections
+      ## cnpg.postgresql.parameters.max_connections override PG default of 200 max DB connections.
+      ## 'max_connections' must exceed 'metacat.database.maximumConnections', since some connections
+      ## will be reserved for superuser
       max_connections: 250
 
-  ## CNPG persistence
+  ## Database FIle Storage settings
   ## For explanatory notes, see top-level `persistence` section for metacat.
-  ## @param cnpg.persistence.storageClass Override here or leave blank to use 'global.storageClass'
-  ## @param cnpg.persistence.size PVC Storage size request for postgres volumes
+  ## @param database.persistence.storageClass Override, or leave blank to use 'global.storageClass'
+  ## @param database.persistence.size PVC Storage size request for postgres volumes
   ##
   persistence:
     storageClass: ""

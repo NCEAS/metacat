@@ -1,3 +1,4 @@
+{{- if .Values.database.cnpg.enabled -}}
 ## Create a PostgreSQL cluster using the CloudNative-PG operator
 ## (https://github.com/cloudnative-pg/cloudnative-pg)
 ##
@@ -10,7 +11,7 @@ spec:
   instances: 3
   bootstrap:
     initdb:
-      database: {{ .Values.database.database }}
+      database: {{ .Values.database.dbName }}
       owner: {{ include "metacat.postgresql.username" . }}
       secret:
         name: {{ include "metacat.cnpg.secret.name" . }}
@@ -22,13 +23,14 @@ spec:
   postgresql:
     parameters:
       {{- /* Ensure all parameter values are strings to satisfy CNPG's schema */ -}}
-      {{- range $k, $v := .Values.database.postgresql.parameters }}
+      {{- range $k, $v := .Values.database.cnpg.parameters }}
         {{ $k }}: {{ $v | toString | quote }}
       {{- end }}
     pg_hba:
-      {{- toYaml .Values.database.postgresql.pg_hba | nindent 6 }}
+      {{- toYaml .Values.database.cnpg.pg_hba | nindent 6 }}
     pg_ident:
-      {{- toYaml .Values.database.postgresql.pg_ident | nindent 6 }}
+      {{- toYaml .Values.database.cnpg.pg_ident | nindent 6 }}
   storage:
     storageClass: {{ default .Values.database.persistence.storageClass .Values.global.storageClass }}
     size: {{ .Values.database.persistence.size }}
+{{- end }}

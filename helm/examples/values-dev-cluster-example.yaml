@@ -89,7 +89,7 @@ ingress:
 database:
   persistence:
     size: 10Gi
-  postgresql:
+  cnpg:
     parameters:
       max_wal_size: 16384
       min_wal_size: 4096
