@@ -998,6 +998,11 @@ database:
   ##
   dbName: metacat
 
+  ## @param database.port Override default database port (5432) - only if not using CNPG
+  ## Otherwise leave as 5432, since this is the default for CNPG
+  ##
+  port: 5432
+
   ## @param database.existingSecret override name of Secret holding username and password
   ## This is the name of the Basic Auth Secret holding the PostgreSQL database username and
   ## password.

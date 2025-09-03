@@ -30,7 +30,7 @@ spec:
               ## wait for PostgreSQL to be ready...
               ##
               PGHOST={{ include "metacat.postgresql.hostname" . }};
-              PGPORT=5432;
+              PGPORT={{ .Values.database.port }};
               echo "* * * Checking if PostgreSQL is ready, at $PGHOST:$PGPORT * * *";
               until nc -z $PGHOST $PGPORT > /dev/null; do
               echo waiting for PostgreSQL at $PGHOST:$PGPORT; sleep 1; done;
