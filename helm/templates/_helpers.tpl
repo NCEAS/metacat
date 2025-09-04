@@ -153,14 +153,34 @@ set postgresql HostName
 {{- end }}
 
 {{/*
+Detect whether we're doing a helm install/upgrade, or just a local 'helm template'
+*/}}
+{{- define "helm.sees.cluster" -}}
+{{- $ns := lookup "v1" "Namespace" .Release.Namespace .Release.Namespace -}}
+{{- if $ns -}}
+true
+{{- else -}}
+{{- /* no output means false */ -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 set postgresql UserName
 */}}
 {{- define "metacat.postgresql.username" -}}
 {{- $secretName := ( include "metacat.cnpg.secret.name" . ) }}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) | required (printf "Secret %s not found in namespace %s" $secretName .Release.Namespace) }}
-{{- $raw := index $secret.data "username" | required (printf "Key 'username' not found in Secret %s" $secretName) | toString -}}
-{{- $raw | b64dec -}}
-{{- end }}
+{{- $secret := lookup "v1" "Secret" .Release.Namespace $secretName -}}
+{{- if $secret -}}
+  {{- $raw := index $secret.data "username" | required (printf "Key 'username' not found in Secret %s" $secretName) | toString -}}
+  {{- $raw | b64dec -}}
+{{- else -}}
+  {{- if ( include "helm.sees.cluster" .) -}}
+    {{- fail (printf "Secret %s not found in namespace %s - %s" $secretName .Release.Namespace ) -}}
+  {{- else -}}
+    {{- printf "templating-only--Secret-%s-not-found-locally" $secretName }}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
 
 {{/*
 set postgresql Basic Auth Secret Name
