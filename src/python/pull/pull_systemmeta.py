@@ -71,7 +71,7 @@ class AMQPStormChannelPool:
     def acquire_channel(self):
         with self._lock:
             if not self._is_healthy():
-                print("[CHANNEL POOL] Connection lost. Reinitializing.")
+                print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [CHANNEL POOL] Connection lost. Reinitializing.")
                 self._initialize_pool()
         try:
             for _ in range(self.pool_size):
@@ -79,7 +79,8 @@ class AMQPStormChannelPool:
                 if channel and channel.is_open:
                     return channel
                 else:
-                    print("[CHANNEL POOL] Found closed channel. Creating a new one.")
+                    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [CHANNEL POOL] Found "
+                     "closed channel. Creating a new one.")
                     with self._lock:
                         self._put_new_channel_into_queue()
             raise Exception("No healthy AMQPStorm channels available in the pool.")
@@ -141,7 +142,7 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
         if object_format and object_format in resourcemap_format_list:
             priority = 3
         if guid:
-            print(f"[{thread_name}] Processing PID: {guid} with type: {index_type}, docid: {doc_id}, priority: {priority}")
+            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [{thread_name}] Processing PID: {guid} with type: {index_type}, docid: {doc_id}, priority: {priority}")
             headers = {'index_type': index_type, 'id': guid, 'doc_id': doc_id}
             message = ''
             channel = None
@@ -157,11 +158,12 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
                 if channel:
                     channel_pool.release_channel(channel)
         else:
-            print(f"[{thread_name}] No GUID found in the query")
+            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [{thread_name}] No GUID "
+            "found in the query")
     except AMQPError as amqp_err:
-        print(f"[ERROR] [{thread_name}] AMQPStorm error while processing PID {guid}: {amqp_err}")
+        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] [{thread_name}] AMQPStorm error while processing PID {guid}: {amqp_err}")
     except Exception as e:
-        print(f"[ERROR] [{thread_name}] Unexpected error while processing PID {guid}: {e}")
+        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] [{thread_name}] Unexpected error while processing PID {guid}: {e}")
     return None
 
 def load_last_timestamp():
@@ -171,7 +173,7 @@ def load_last_timestamp():
                 content = f.read().strip()
                 return datetime.fromisoformat(content)
         except Exception as e:
-            print(f"[WARN] Could not read or parse timestamp file: {e}")
+            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [WARN] Could not read or parse timestamp file: {e}")
     return datetime.now()  # fallback
 
 def save_last_timestamp(ts: datetime):
@@ -179,12 +181,12 @@ def save_last_timestamp(ts: datetime):
         with open(LAST_TIMESTAMP_FILE, "w") as f:
             f.write(ts.strftime('%Y-%m-%d %H:%M:%S.%f'))
     except Exception as e:
-        print(f"[ERROR] Failed to write last_timestamp file: {e}")
+        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] Failed to write last_timestamp file: {e}")
 
 def poll_and_submit():
     global pg_pool
     last_timestamp = load_last_timestamp()
-    print(f"The last_timestamp from the previous process is {last_timestamp}")
+    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] The last_timestamp from the previous process is {last_timestamp}")
     channel_pool = AMQPStormChannelPool(
         RABBITMQ_URL, RABBITMQ_PORT_NUMBER, RABBITMQ_USERNAME, RABBITMQ_PASSWORD, MAX_WORKERS
     )
@@ -213,12 +215,12 @@ def poll_and_submit():
                         for guid, object_format, doc_id, modified_time in rows:
                             futures.append(executor.submit(process_pid_wrapper, channel_pool,
                             guid, object_format, doc_id))
-                            print(f"The modified_time from database is {modified_time}")
+                            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] The modified_time from database is {modified_time}")
                             max_timestamp_in_batch = max(max_timestamp_in_batch, modified_time)
-                            print(f"The max time in batch is {max_timestamp_in_batch}")
+                            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] The max time in batch is {max_timestamp_in_batch}")
 
                 except Exception as poll_error:
-                    print(f"[ERROR] Polling failed: {poll_error}")
+                    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] Polling failed: {poll_error}")
                 finally:
                     if conn:
                         pg_pool.putconn(conn)
@@ -226,7 +228,7 @@ def poll_and_submit():
                 if futures:
                     wait(futures, return_when=ALL_COMPLETED)
                     last_timestamp = max_timestamp_in_batch
-                    print(f"Save the last_timestamp {last_timestamp} to file")
+                    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Save the last_timestamp {last_timestamp} to file")
                     save_last_timestamp(last_timestamp)
 
                 elapsed = time.time() - cycle_start
@@ -235,7 +237,7 @@ def poll_and_submit():
                     time.sleep(sleep_time)
 
         except KeyboardInterrupt:
-            print("Polling interrupted. Exiting.")
+            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Polling interrupted. Exiting.")
         finally:
             channel_pool.close()
             if pg_pool:
