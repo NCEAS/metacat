@@ -20,6 +20,14 @@ spec:
       icuLocale: en_US
       localeCType: en_US.UTF-8
       localeCollate: en_US.UTF-8
+      {{- with .Values.database.cnpg.import }}
+      import:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- with .Values.database.cnpg.externalClusters }}
+  externalClusters:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   postgresql:
     parameters:
       {{- /* Ensure all parameter values are strings to satisfy CNPG's schema */ -}}

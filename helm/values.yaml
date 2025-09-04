@@ -1085,6 +1085,30 @@ database:
       ##
       shared_buffers: 128MB
 
+    ## @param database.cnpg.externalClusters external DB as a data source for import on startup
+    ## ADC example:
+    ##   externalClusters:
+    ##     - name: metacatarctic-postgresql-0
+    ##       connectionParameters:
+    ##         # Use the correct IP or host name for the source database
+    ##         host: metacatarctic-postgresql-hl.arctic.svc.cluster.local
+    ##         user: metacat
+    ##         dbname: metacat
+    externalClusters: []
+
+    ## @param database.cnpg.import Import of data from external databases on startup
+    ## ADC example:
+    ##  import:
+    ##    type: microservice
+    ##    databases:
+    ##      - metacat
+    ##    source:
+    ##      externalCluster: metacatarctic-postgresql-0
+    ##    pgRestoreExtraOptions:
+    ##      - '--verbose'
+    ##
+    import: []
+
 ## @section Tomcat Configuration
 tomcat:
   ## @param tomcat.jmxEnabled Enable JMX for Tomcat, to inspect JVM usage of CPU, memory, etc.
