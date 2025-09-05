@@ -194,6 +194,7 @@ def poll_and_submit():
     with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS, thread_name_prefix='PullProcessor') as executor:
         try:
             while True:
+                print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Start to pull new records from the systemmetadata table.")
                 cycle_start = time.time()
                 futures = []
                 max_timestamp_in_batch = last_timestamp
