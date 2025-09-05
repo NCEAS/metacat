@@ -995,6 +995,11 @@ database:
   ##
   dbName: metacat
 
+  ## @param database.dbUser DB username is pulled from the secret. Override here only if necessary;
+  ## otherwise leave blank to use the value defined in the secret 'database.existingSecret'
+  ##
+  dbUser: ""
+
   ## @param database.port Override default database port (5432) - only if not using CNPG
   ## Otherwise leave as 5432, since this is the default for CNPG
   ##
@@ -1103,11 +1108,21 @@ database:
     ##    databases:
     ##      - metacat
     ##    source:
+    ##      ## as defined in 'database.cnpg.externalClusters'
     ##      externalCluster: metacatarctic-postgresql-0
     ##    pgRestoreExtraOptions:
     ##      - '--verbose'
     ##
     import: []
+
+    ## @param database.cnpg.pg_basebackup Uses streaming replication to copy an existing PG instance
+    ## https://cloudnative-pg.io/documentation/1.27/bootstrap/#bootstrap-from-a-live-cluster-pg_basebackup
+    ## ADC example:
+    ##   pg_basebackup:
+    ##     ## as defined in 'database.cnpg.externalClusters'
+    ##     source: metacatarctic-postgresql-0
+    ##
+    pg_basebackup: []
 
 ## @section Tomcat Configuration
 tomcat:
