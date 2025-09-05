@@ -12,7 +12,7 @@ spec:
   bootstrap:
     initdb:
       database: {{ .Values.database.dbName }}
-      owner: {{ include "metacat.postgresql.username" . }}
+      owner: {{ .Values.database.dbUser | default ( include "metacat.postgresql.username" . ) }}
       secret:
         name: {{ include "metacat.cnpg.secret.name" . }}
       encoding: UTF8
@@ -24,6 +24,10 @@ spec:
       import:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+    {{- with .Values.database.cnpg.pg_basebackup }}
+    pg_basebackup:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
   {{- with .Values.database.cnpg.externalClusters }}
   externalClusters:
     {{- toYaml . | nindent 4 }}
@@ -41,6 +45,6 @@ spec:
   resources:
     {{- toYaml .Values.database.cnpg.resources | nindent 4 }}
   storage:
-    storageClass: {{ default .Values.database.persistence.storageClass .Values.global.storageClass }}
-    size: {{ .Values.database.persistence.size }}
+    storageClass: {{ .Values.database.cnpg.persistence.storageClass | default .Values.global.storageClass }}
+    size: {{ .Values.database.cnpg.persistence.size }}
 {{- end }}
