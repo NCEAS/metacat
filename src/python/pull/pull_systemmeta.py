@@ -38,6 +38,10 @@ POLL_INTERVAL = 1  # second
 MAX_ROWS = 4000
 LAST_TIMESTAMP_FILE = "last_timestamp"
 DB_CONNECTION_POOL_SIZE = 3
+DOCUMENTS_DIR = "/var/metacat/documents"
+DATA_DIR = "/var/metacat/data"
+CHECK_FILE_WAIT_MILLISECONDS = 50
+CHECK_FILE_MAX_ATTEMPTS = 200
 # RabbitMQ queue configuration. They shouldn't be changed
 QUEUE_NAME = "index"
 ROUTING_KEY = "index"
@@ -129,6 +133,39 @@ DB_CONFIG = {
     'port': DB_PORT_NUMBER
 }
 
+class DocumentNotFoundError(Exception):
+    """Raised when the document paths are not found after max attempts."""
+    pass
+
+def wait_for_docid(docid: str):
+    """
+    Wait until a file for the given docid exists under either
+    DOCUMENTS_DIR or DATA_DIR.
+
+    Args:
+        docid (str): The document ID.
+
+    Raises:
+        DocumentNotFoundError: If neither path exists after CHECK_FILE_MAX_ATTEMPTS.
+    """
+    if not docid:  # docid doesn't exist (empty or None)
+        return  # Do nothing
+
+    doc_path = os.path.join(DOCUMENTS_DIR, docid)
+    data_path = os.path.join(DATA_DIR, docid)
+
+    for attempt in range(1, CHECK_FILE_MAX_ATTEMPTS + 1):
+        if os.path.exists(doc_path) or os.path.exists(data_path):
+            return  # Found the file, success
+        if attempt < CHECK_FILE_MAX_ATTEMPTS:
+            time.sleep(CHECK_FILE_WAIT_MILLISECONDS / 1000.0)
+
+    # After max attempts, still not found
+    raise DocumentNotFoundError(
+        f"Document '{docid}' not found in {doc_path} or {data_path} "
+        f"after {CHECK_FILE_MAX_ATTEMPTS} attempts."
+    )
+
 """
     Processes a single PID:
        1 Construct the rabbitmq message
@@ -146,6 +183,7 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
             headers = {'index_type': index_type, 'id': guid, 'doc_id': doc_id}
             message = ''
             channel = None
+            wait_for_docid(doc_id)
             try:
                 channel = channel_pool.acquire_channel()
                 channel.basic.publish(
