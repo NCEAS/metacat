@@ -68,15 +68,7 @@ global:
 
   ## @param global.storageClass default name of the storageClass to use for PVs
   ##
-  ## If <storageClass> is defined,  storageClassName: <storageClass>
-  ##
-  ## If <storageClass> set to "-",  storageClassName: ""  -- which disables dynamic PV provisioning
-  ##   (meaning claim can only be bound to an existing PV, not a dynamically-provisioned one) with
-  ##   no class (no annotation, or one set equal to "")
-  ##
-  ## NOTE when using StatefulSet with a defaultClaimTemplate - leaving storageClass unset/null does
-  ## NOT choose the default provisioner for dynamic provisioning of the underlying PV, as expected!
-  ## Instead, inspect your cluster to see what storageClass is set as default:
+  ## Inspect your cluster to see what storageClass is set as default:
   ##    $  kubectl get storageclass
   ## ...and then explicitly set storageClass to match the name of the default storageclass
   ## (e.g. for Rancher Desktop, use:   storageclass: local-path)
@@ -988,10 +980,24 @@ readinessProbe:
     path: /metacat/d1/mn/v2/monitor/ping
     port: metacat-web
 
-## @section Postgresql Sub-Chart
+## @section PostgreSQL Database Connection Parameters
+##
+## Metacat requires a pre-existing PostgreSQL database, that has already been provisioned outside
+## the Metacat Helm Chart's lifecycle.
+## We recommend using the CloudNative PG Operator (https://cloudnative-pg.io/), although any
+## suitable PostgreSQL database may be used (deployed either within or outside your Kubernetes
+## cluster).
+##
 database:
-  ## @param database.dbName The name of the database used by metacat.
-  ## Make sure metacat.database.connectionURI is using this value
+  ## @param database.existingSecret Name of the Basic-Auth Secret holding the username and password
+  ## IMPORTANT:
+  ##    - the secret must be of type 'kubernetes.io/basic-auth'
+  ##    - the Secret must contain the exact key names: 'username' and 'password'
+  ##    - the username must match the 'database.dbUser' value below
+  ##
+  existingSecret: ""
+
+  ## @param database.dbName The name of the PostgreSQL database to connect to
   ##
   dbName: metacat
 
@@ -999,91 +1005,6 @@ database:
   ## Otherwise leave as 5432, since this is the default for CNPG
   ##
   port: 5432
-
-  ## @param database.existingSecret override name of Secret holding username and password
-  ## This is the name of the Basic Auth Secret holding the PostgreSQL database username and
-  ## password.
-  ##
-  ## Note:
-  ## 1. Leave blank to autopopulate with the default Secret name (as defined in
-  ##    ./admin/secret--cloudnative-pg.yaml)
-  ## 2. This is NOT the same secret used by metacat (./admin/secret--metacat.yaml)
-  ##
-  existingSecret: ""    # Leave blank to autopopulate with the default Secret name
-
-  ## CloudNative-PG-specific (CNPG) Configuration. This section allows customization of the settings
-  ## for creation of a CNPG cluster, and also for the PostgreSQL config usually found in the
-  ## following files:
-  ##   - postgresql.conf: main run-time configuration file of PostgreSQL
-  ##   - pg_hba.conf: clients authentication file
-  ##   - pg_ident.conf: map external users to internal users
-  ## See: https://cloudnative-pg.io/documentation/1.20/postgresql_conf/
-  ##
-  cnpg:
-    ## @param database.cnpg.enabled Enable CloudNative-PG integration. Disable if using a different
-    ## Postgresql database.
-    ##
-    enabled: true
-
-    ## @param database.cnpg.resources Resource requests and limits for each PostgreSQL container.
-    ## For a PostgreSQL workload it is recommended to set a "Guaranteed" QoS. See the CNPG docs:
-    ## https://cloudnative-pg.io/documentation/1.20/resource_management/
-    ## For your cluster's pods to get assigned to the "Guaranteed" QoS class, you must set limits
-    ## and requests for both CPU and memory TO THE SAME VALUE!
-    ##
-    resources: {}
-
-    ## Database FIle Storage settings
-    ## For explanatory notes, see top-level `persistence` section for metacat.
-    ## @param database.persistence.storageClass Override, or leave blank to use 'global.storageClass'
-    ## @param database.persistence.size PVC Storage size request for postgres volumes
-    ##
-    persistence:
-      storageClass: ""    # leave blank to use 'global.storageClass'
-      size: 1Gi
-
-    ## @param database.cnpg.pg_hba [default: see values.yaml] client authentication pg_hba.conf
-    ## ref: https://cloudnative-pg.io/documentation/1.20/postgresql_conf/#the-pg_hba-section and
-    ## https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
-    ## We override the default pg_hba.conf with our own, to allow password auth, since this is the
-    ## only method metacat currently supports (as of June 2023)
-    ##
-    ##  TYPE        DATABASE      USER          ADDRESS         METHOD
-    pg_hba:
-      - host        metacat       metacat       0.0.0.0/0       password
-      - host        metacat       metacat       ::0/0           password
-      - host        all           postgres      0.0.0.0/0       password
-      - host        all           postgres      ::0/0           password
-
-    ## @param database.cnpg.pg_ident [default: see values.yaml] username mappings: pg_ident.conf
-    ## ref: https://cloudnative-pg.io/documentation/1.20/postgresql_conf/#the-pg_ident-section
-    ## https://www.postgresql.org/docs/current/auth-username-maps.html
-    ## This allows the UNIX user 'postgres' (inside the container shell) to connect as database user
-    ## 'metacat' using peer authentication, no password and no hostname required. i.e. simply:
-    ##   $ psql -U metacat
-    ## The user will only have the DB privileges of the `metacat` user, not the `postgres` superuser
-    ## The rule applies only for local (Unix domain socket) connections, from a shell inside the
-    ## container. Remote access still requires a password.
-    ##
-    ##  MAP-NAME    SYS-USERNAME    DB-USERNAME
-    pg_ident:
-      - local       postgres        metacat
-
-    ## Extended configuration, appended to defaults
-    ## ref: https://cloudnative-pg.io/documentation/1.20/postgresql_conf/#the-postgresql-section
-    ##
-    parameters:
-      ## @param database.cnpg.parameters.max_connections override PG default 200 max DB connections.
-      ## 'max_connections' must exceed 'metacat.database.maximumConnections', since some connections
-      ## will be reserved for superuser
-      ##
-      max_connections: 250
-      ## @param database.cnpg.parameters.shared_buffers memory for caching data (PG default: 128MB)
-      ## If you have a dedicated database server with 1GB or more of RAM, a reasonable starting
-      ## value for shared_buffers is 25% of the container memory. E.g: if shared_buffers=256MB, then
-      ## the recommended value for container memory size is 1 GB (see 'database.cnpg.resources')
-      ##
-      shared_buffers: 128MB
 
 ## @section Tomcat Configuration
 tomcat:
