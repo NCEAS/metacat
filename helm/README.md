@@ -94,21 +94,21 @@ are available...
 
 ## Introduction
 
-This chart deploys a [Metacat](https://github.com/NCEAS/metacat) deployment on a [Kubernetes](https://kubernetes.io) cluster,
-using the [Helm](https://helm.sh) package manager.
+This chart deploys a [Metacat](https://github.com/NCEAS/metacat) deployment on a [Kubernetes](https://kubernetes.io) cluster, using the [Helm](https://helm.sh) package manager.
 
 ## Prerequisites
 
 - Kubernetes 1.23.3+
 - Helm 3.16.1+
-- PV provisioner support in the underlying infrastructure
+- A pre-existing PostgreSQL database. We recommend using the [CloudNative PG Operator v1.27.0+](https://cloudnative-pg.io/), although any suitable PostgreSQL database may be used (deployed either within or outside your Kubernetes cluster).
+- The Kubernetes open source community version of [the nginx ingress controller](https://kubernetes.github.io/ingress-nginx/) (see the [Networking section](#networking-and-certificates), below).
 
 ## Installing the Chart
 
-To install the chart with the release name `my-release`:
+To install the chart with the release name `myrelease`:
 
 ```shell
-helm install my-release oci://ghcr.io/nceas/charts/metacat --version [version-here]
+helm install myrelease oci://ghcr.io/nceas/charts/metacat --version [version-here]
 ```
 
 This command deploys Metacat on the Kubernetes cluster in the default configuration that is defined
@@ -120,7 +120,7 @@ by creating a YAML file that specifies only those values that need to be overrid
 that file as part of the helm install command. For example:
 
 ```shell
-helm install my-release  -f myValues.yaml  oci://ghcr.io/nceas/charts/metacat --version [version-here]
+helm install myrelease  -f myValues.yaml  oci://ghcr.io/nceas/charts/metacat --version [version-here]
 ```
 (where `myValues.yaml` contains only the values you wish to override.)
 
@@ -128,8 +128,8 @@ Parameters may also be provided on the command line to override those in
 [values.yaml](./values.yaml); e.g.
 
 ```shell
-helm install my-release oci://ghcr.io/nceas/charts/metacat --version [version-here]  \
-                        --set postgres.auth.existingSecret=my-release-secrets
+helm install myrelease oci://ghcr.io/nceas/charts/metacat --version [version-here]  \
+                        --set postgres.auth.existingSecret=myrelease-secrets
 ```
 
 > **Note**: Some settings need to be edited to include release name that you choose. See the
@@ -268,22 +268,22 @@ will be on the same volume and mount-point):
 
 ## Uninstalling the Chart
 
-To uninstall/delete the `my-release` deployment:
+To uninstall/delete the `myrelease` deployment:
 
 ```shell
-helm delete my-release
+helm delete myrelease
 ```
 
 The `helm delete` command removes all the Kubernetes components associated with the chart
 (except for Secrets, PVCs and PVs) and deletes the release.
 
-There are multiple PVCs associated with `my-release`, for Metacat data files, the PostgreSQL
+There are multiple PVCs associated with `myrelease`, for Metacat data files, the PostgreSQL
 database, and for components of the indexer sub-chart. To delete:
 
 ```shell
 kubectl delete pvc <myPVCName>   ## deletes specific named PVC
 or:
-kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associated with the release
+kubectl delete pvc -l release=myrelease   ## DANGER! deletes all PVCs associated with the release
 ```
 
 > [!CAUTION]
@@ -506,7 +506,7 @@ the comments inside those files. Please remember to NEVER ADD UNENCRYPTED SECRET
 
 > [!IMPORTANT]
 > The names of the deployed Secrets include the release name as a prefix
-> (e.g. `my-release-metacat-secrets`), so it's important to ensure that the secrets name matches
+> (e.g. `myrelease-metacat-secrets`), so it's important to ensure that the secrets name matches
 > the release name referenced whenever you use `helm` commands.
 
 ## User Interface
@@ -963,3 +963,26 @@ public | xml_revisions         | table | metacat
 (21 rows)
 Metacat tables found in /bitnami/postgresql/17/main; will NOT do a pg_restore. Exiting initContainer...
 ```
+
+## Appendix 6: Initial Creation of a PostgreSQL Cluster using CloudNative PG
+
+< [!NOTE]
+> This is a separate process from installing the Metacat Helm chart, and only needs to be done once.
+
+We recomment using the [CloudNative PG](https://cloudnative-pg.io/) operator to install and manage a PostgreSQL cluster for use with Metacat. The operator automates many of the tasks involved in installing, configuring, and managing a PostgreSQL cluster, including backups, failover, and scaling. Installing CNPG is beyond the scope of this document, but you can find detailed instructions in the [DataONE K8s Cluster documentation](https://github.com/DataONEorg/k8s-cluster/blob/main/postgres/postgres.md#cloudnativepg-operator-installation).
+
+Once the CNPG operator is installed, you can create a PostgreSQL cluster easily, using the [DataONE CNPG Helm Chart](https://github.com/DataONEorg/dataone-cnpg).
+
+> [!IMPORTANT]
+> DO THIS ONLY ONCE! See [these important warnings](https://github.com/DataONEorg/dataone-cnpg?tab=readme-ov-file#secrets--credentials) about not changing credentials!
+>
+> ### Before installing the chart
+> With reference to the example values overrides in the [cnpg example yaml file](./examples/values-dev-cluster-cnpg-example.yaml):
+> 1. Ensure you have set the correct values for the database name and the database owner (username) in your values overrides. (If you deploy with the wrong values, it's difficult to change them after the fact).
+> 2. If you are planning to provide your own database password instead of having CNPG create one for you (e.g. if you're migrating an existing database to k8s), you can use this yaml template(helm/admin/secret--cloudnative-pg.yaml) to create your secret - see the instructions in the file.
+> 3. Finally, double-check all yoru values, and then install the chart, as follows:
+>
+>   ```shell
+>   $ helm install <releasename> oci://datanoeorg.github.io/dataone-cnpg --version <version> \
+>             -f ./examples/values-dev-cluster-cnpg-example.yaml  # or replace with your own file
+>   ```
