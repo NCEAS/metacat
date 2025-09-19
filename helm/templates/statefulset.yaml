@@ -130,12 +130,12 @@ spec:
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "metacat.cnpg.secret.name" . }}
+                  name: {{ .Values.database.existingSecret }}
                   key: username
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "metacat.cnpg.secret.name" . }}
+                  name: {{ .Values.database.existingSecret }}
                   key: password
             - name: METACAT_RABBITMQ_PASSWORD
               valueFrom:
