@@ -1001,10 +1001,14 @@ database:
   ##
   dbName: metacat
 
-  ## @param database.dbUser DB username is pulled from the secret. Override here only if necessary;
-  ## otherwise leave blank to use the value defined in the secret 'database.existingSecret'
+  ## @param database.serviceName The name of the Kubernetes Service exposing the database (if k8s).
+  ## Ignored if using an external database (i.e. outside the k8s cluster), in which case the value
+  ## 'metacat.database.connectionURI' must be set.
   ##
-  dbUser: ""
+  ## If using CNPG, this is the name of the Read/Write ClusterIP service created by CNPG; typically
+  ## "<cnpg-cluster-release-name>-cnpg-rw"
+  ##
+  serviceName: ""
 
   ## @param database.port Override default database port (5432) - only if not using CNPG
   ## Otherwise leave as 5432, since this is the default for CNPG
