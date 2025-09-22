@@ -12,6 +12,7 @@ metadata:
   name: &pv-name cephfs-releasename-metacat-postgresdata
   labels:
     metacatVolumeName: *pv-name
+    velero.io/exclude-from-backup: "true"
 spec:
   accessModes:
   - ReadWriteOnce

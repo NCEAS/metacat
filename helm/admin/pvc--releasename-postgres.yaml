@@ -12,6 +12,8 @@ metadata:
   name: releasename-metacat-postgresql-0
   ## Use your own namespace
   namespace: mynamespace
+  labels:
+    velero.io/exclude-from-backup: "true"
 spec:
   accessModes:
     - ReadWriteOnce
