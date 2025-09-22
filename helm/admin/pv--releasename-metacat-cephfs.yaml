@@ -10,6 +10,8 @@ metadata:
   #
   ## Use your own release name
   name: &pv-name cephfs-releasename-metacat-varmetacat
+  labels:
+    velero.io/exclude-from-backup: "true"
 spec:
   accessModes:
   - ReadWriteMany
