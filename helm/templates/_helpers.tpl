@@ -146,7 +146,7 @@ set postgresql HostName
 {{- define "metacat.postgresql.hostname" -}}
 {{- $dbUri := (index .Values.metacat "database.connectionURI") }}
 {{- if not $dbUri }}
-  {{- .Values.database.serviceName }}
+  {{- tpl .Values.database.serviceName . }}
 {{- else }}
   {{- regexFind "://[^/]+" $dbUri | trimPrefix "://" }}
 {{- end }}

@@ -13,7 +13,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+{{/*        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}*/}}
           {{- with .Values.podAnnotations }}
             {{- toYaml . | nindent 8 }}
           {{- end }}
@@ -130,12 +130,12 @@ spec:
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.database.existingSecret }}
+                  name: {{ tpl .Values.database.existingSecret . }}
                   key: username
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.database.existingSecret }}
+                  name: {{ tpl .Values.database.existingSecret . }}
                   key: password
             - name: METACAT_RABBITMQ_PASSWORD
               valueFrom:

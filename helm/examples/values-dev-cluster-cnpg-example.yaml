@@ -8,26 +8,26 @@
 ## Create a new CNPG cluster:
 ##   $ helm install <releasename> oci://ghcr.io/dataoneorg/charts/cnpg --version <version> \
 ##                              -f ./examples/values-dev-cluster-cnpg-example.yaml
-database:
-  dbName: metacat
 
-cnpg:
-  resources:
-    requests:
-      cpu: 1
-      memory: 1Gi
-    limits:
-      cpu: 1
-      memory: 1Gi
+dbName: metacat
+#dbUser: defaults to dbName if blank
 
-  persistence:
-    size: 10Gi
+resources:
+  requests:
+    cpu: 1
+    memory: 1Gi
+  limits:
+    cpu: 1
+    memory: 1Gi
 
-  postgresql:
-    ## metacat override to allow password auth:
-    pg_hba:
-      # TYPE        DATABASE      USER          ADDRESS         METHOD
-      - host        metacat       metacat       0.0.0.0/0       password
-      - host        metacat       metacat       ::0/0           password
-      - host        all           postgres      0.0.0.0/0       password
-      - host        all           postgres      ::0/0           password
+persistence:
+  size: 10Gi
+
+postgresql:
+  ## metacat override to allow password auth:
+  pg_hba:
+    # TYPE        DATABASE      USER          ADDRESS         METHOD
+    - host        metacat       metacat       0.0.0.0/0       password
+    - host        metacat       metacat       ::0/0           password
+    - host        all           postgres      0.0.0.0/0       password
+    - host        all           postgres      ::0/0           password
