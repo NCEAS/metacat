@@ -129,7 +129,7 @@ Parameters may also be provided on the command line to override those in
 
 ```shell
 helm install myrelease oci://ghcr.io/nceas/charts/metacat --version [version-here]  \
-                        --set postgres.auth.existingSecret=myrelease-secrets
+                        --set database.existingSecret=myrelease-secrets
 ```
 
 > **Note**: Some settings need to be edited to include release name that you choose. See the

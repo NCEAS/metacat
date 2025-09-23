@@ -989,11 +989,23 @@ readinessProbe:
 ## cluster).
 ##
 database:
-  ## @param database.existingSecret Name of the Basic-Auth Secret holding the username and password
+  ## @param database.existingSecret REQUIRED Name of Secret holding database username & passwd
   ## IMPORTANT:
   ##    - the secret must be of type 'kubernetes.io/basic-auth'
   ##    - the Secret must contain the exact key names: 'username' and 'password'
   ##    - the username must match the 'database.dbUser' value below
+  ##
+  ## Examples:
+  ## 1. If using a secret created with the SAME release name as metacat:
+  ##      database:
+  ##        existingSecret: "{{ .Release.Name }}-cnpg-app"
+  ##
+  ##    (NOTE that the value may include Go templating to represent the release name, provided the
+  ##    entire string is in quotes)
+  ##
+  ## 2. If using a secret auto-created by cnpg, with a release name DIFFERENT from metacat's:
+  ##      database:
+  ##        existingSecret: "mycnpgreleasename-cnpg-app"
   ##
   existingSecret: ""
 
@@ -1001,12 +1013,12 @@ database:
   ##
   dbName: metacat
 
-  ## @param database.serviceName The name of the Kubernetes Service exposing the database (if k8s).
+  ## @param database.serviceName (REQUIRED if DB on k8s) name of the Service exposing the database
   ## Ignored if using an external database (i.e. outside the k8s cluster), in which case the value
   ## 'metacat.database.connectionURI' must be set.
   ##
-  ## If using CNPG, this is the name of the Read/Write ClusterIP service created by CNPG; typically
-  ## "<cnpg-cluster-release-name>-cnpg-rw"
+  ## Example:
+  ##   serviceName: mycnpgreleasename-cnpg-rw
   ##
   serviceName: ""
 
