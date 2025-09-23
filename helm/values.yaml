@@ -40,19 +40,6 @@ global:
   ##
   d1ClientCnUrl: "https://cn.dataone.org/cn"
 
-  ## @param global.passwordsSecret The name of the Secret containing application passwords
-  ## This is the secret deployed using your own private, edited version of `../admin/secret--metacat.yaml`.
-  ##
-  ## (Note the actual key passwordsSecret is not used anywhere; only the yaml anchor/alias
-  ##  &passwordSecretName. IF YOU OVERRIDE THIS VALUE IN ANOTHER VALUES-OVERLAY FILE, YOU ALSO
-  ## NEED TO OVERRIDE THE VALUES THAT USE THIS ANCHOR - search this file for 'passwordSecretName')
-  ##
-  ## IMPORTANT NOTE: make sure you edit this, since IT INCLUDES THE RELEASE NAME! For
-  ## example, if the release name is 'myrelease', the value of name: would be
-  ## 'myrelease-metacat-secrets'.
-  ##
-  passwordsSecret: &passwordSecretName ${RELEASE_NAME}-metacat-secrets
-
   ## @param global.metacatAppContext The application context to use
   ## - for example, if your application is hosted at https://mydomain.org, and you define the
   ## context to be "metacat", then the application may be accessed at: https://mydomain.org/metacat/
@@ -125,10 +112,10 @@ global:
     ##
     enabled: false
     service:
-      ## @param global.metacatUiIngressBackend.service.name MetacatUI service name (used only if 'global.includeMetacatUi: false')
+      ## @param global.metacatUiIngressBackend.service.name MetacatUI service name (ignored if 'global.includeMetacatUi: true')
       ## This should be overridden with the name of the service created by the MetacatUI chart.
       ##
-      name: metacatui${RELEASE_NAME}
+      name: ${METACATUI_RELEASE_NAME}-metacatui
       port:
         ## @param global.metacatUiIngressBackend.service.port.number Port for MetacatUI service (used only if 'global.includeMetacatUi: false')
         ##
@@ -1154,9 +1141,16 @@ dataone-indexer:
       username: *rmqUsername
 
       ## @param dataone-indexer.rabbitmq.auth.existingPasswordSecret location of rabbitmq password
-      ## (must contain a value for `rabbitmq-password` key)
+      ## This is usually the secret deployed using your own private, edited version of
+      ## '../admin/secret--metacat.yaml'.
       ##
-      existingPasswordSecret: *passwordSecretName
+      ## IMPORTANT:
+      ## - The Secret must contain the exact key name: 'rabbitmq-password'
+      ## - Make sure you edit this, to replace ${RELEASE_NAME} with yours! For example, if
+      ##   the release name is 'myrelease':
+      ##   existingPasswordSecret: myrelease-metacat-secrets
+      ##
+      existingPasswordSecret: ${RELEASE_NAME}-metacat-secrets
 
   solr:
     ## @param dataone-indexer.solr.javaMem Java memory options to pass to the Solr container
@@ -1194,9 +1188,12 @@ dataone-indexer:
           ## This is the name of the configMap created by the dataone-indexer. It has to be here
           ## because it is passed directly to the dataone-indexer subchart's own solr subchart via
           ## .Values, so cannot be set automatically. Unfortunate but true.
-          ## IMPORTANT NOTE: make sure you edit this, since IT INCLUDES THE RELEASE NAME! For
-          ## example, if the release name is 'myrelease', the value of name: would be
-          ## 'myrelease-indexer-configfiles'.
+          ##
+          ## IMPORTANT:
+          ## - Make sure you edit this, to replace ${RELEASE_NAME} with yours! For example, if
+          ##   the release name is 'myrelease':
+          ##     name: myrelease-indexer-configfiles
+          ##
           name: ${RELEASE_NAME}-indexer-configfiles
           ## @param dataone-indexer.solr.extraVolumes[0].configMap.defaultMode DO NOT EDIT
           defaultMode: 0777

@@ -295,22 +295,21 @@ kubectl delete pvc -l release=myrelease   ## DANGER! deletes all PVCs associated
 
 ### Global Properties Shared Across Sub-Charts Within This Deployment
 
-| Name                                                 | Description                                                                 | Value                             |
-| ---------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------- |
-| `global.metacatExternalBaseUrl`                      | Metacat base url accessible from outside cluster.                           | `https://localhost/`              |
-| `global.d1ClientCnUrl`                               | The url of the CN; used to populate metacat's 'D1Client.CN_URL'             | `https://cn.dataone.org/cn`       |
-| `global.passwordsSecret`                             | The name of the Secret containing application passwords                     | `${RELEASE_NAME}-metacat-secrets` |
-| `global.metacatAppContext`                           | The application context to use                                              | `metacat`                         |
-| `global.storageClass`                                | default name of the storageClass to use for PVs                             | `local-path`                      |
-| `global.ephemeralVolumeStorageClass`                 | Optional global storageClass override                                       | `""`                              |
-| `global.sharedVolumeSubPath`                         | The subdirectory of the metacat data volume to mount                        | `""`                              |
-| `global.dataone-indexer.enabled`                     | Enable the dataone-indexer sub-chart                                        | `true`                            |
-| `global.includeMetacatUi`                            | Enable or disable the MetacatUI sub-chart.                                  | `true`                            |
-| `global.metacatUiIngressBackend.enabled`             | Enable or disable MetacatUI support via Ingress                             | `false`                           |
-| `global.metacatUiIngressBackend.service.name`        | MetacatUI service name (used only if 'global.includeMetacatUi: false')      | `metacatui${RELEASE_NAME}`        |
-| `global.metacatUiIngressBackend.service.port.number` | Port for MetacatUI service (used only if 'global.includeMetacatUi: false')  | `80`                              |
-| `global.metacatUiThemeName`                          | MetacatUI theme name to use. (used only if 'global.includeMetacatUi: true') | `knb`                             |
-| `global.metacatUiWebRoot`                            | The url root to be appended after the MetacatUI baseUrl.                    | `/`                               |
+| Name                                                 | Description                                                                 | Value                                 |
+| ---------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------- |
+| `global.metacatExternalBaseUrl`                      | Metacat base url accessible from outside cluster.                           | `https://localhost/`                  |
+| `global.d1ClientCnUrl`                               | The url of the CN; used to populate metacat's 'D1Client.CN_URL'             | `https://cn.dataone.org/cn`           |
+| `global.metacatAppContext`                           | The application context to use                                              | `metacat`                             |
+| `global.storageClass`                                | default name of the storageClass to use for PVs                             | `local-path`                          |
+| `global.ephemeralVolumeStorageClass`                 | Optional global storageClass override                                       | `""`                                  |
+| `global.sharedVolumeSubPath`                         | The subdirectory of the metacat data volume to mount                        | `""`                                  |
+| `global.dataone-indexer.enabled`                     | Enable the dataone-indexer sub-chart                                        | `true`                                |
+| `global.includeMetacatUi`                            | Enable or disable the MetacatUI sub-chart.                                  | `true`                                |
+| `global.metacatUiIngressBackend.enabled`             | Enable or disable MetacatUI support via Ingress                             | `false`                               |
+| `global.metacatUiIngressBackend.service.name`        | MetacatUI service name (ignored if 'global.includeMetacatUi: true')         | `${METACATUI_RELEASE_NAME}-metacatui` |
+| `global.metacatUiIngressBackend.service.port.number` | Port for MetacatUI service (used only if 'global.includeMetacatUi: false')  | `80`                                  |
+| `global.metacatUiThemeName`                          | MetacatUI theme name to use. (used only if 'global.includeMetacatUi: true') | `knb`                                 |
+| `global.metacatUiWebRoot`                            | The url root to be appended after the MetacatUI baseUrl.                    | `/`                                   |
 
 ### Metacat Application-Specific Properties
 
@@ -440,19 +439,14 @@ kubectl delete pvc -l release=myrelease   ## DANGER! deletes all PVCs associated
 | `readinessProbe.successThreshold` | Min consecutive successes for probe to be successful                     | `1`                              |
 | `readinessProbe.failureThreshold` | No. consecutive failures before container marked unhealthy               | `6`                              |
 
-### Postgresql Sub-Chart
+### PostgreSQL Database Connection Parameters
 
-| Name                                       | Description                                                     | Value             |
-| ------------------------------------------ | --------------------------------------------------------------- | ----------------- |
-| `database.dbName`                          | The name of the database used by metacat.                       | `metacat`         |
-| `database.port`                            | Override default database port (5432) - only if not using CNPG  | `5432`            |
-| `database.existingSecret`                  | override name of Secret holding username and password           | `""`              |
-| `database.cnpg.enabled`                    | Enable CloudNative-PG integration. Disable if using a different | `true`            |
-| `database.cnpg.pg_hba`                     | client authentication pg_hba.conf                               | `see values.yaml` |
-| `database.cnpg.pg_ident`                   | username mappings: pg_ident.conf                                | `see values.yaml` |
-| `database.cnpg.parameters.max_connections` | override PG default 200 max DB connections.                     | `250`             |
-| `database.persistence.storageClass`        | Override, or leave blank to use 'global.storageClass'           | `""`              |
-| `database.persistence.size`                | PVC Storage size request for postgres volumes                   | `1Gi`             |
+| Name                      | Description                                                       | Value     |
+| ------------------------- | ----------------------------------------------------------------- | --------- |
+| `database.existingSecret` | REQUIRED Name of Secret holding database username & passwd        | `""`      |
+| `database.dbName`         | The name of the PostgreSQL database to connect to                 | `metacat` |
+| `database.serviceName`    | (REQUIRED if DB on k8s) name of the Service exposing the database | `""`      |
+| `database.port`           | Override default database port (5432) - only if not using CNPG    | `5432`    |
 
 ### Tomcat Configuration
 
