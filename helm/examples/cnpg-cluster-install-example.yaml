@@ -7,7 +7,7 @@
 ## https://github.com/DataONEorg/dataone-cnpg?tab=readme-ov-file#secrets--credentials)
 ## Create a new CNPG cluster:
 ##   $ helm install <releasename> oci://ghcr.io/dataoneorg/charts/cnpg --version <version> \
-##                              -f ./examples/values-dev-cluster-cnpg-example.yaml
+##                              -f ./examples/cnpg-cluster-install-example.yaml
 
 dbName: metacat
 #dbUser: defaults to dbName if blank

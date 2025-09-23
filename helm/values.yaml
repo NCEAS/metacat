@@ -2,25 +2,24 @@
 ## This is a YAML-formatted file.
 ##
 ##     * * *  NOTE: SOME VALUES INCLUDE THE PLACEHOLDER "${RELEASE_NAME}", WHICH  * * *
-##     * * *        MUST BE REPLACED BY THE ACTUAL RELEASE NAME, AS FOLLOWS...    * * *
+##     * * *        MUST BE REPLACED BY THE ACTUAL RELEASE NAME                   * * *
 ##
-## EASY OPTION: use the 'helm-upstall.sh' (helm upgrade --install) shell script.
-##     e.g. (from the metacat repo root directory):
+## 1. Create a values-override file that overrides only the values you need to change (including
+##    those containing the release name). This allows you to keep a versioned copy of your overrides
+##    for each release. See examples in the metacat/helm/examples directory.
 ##
-##     $  ./helm-upstall.sh  myrelease   mynamespace  [other optional helm command flags]
+## 2. Install or upgrade using:
+##      $ helm install --upgrade myrelease -n mynamespace-f myValues.yaml \
+##                 oci://ghcr.io/nceas/charts/metacat --version [version]
 ##
-##     # NOTE: If you see: "command not found: envsubst", you'll need to install Gnu 'gettext'
-##             (https://www.gnu.org/software/gettext/).  For example, on macOS:
+##    ...assuming release name is "myrelease"; values-override filename is "myValues.yaml" and
+##    namespace is "mynamespace". Charts and their version numbers can be found at:
+##            https://github.com/NCEAS/metacat/pkgs/container/charts%2Fmetacat
 ##
-##             $  brew install gettext && brew link --force gettext
+## If you wish to deploy using a local copy of the helm chart (e.g. for development), then get a
+## copy of the code from GitHub (https://github.com/NCEAS/metacat), and install or upgrade using:
 ##
-## PERMANENT OPTION: either manually search and replace "${RELEASE_NAME}" with your release name, or
-##     use a command-line tool to do so - e.g. `sed`:
-##
-##     $ cp values.yaml values.yaml_ORIG
-##     $ sed -i -e "s/\${RELEASE_NAME}/myrelease/g" values.yaml
-##
-##     ...then `helm install` as usual
+## $ helm install --upgrade myrelease -n mynamespace-f myValues.yaml ./helm
 ##
 
 ## @section Global Properties Shared Across Sub-Charts Within This Deployment
@@ -28,9 +27,6 @@
 global:
   ## @param global.metacatExternalBaseUrl Metacat base url accessible from outside cluster.
   ## Include protocol and trailing slash, but not the context; e.g.: "https://test.arcticdata.io/"
-  ## NOTE: Must match metacat.server.name setting.
-  ##
-  ## TODO: auto-assign metacat.server.name and ingress settings from global.metacatExternalBaseUrl?
   ##
   metacatExternalBaseUrl: "https://localhost/"
 
@@ -189,10 +185,6 @@ metacat:
   ## whether you have TLS set up for the ingress
   ##
   server.port: ""
-
-  ## @param metacat.server.name The hostname for the server, as exposed by the ingress
-  ## and seen by end users outside the cluster
-  server.name: localhost
 
   ## @param metacat.solr.baseURL The url to access solr, or leave blank to use sub-chart
   ##
@@ -415,7 +407,7 @@ metacat:
   ##
   ## When 'sitemap.enabled: true', Metacat automatically generates a sitemap index file, at:
   ##
-  ##   https://<server.name>/<application.context>/sitemaps/sitemap_index.xml
+  ##   <global.metacatExternalBaseUrl>/<application.context>/sitemaps/sitemap_index.xml
   ##
   ## ...and creates a robots.txt file that points to it (see .Values.robots).
   ##
@@ -429,7 +421,7 @@ metacat:
   ## ...for 1 or more sitemap files, named sitemap1.xml, sitemap2.xml, etc. These sitemap files
   ## are also located at:
   ##
-  ##   https://<server.name>/<application.context>/sitemaps/sitemap1.xml ...etc.
+  ##   <global.metacatExternalBaseUrl>/<application.context>/sitemaps/sitemap1.xml ...etc.
   ##
   ## Each sitemap file contains up to 50,000 entries, each pointing to a dataset that is publicly
   ## readable metadata, is the newest version in a version chain, and has not been archived.
@@ -845,7 +837,7 @@ ingress:
   ## To disable TLS altogether (i.e. use http only), set:
   ##    tls: []
   ##
-  ## To have tls.hosts auto-populated with the external hostname (from metacat.server.name),
+  ## To have tls.hosts auto-populated with external hostname (from global.metacatExternalBaseUrl),
   ## set only the secretName (always required), and leave hosts as an empty list - i.e:
   ##
   ##    tls:
@@ -855,9 +847,9 @@ ingress:
   tls: []
 
   ## @param ingress.rules The Ingress rules can be defined here or left blank to be auto-populated
-  ## based on the metacat.server.name value. If defining rules here, they will be copied verbatim
-  ## to the ingress definition, overriding any automatic configuration in the template. For schema
-  ## guidance, see:
+  ## based on the global.metacatExternalBaseUrl value. If defining rules here, they will be copied
+  ## verbatim to the ingress definition, overriding any automatic configuration in the template.
+  ## For schema guidance, see:
   ## https://kubernetes.io/docs/concepts/services-networking/ingress/
   ## Example:
   ##    - host: knb.ecoinformatics.org
