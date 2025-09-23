@@ -75,12 +75,9 @@ Starting in the root directory of the `metacat` repo:
 
 3. Deploy
 
-   (*Note: Your k8s service account must have the necessary permissions to get information about the
-   resource `roles` in the API group `rbac.authorization.k8s.io`*).
-
     ```shell
-    $ ./helm-upstall.sh  myreleasename  mynamespace oci://ghcr.io/nceas/charts/metacat  \
-                                          --version [version-here]  -f  /your/values-overrides.yaml
+    $ helm upgrade --install  myreleasename  -n mynamespace oci://ghcr.io/nceas/charts/metacat  \
+                   --version [version-here]  -f  /your/values-overrides.yaml
     ```
 
 To access Metacat, you'll need to create a mapping between your ingress IP address (found by:
@@ -320,7 +317,6 @@ kubectl delete pvc -l release=myrelease   ## DANGER! deletes all PVCs associated
 | `metacat.database.connectionURI`  | postgres database URI (or blank if using CloudNative PG)        | `""`                |
 | `metacat.guid.doi.enabled`        | Allow users to publish Digital Object Identifiers at doi.org?   | `true`              |
 | `metacat.server.port`             | The http port exposed externally, if NOT using the ingress      | `""`                |
-| `metacat.server.name`             | The hostname for the server, as exposed by the ingress          | `localhost`         |
 | `metacat.solr.baseURL`            | The url to access solr, or leave blank to use sub-chart         | `""`                |
 | `metacat.solr.coreName`           | The solr core (solr standalone) or collection name (solr cloud) | `""`                |
 | `metacat.replication.logdir`      | Location for the replication logs                               | `/var/metacat/logs` |
@@ -586,9 +582,7 @@ Then simply tell the ingress which secret to use:
 ingress:
   tls:
     - hosts:
-        # hostname is auto-populated from the value of
-        #     metacat:
-        #       server.name: &extHostname myHostName.com
+        # hostname is auto-populated from the value of global.metacatExternalBaseUrl
         - knb.test.dataone.org
       secretName: tls-secret
 ```
@@ -728,7 +722,7 @@ resolve it; e.g.:
 ```
 
 Whatever hostname you are using, don't forget to set the
-`metacat.server.name` accordingly, in `values.yaml`!
+`global.metacatExternalBaseUrl` accordingly, in `values.yaml`!
 
 ## Appendix 2: Self-Signing Certificates for Testing Mutual Authentication
 
@@ -971,12 +965,12 @@ Once the CNPG operator is installed, you can create a PostgreSQL cluster easily,
 > DO THIS ONLY ONCE! See [these important warnings](https://github.com/DataONEorg/dataone-cnpg?tab=readme-ov-file#secrets--credentials) about not changing credentials!
 >
 > ### Before installing the chart
-> With reference to the example values overrides in the [cnpg example yaml file](./examples/values-dev-cluster-cnpg-example.yaml):
+> With reference to the example values overrides in the [cnpg example yaml file](helm/examples/cnpg-cluster-install-example.yaml):
 > 1. Ensure you have set the correct values for the database name and the database owner (username) in your values overrides. (If you deploy with the wrong values, it's difficult to change them after the fact).
 > 2. If you are planning to provide your own database password instead of having CNPG create one for you (e.g. if you're migrating an existing database to k8s), you can use this yaml template(helm/admin/secret--cloudnative-pg.yaml) to create your secret - see the instructions in the file.
 > 3. Finally, double-check all yoru values, and then install the chart, as follows:
 >
 >   ```shell
 >   $ helm install <releasename> oci://datanoeorg.github.io/dataone-cnpg --version <version> \
->             -f ./examples/values-dev-cluster-cnpg-example.yaml  # or replace with your own file
+>             -f ./examples/cnpg-cluster-install-example.yaml  # or replace with your own file
 >   ```
