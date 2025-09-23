@@ -298,7 +298,6 @@ whether you are using the MetacatUI sub-chart or not:
 > BEFORE STARTING: To reduce downtime during switch-over, flag any required values override
 > updates as @TODOs. E.g. If you've been using a temporary node name, hostname, and TLS setup,
 > flag these as `TODO`, for updates during switchover, with the new values in handy comments:
-> - [ ] `metacat.server.name`
 > - [ ] `global.metacatExternalBaseUrl`
 > - [ ] `global.d1ClientCnUrl`
 > - [ ] Any others that will need changing, e.g. `dataone.nodeSynchronize`, `dataone.nodeReplicate`

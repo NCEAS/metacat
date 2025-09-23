@@ -32,7 +32,6 @@ global:
       name: mcuibrooke-metacatui    # Use your own service name
 
 metacat:
-  server.name: metacat-dev.test.dataone.org
   auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
 
 #  storage.hashstore.disableConversion: true
@@ -82,22 +81,14 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
   tls:
-    - hosts: [] # defaults to metacat.server.name
+    - hosts: [] # defaults to global.metacatExternalBaseUrl
       secretName: ingress-nginx-tls-cert
 
 database:
-  persistence:
-    size: 10Gi
-  cnpg:
-    resources:
-      requests:
-        cpu: 1
-        memory: 1Gi
-      limits:
-        cpu: 1
-        memory: 1Gi
-    parameters:
-      shared_buffers: 256MB
+#  dbName: metacat  # already default
+#  dBUser: metacat  # already default
+  existingSecret: cnpgtest011mc-cnpg-app
+  serviceName: cnpgtest011mc-cnpg-rw
 
 dataone-indexer:
   autoscaling:
@@ -134,8 +125,6 @@ dataone-indexer:
 
   solr:
     javaMem: "-XX:MaxRAMPercentage=75.0"
-#    javaMem: "-Xms512m -Xmx2g"
-    #    resourcesPreset: "large"  # (cpu: 1.0/1.5; mem: 2048Mi/3072Mi)
     resources:
       requests:
         cpu: 500m

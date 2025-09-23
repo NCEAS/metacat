@@ -1,0 +1,33 @@
+## CloudNative-PG-specific (CNPG) Configuration
+## See https://github.com/DataONEorg/dataone-cnpg
+## Used ONLY for initial creation of a CNPG cluster, using the helm chart from:
+##   oci://ghcr.io/dataoneorg/charts/cnpg
+##
+## DO THIS ONLY ONCE! See important warnings about not changing credentials!
+## https://github.com/DataONEorg/dataone-cnpg?tab=readme-ov-file#secrets--credentials)
+## Create a new CNPG cluster:
+##   $ helm install <releasename> oci://ghcr.io/dataoneorg/charts/cnpg --version <version> \
+##                              -f ./examples/cnpg-cluster-install-example.yaml
+
+dbName: metacat
+#dbUser: defaults to dbName if blank
+
+resources:
+  requests:
+    cpu: 1
+    memory: 1Gi
+  limits:
+    cpu: 1
+    memory: 1Gi
+
+persistence:
+  size: 10Gi
+
+postgresql:
+  ## metacat override to allow password auth:
+  pg_hba:
+    # TYPE        DATABASE      USER          ADDRESS         METHOD
+    - host        metacat       metacat       0.0.0.0/0       password
+    - host        metacat       metacat       ::0/0           password
+    - host        all           postgres      0.0.0.0/0       password
+    - host        all           postgres      ::0/0           password
