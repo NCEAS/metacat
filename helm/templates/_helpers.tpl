@@ -146,22 +146,10 @@ set postgresql HostName
 {{- define "metacat.postgresql.hostname" -}}
 {{- $dbUri := (index .Values.metacat "database.connectionURI") }}
 {{- if not $dbUri }}
-  {{- .Release.Name }}-cnpg-rw
+  {{- tpl .Values.database.serviceName . }}
 {{- else }}
   {{- regexFind "://[^/]+" $dbUri | trimPrefix "://" }}
 {{- end }}
-{{- end }}
-
-{{/*
-Detect whether we're doing a helm install/upgrade, or just a local 'helm template'
-*/}}
-{{- define "helm.sees.cluster" -}}
-{{- $ns := lookup "v1" "Namespace" .Release.Namespace .Release.Namespace -}}
-{{- if $ns -}}
-true
-{{- else -}}
-{{- /* no output means false */ -}}
-{{- end -}}
 {{- end }}
 
 {{/*
@@ -169,18 +157,10 @@ set postgresql UserName
 */}}
 {{- define "metacat.postgresql.username" -}}
 {{- $secretName := ( include "metacat.cnpg.secret.name" . ) }}
-{{- $secret := lookup "v1" "Secret" .Release.Namespace $secretName -}}
-{{- if $secret -}}
-  {{- $raw := index $secret.data "username" | required (printf "Key 'username' not found in Secret %s" $secretName) | toString -}}
-  {{- $raw | b64dec -}}
-{{- else -}}
-  {{- if ( include "helm.sees.cluster" .) -}}
-    {{- fail (printf "Secret %s not found in namespace %s - %s" $secretName .Release.Namespace ) -}}
-  {{- else -}}
-    {{- printf "templating-only--Secret-%s-not-found-locally" $secretName }}
-  {{- end -}}
-{{- end -}}
-{{- end -}}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) | required (printf "Secret %s not found in namespace %s" $secretName .Release.Namespace) }}
+{{- $raw := index $secret.data "username" | required (printf "Key 'username' not found in Secret %s" $secretName) | toString -}}
+{{- $raw | b64dec -}}
+{{- end }}
 
 {{/*
 set postgresql Basic Auth Secret Name
@@ -206,3 +186,20 @@ Usage:
         {{- tpl (.value | toYaml) .context }}
     {{- end }}
 {{- end -}}
+
+{{/*
+Parse hostname from .Values.global.metacatExternalBaseUrl
+*/}}
+{{- define "metacat.server.name" -}}
+{{- $url := .Values.global.metacatExternalBaseUrl -}}
+{{- if $url -}}
+    {{- $parsed := regexFind "://([^/:]+)" $url -}}
+    {{- if $parsed -}}
+      {{- regexReplaceAll "/$" ( trimPrefix "://" $parsed ) "" }}
+    {{- else -}}
+      {{- "ERROR_.Values.global.metacatExternalBaseUrl_WRONG_FORMAT" }}
+    {{- end -}}
+{{- else -}}
+    {{- "ERROR_.Values.global.metacatExternalBaseUrl_NOT_FOUND" }}
+{{- end -}}
+{{- end }}
