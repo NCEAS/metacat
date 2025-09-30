@@ -2,6 +2,9 @@
 
 > **= = = THIS IS A TEMPLATE - MAKE YOUR OWN COPY BEFORE CHECKING BOXES! = = =**
 
+> [!CAUTION]
+> This checklist has not yet been updated to reflect recent major PostgreSQL deployment changes (moving from Bitnami PostgreSQL sub-chart to CloudNative PG PostgreSQL Operator).
+
 > [!IMPORTANT]
 > Before you begin...
 > 1. **PURPOSE:** This ordered checklist is for either:
