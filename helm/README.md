@@ -6,26 +6,13 @@ created by others. For more details, see https://github.com/NCEAS/metacat
 
 > [!IMPORTANT]
 > ### Before You Start:
-> 1. **This Metacat Helm chart is a beta feature**. It has been tested, and we believe it to be
->    working well, but it has not yet been used in production - so we recommend caution with this
->    early release. If you try it, [we'd love to hear your
->    feedback](https://www.dataone.org/contact/)! After you have read the details below, [this
->    checklist](./admin/MetacatQuickRef.md) may be helpful in guiding you through the necessary
->    installation steps.
+> 1. After you have read the details below, [this checklist](./admin/MetacatQuickRef.md) may be helpful in guiding you through the necessary installation steps.
 >
 >
-> 2. If you are considering **migrating an existing Metacat installation to Kubernetes**, note that
->    ***before starting a migration, you must have a fully-functioning installation of Metacat
->    version 2.19, running with PostgreSQL version 14. Migrating from other versions of Metacat
->    and/or PostgreSQL is not supported.*** See [this checklist](./admin/MetacatQuickRef.md)
->    for the necessary migration steps.
+> 2. If you are considering **migrating an existing Metacat installation to Kubernetes**, note that ***before starting a migration, you must have a fully-functioning installation of Metacat version 2.19, running with PostgreSQL version 14. Migrating from other versions of Metacat and/or PostgreSQL is not supported.*** See [this checklist](./admin/MetacatQuickRef.md) for the necessary migration steps.
 >
 >
-> 3. If you are upgrading from a previous Helm Chart major version (e.g. from chart v1.2.0 to chart
->    v.2.0.0), first check the [Metacat Release Notes](../RELEASE-NOTES.md) to see if this involves
->    a change in the major version of the PostgreSQL application deployed by the included Bitnami
->    PostgreSQL sub-chart. If it does, you will first need to dump your database contents before you
->    upgrade -- see the [Major Version Upgrades](#major-version-upgrades) section.
+> 3. If you are upgrading from a previous Helm Chart major version (e.g. from chart v1.2.0 to chart v.2.0.0), first check the [Metacat Release Notes](../RELEASE-NOTES.md) to see if this involves a change in the major version of the PostgreSQL application deployed by the included Bitnami PostgreSQL sub-chart. If it does, manual intervention may be required -- see the [Major Version Upgrades](#major-version-upgrades) section.
 >
 >
 > 4. This deployment does not currently work on Apple Silicon machines (e.g. in Rancher Desktop),
@@ -55,7 +42,7 @@ created by others. For more details, see https://github.com/NCEAS/metacat
     * [Appendix 2: Self-Signing Certificates for Testing Mutual Authentication](#appendix-2-self-signing-certificates-for-testing-mutual-authentication)
     * [Appendix 3: Troubleshooting Mutual Authentication](#appendix-3-troubleshooting-mutual-authentication)
     * [Appendix 4: Debugging and Logging](#appendix-4-debugging-and-logging)
-    * [Appendix 5: Upgrader InitContainer Sample Logs](#appendix-5-upgrader-initcontainer-sample-logs)
+    * [Appendix 5: Initial Creation of a PostgreSQL Cluster using CloudNative PG](#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg)
 
 ---
 
@@ -129,139 +116,24 @@ helm install myrelease oci://ghcr.io/nceas/charts/metacat --version [version-her
                         --set database.existingSecret=myrelease-secrets
 ```
 
-> **Note**: Some settings need to be edited to include release name that you choose. See the
-> [values.yaml](./values.yaml) file for settings that include `${RELEASE_NAME}`. The instructions
-> at the beginning of [values.yaml](./values.yaml) suggest simple ways to achieve this.
+> **Note**: Some settings need to be edited to include release name that you choose. See the instructions
+> at the beginning of [values.yaml](./values.yaml)
 
 ## Major Version Upgrades
 
 > [!IMPORTANT]
 > If you are upgrading across Metacat Helm chart **major** versions (e.g. from chart v1.x.x to chart
 > v.2.x.x), always check the [Metacat Release Notes](../RELEASE-NOTES.md) to see if this involves a
-> change in the major version of the underlying **PostgreSQL** application that is deployed by the
-> included Bitnami PostgreSQL sub-chart. **If it does, you will first need to dump your database
-> contents before you upgrade** -- see below. Note that the **Bitnami helm chart version** is
-> different from the **PostgreSQL application version**; to see how they correspond, use the
-> command: `helm search repo bitnami/postgresql --versions`
+> change in the major version of the underlying **PostgreSQL** application. If it does, you will
+> need to take specific actions during the upgrade, as described below.
 
-If the Metacat helm chart upgrade involves a major-version upgrade of PostgreSQL, the following
-steps are required. (Note: this procedure assumes that both the old and the new data directories
-will be on the same volume and mount-point):
+### Upgrading from the Bitnami PostgreSQL sub-chart to the CloudNative PG Operator
 
-### **BEFORE UPGRADING**: with the current ("old version") chart deployed:
+Follow the instructions in [Appendix 5: Initial Creation of a PostgreSQL Cluster using CloudNative PG](#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg)
 
-1. Put Metacat into Read-Only mode:
+### Upgrading between other major versions of PostgreSQL Using the CloudNative PG Operator
 
-> [!WARNING]
-> Always put Metacat in "Read Only" mode during the database upgrade, or you may lose data!
-
-   ```shell
-      helm upgrade $RELEASE_NAME oci://ghcr.io/nceas/charts/metacat \
-          --version [OLD-chart-version] \
-          -f [your-values-overrides] \
-          --set metacat.application\\.readOnlyMode=true
-
-      # # # IMPORTANT: Note the TWO backslashes in: metacat.application\\.readOnlyMode
-   ```
-
-2. Run the script: [metacat/helm/admin/pg_dump_for_upgrades.sh](./admin/pg_dump_for_upgrades.sh),
-   which will check your data directory location is correctly versioned, and then carry out a
-   `pg_dump` of your existing database.
-
-> [!TIP]
-> The script is safe and non-destructive. It never deletes data, and seeks permission before
-> making copies to new locations.
-
-### **UPGRADE PROCESS**
-1. Ensure your Values overrides are correct for the section:
-
-   ```yaml
-   postgresql:
-     upgrader:
-       persistence:
-        existingClaim: # [existing-postgresql-pvc-name-here]
-   ```
-> [!IMPORTANT]
-> You must remove the `postgresql.postgresqlDataDir: /bitnami/postgresql/14/main` override, if you
-> added it for the previous (`pg_dump`) step, since the new chart will contain the correct
-> (versioned) location by default. (Alternatively, if you are using a custom path for the next
-> DB version, change it to point there).
-
-2. `helm uninstall` the OLD version of the Metacat chart, and then `helm install` the NEW
-   Metacat chart. This will automatically detect the pg_dump directory, and use it to `pg_restore`
-   the data into the new version of PostgreSQL. (We recommend you don't use `helm upgrade` across
-   major versions.) Don't forget the `metacat.application\\.readOnlyMode` flag.
-
-   ```shell
-   helm uninstall $RELEASE_NAME
-
-   ## ...wait for uninstall to complete...
-
-   helm install $RELEASE_NAME oci://ghcr.io/nceas/charts/metacat \
-       --version {NEW-chart-version} \
-       -f {your-values-overrides} \
-       --set metacat.application\\.readOnlyMode=true  ## Two slashes!
-
-   ## ...as metacat pod is starting up, view the initContainer logs:
-   kubectl logs -f pod/${RELEASE_NAME}-0 -c pgupgrade
-   ```
-
-> [!TIP]
-> See example `initContainer` logs from a successful upgrade in [Appendix 5: Upgrader InitContainer
-> Sample Logs](#appendix-5-upgrader-initcontainer-sample-logs).
-
-3. Finally, verify that the upgrade has completed successfully, the new version of PostgreSQL is
-   running, and your data is intact. If so, you can unset "Read Only" mode by doing a `helm upgrade`
-   without the `readOnlyMode` flag, so Metacat will once again be able to accept edits and uploads:
-
-   ```shell
-   # First verify that Metacat is working correctly: you should see a non-zero number of objects
-   # returned when you browse:
-   #  https://YOUR-HOST/metacat/d1/mn/v2/object
-   #
-   # If so, then:
-   #
-   helm upgrade $RELEASE_NAME oci://ghcr.io/nceas/charts/metacat \
-       --version {NEW-chart-version} \
-       -f {your-values-overrides}  , as soon
-   ```
-
-### Troubleshooting
-
-1. **Troubleshooting the `pg_dump` step** (from the script:
-   [metacat/helm/admin/pg_dump_for_upgrades.sh](./admin/pg_dump_for_upgrades.sh))
-   - If the `pg_dump` fails, use `kubectl describe pod...` to check whether the PostgreSQL container
-     ran out of memory and was `OOMKilled`. If so, you may need to increase the memory limits in
-     your values overrides for `postgresql.primary.resources`.
-
-2. **Troubleshooting the `pg_restore` step** (from the `initContainer` in the new chart)
-   - If the upgrade initContainer fails for some reason, metacat will continue to start up, and will
-     initialize the new (empty) database. In this case, you will also see:
-     - Error messages in the Metacat pod's `pgupgrade` `initContainer` logs (See log examples in
-       [Appendix 5](#appendix-5-upgrader-initcontainer-sample-logs).)
-
-       ```shell
-       kubectl logs -f pod/${RELEASE_NAME}-0 -c pgupgrade
-       ```
-
-     - `total="0"` objects in the database when browsing to `https://YOUR-HOST/metacat/d1/mn/v2/object`:
-
-       ```xml
-       <ns2:objectList xmlns:ns2="http://ns.dataone.org/service/types/v1" count="0" start="0" total="0"/>
-       ```
-
-   - Re-running the upgrader (`initContainer`) will NOT `pg_restore` the database, since it will
-     detect the presence of Metacat tables, and will refuse to overwrite what it believes to be
-     existing data. We therefore recommend:
-     1. Investigating and fixing the `initContainer` error. (If you need to re-install the chart in
-        order to do this, **make sure it is still in Read Only mode!**)
-     2. Doing a `helm uninstall` of the chart
-     3. Manually moving the NEW data directory to a different location, so PostgreSQL can make
-        another new one on next startup.
-     4. Doing a `helm install` of the chart, and watching the initContainer logs again.
-
-> [!Note]
-> the data still exists in the OLD data directory, and is backed up in the `pg_dump` output!
+These scenarios will be covered in future releases. In the meantime, please refer to the [CloudNative PG documentation](https://cloudnative-pg.io/documentation/current/postgres_upgrades/).
 
 ## Uninstalling the Chart
 
@@ -892,85 +764,28 @@ Logs from an `initContainer`:
   $ kubectl logs -f metacatknb-0 -c dependencies
 ```
 
-## Appendix 5: Upgrader InitContainer Sample Logs
+## Appendix 5: Initial Creation of a PostgreSQL Cluster using CloudNative PG
 
-Sample Logs from upgrader initContainer during PostgreSQL Major Upgrades:
-
-### First Startup - Successful Upgrade
-
-```text
-$ kc logs -f pod/metacatbrooke-0 -c pgupgrade
-
-Checking if a PostgreSQL upgrade is necessary...
-Found version 17; checking if pg_restore needed...
-Result of psql -h metacatbrooke-postgresql-hl -U metacat -d metacat -c "\dt":
-Did not find any relations.
-No Metacat tables found in /bitnami/postgresql/17/main
-Looking for directories named {version}-pg_dump to restore from...
-Current PostgreSQL Major Version: 17
-All dump files:
-14-pg_dump
-Choosing newest dump file before current version (17): 14-pg_dump
-Restoring from dump file 14-pg_dump, using command:
-pg_restore -U metacat -h metacatbrooke-postgresql-hl -d metacat --format=directory --jobs=20 /bitnami/postgresql/14-pg_dump
-FINISHED restoring from dump file 14-pg_dump; exiting initContainer...
-````
-
-### Subsequent Startups - No Action Required
-
-```text
-$ kc logs -f pod/metacatbrooke-0 -c pgupgrade
-
-Checking if a PostgreSQL upgrade is necessary...
-Found version 17; checking if pg_restore needed...
-Result of psql -h metacatbrooke-postgresql-hl -U metacat -d metacat -c "\dt":
-List of relations
-Schema |         Name          | Type  |  Owner
---------+-----------------------+-------+---------
-public | access_log            | table | metacat
-public | checksums             | table | metacat
-public | harvest_detail_log    | table | metacat
-public | harvest_log           | table | metacat
-public | harvest_site_schedule | table | metacat
-public | identifier            | table | metacat
-public | index_event           | table | metacat
-public | node_id_revisions     | table | metacat
-public | quota_usage_events    | table | metacat
-public | scheduled_job         | table | metacat
-public | scheduled_job_params  | table | metacat
-public | smmediatypeproperties | table | metacat
-public | smreplicationpolicy   | table | metacat
-public | smreplicationstatus   | table | metacat
-public | systemmetadata        | table | metacat
-public | version_history       | table | metacat
-public | xml_access            | table | metacat
-public | xml_catalog           | table | metacat
-public | xml_documents         | table | metacat
-public | xml_relation          | table | metacat
-public | xml_revisions         | table | metacat
-(21 rows)
-Metacat tables found in /bitnami/postgresql/17/main; will NOT do a pg_restore. Exiting initContainer...
-```
-
-## Appendix 6: Initial Creation of a PostgreSQL Cluster using CloudNative PG
-
-< [!NOTE]
-> This is a separate process from installing the Metacat Helm chart, and only needs to be done once.
+> [!NOTE]
+> This is a separate process from installing the Metacat Helm chart, and only needs to be done once. See [these important warnings](https://github.com/DataONEorg/dataone-cnpg?tab=readme-ov-file#secrets--credentials) about not changing credentials!
 
 We recomment using the [CloudNative PG](https://cloudnative-pg.io/) operator to install and manage a PostgreSQL cluster for use with Metacat. The operator automates many of the tasks involved in installing, configuring, and managing a PostgreSQL cluster, including backups, failover, and scaling. Installing CNPG is beyond the scope of this document, but you can find detailed instructions in the [DataONE K8s Cluster documentation](https://github.com/DataONEorg/k8s-cluster/blob/main/postgres/postgres.md#cloudnativepg-operator-installation).
 
 Once the CNPG operator is installed, you can create a PostgreSQL cluster easily, using the [DataONE CNPG Helm Chart](https://github.com/DataONEorg/dataone-cnpg).
 
-> [!IMPORTANT]
-> DO THIS ONLY ONCE! See [these important warnings](https://github.com/DataONEorg/dataone-cnpg?tab=readme-ov-file#secrets--credentials) about not changing credentials!
->
-> ### Before installing the chart
-> With reference to the example values overrides in the [cnpg example yaml file](helm/examples/cnpg-cluster-install-example.yaml):
-> 1. Ensure you have set the correct values for the database name and the database owner (username) in your values overrides. (If you deploy with the wrong values, it's difficult to change them after the fact).
-> 2. If you are planning to provide your own database password instead of having CNPG create one for you (e.g. if you're migrating an existing database to k8s), you can use this yaml template(helm/admin/secret--cloudnative-pg.yaml) to create your secret - see the instructions in the file.
-> 3. Finally, double-check all yoru values, and then install the chart, as follows:
->
->   ```shell
->   $ helm install <releasename> oci://datanoeorg.github.io/dataone-cnpg --version <version> \
->             -f ./examples/cnpg-cluster-install-example.yaml  # or replace with your own file
->   ```
+### Before installing the chart
+
+1. Ensure you have set the correct values for the database name and the database owner (username) in your values overrides. (If you deploy with the wrong values, it's difficult to change them after the fact).
+2. If you are planning to provide your own database password instead of having CNPG create one for you (e.g. if you're migrating data from an existing database), you can use [this yaml template](helm/admin/secret--cloudnative-pg.yaml) to create your secret - see the instructions in the file.
+3. Finally, double-check all your values, and then install the chart, as follows:
+
+### EITHER: Fresh Metacat Install with an Empty Database
+
+```shell
+$ helm install <releasename> oci://dataoneorg.github.io/dataone-cnpg --version <version> \
+        -f ./examples/cnpg-cluster-empty-example.yaml  # or replace with your own file
+```
+
+### OR: Migrating Metacat from an Existing Database (e.g. Bitnami Postgres)
+
+Follow the detailed instructions on ["Importing Data" in the DataONE CNPG README](https://github.com/DataONEorg/dataone-cnpg/blob/main/README.md#importing-data).
