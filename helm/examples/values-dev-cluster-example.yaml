@@ -84,11 +84,10 @@ ingress:
     - hosts: [] # defaults to global.metacatExternalBaseUrl
       secretName: ingress-nginx-tls-cert
 
+# Pre-existing secret containing original metacat postgresql credentials
 database:
-#  dbName: metacat  # already default
-#  dBUser: metacat  # already default
-  existingSecret: cnpgtest011mc-cnpg-app
-  serviceName: cnpgtest011mc-cnpg-rw
+  existingSecret: "{{ .Release.Name }}-metacat-cnpg"
+  serviceName: mcdb-cnpg-rw
 
 dataone-indexer:
   autoscaling:
