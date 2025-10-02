@@ -287,7 +287,7 @@ These scenarios will be covered in future releases. In the meantime, please refe
 
 | Name                      | Description                                                       | Value     |
 | ------------------------- | ----------------------------------------------------------------- | --------- |
-| `database.existingSecret` | REQUIRED Name of Secret holding database username & passwd        | `""`      |
+| `database.existingSecret` | REQUIRED Name of Secret holding the database username & password  | `""`      |
 | `database.dbName`         | The name of the PostgreSQL database to connect to                 | `metacat` |
 | `database.serviceName`    | (REQUIRED if DB on k8s) name of the Service exposing the database | `""`      |
 | `database.port`           | Override default database port (5432) - only if not using CNPG    | `5432`    |

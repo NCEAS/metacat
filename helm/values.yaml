@@ -968,7 +968,7 @@ readinessProbe:
 ## cluster).
 ##
 database:
-  ## @param database.existingSecret REQUIRED Name of Secret holding database username & passwd
+  ## @param database.existingSecret REQUIRED Name of Secret holding the database username & password
   ## IMPORTANT:
   ##    - the secret must be of type 'kubernetes.io/basic-auth'
   ##    - the Secret must contain the exact key names: 'username' and 'password'
