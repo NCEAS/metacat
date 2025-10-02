@@ -16,23 +16,16 @@
 >      other versions of Metacat and/or PostgreSQL is not supported.***
 >
 > 2. Sections marked `(FRESH INSTALL ONLY)` are needed ONLY for **new, empty installations.**
-> 3. Sections marked `(MIGRATION ONLY)` are needed ONLY for a **migration from an existing Metacat
->    2.19.x instance.**
+> 3. Sections marked `(MIGRATION ONLY)` are needed ONLY for a **migration from an existing Metacat 2.19.x instance.**
 > 4. Unmarked sections are required for both types of installation
-> 5. For more in-depth explanation and details of configuration steps, see the [Metacat Helm
->    README](https://github.com/NCEAS/metacat/tree/main/helm#readme).
-> 6. Some references below are specific to NCEAS infrastructure (e.g. ssh username/hostname; use of
->    CephFS storage, etc); adjust as needed for your own installation.
-> 7. Assumptions: you have a working knowledge of Kubernetes deployment, including working with yaml
->    files, helm and kubectl commands; your kubectl context is set for the target deployment
->    location; you are able to ssh from the legacy host to the host where the target filesystem is
->    mounted (in our case, cephfs).
+> 5. For more in-depth explanation and details of configuration steps, see the [Metacat Helm README](https://github.com/NCEAS/metacat/tree/main/helm#readme).
+> 6. Some references below are specific to NCEAS infrastructure (e.g. ssh username/hostname; use of CephFS storage, etc); adjust as needed for your own installation.
+> 7. Assumptions: you have a working knowledge of Kubernetes deployment, including working with yaml files, helm and kubectl commands; your kubectl context is set for the target deployment location; you are able to ssh from the legacy host to the host where the target filesystem is mounted (in our case, cephfs).
 
 ## 1. `(MIGRATION ONLY)` Copy Data and Set Ownership & Permissions
 
 ### = = = = = = = = = = = = = ON LEGACY HOST: = = = = = = = = = = = = =
-- [ ] first `rsync` the data from the 2.19 instance over to cephfs (OK to leave postgres & tomcat
-      running)
+- [ ] first `rsync` the data from the 2.19 instance over to cephfs (OK to leave postgres & tomcat running)
     ```shell
     # can also prepend with time, and use --stats --human-readable, and/or --dry-run
     #
@@ -47,9 +40,7 @@
                 /var/metacat/logs/      $USER@$TARGET:/mnt/ceph/repos/$REPO/metacat/logs/
     ```
 
-- [ ] In the metacat database, verify that all the `systemmetadata.checksum_algorithm` entries are
-  on the [list of supported algorithms](https://github.com/DataONEorg/hashstore-java/blob/main/src/main/java/org/dataone/hashstore/filehashstore/FileHashStore.java#L63)
-  (NOTE: syntax matters! E.g. `SHA-1` is OK, but `SHA1` isn't):
+- [ ] In the metacat database, verify that all the `systemmetadata.checksum_algorithm` entries are on the [list of supported algorithms](https://github.com/DataONEorg/hashstore-java/blob/main/src/main/java/org/dataone/hashstore/filehashstore/FileHashStore.java#L63) (NOTE: syntax matters! E.g. `SHA-1` is OK, but `SHA1` isn't):
 
   ```sql
     -- psql -U metacat -h 127.0.0.1
@@ -62,10 +53,7 @@
     ```
 
 > [!NOTE]
-> The above step on the legacy host breaks search results in some cases (e.g. attempts to find
-> specific data files -- by checksum -- across packages), unless you reindex-all. Therefore, if you
-> do not anticipate that the transfer to k8s will complete quickly, it should instead be done in
-> k8s, and repeated after each rsync.
+> The above step on the legacy host breaks search results in some cases (e.g. attempts to find specific data files -- by checksum -- across packages), unless you reindex-all. Therefore, if you do not anticipate that the transfer to k8s will complete quickly, it should instead be done in k8s, and repeated after each rsync.
 
 - [ ] Do a `pg_dump` on the legacy host (since postgresql major version on legacy host is lower than that being deployed by helm chart):
 
@@ -78,10 +66,7 @@
 
 > [!IMPORTANT]
 > 1. The dump directory must be named `[version]-pg_dump` - e.g. `14-pg_dump`
-> 2. It must be located alongside the existing _**versioned**_ postgres data dir, so for PG data
->    dir at: `postgresql.postgresqlDataDir: /bitnami/postgresql/14/main`, for example, the existing
->    versioned directory would be `/var/lib/postgresql/14`, and the dump dir must be created
->    alongside it, at: `/var/lib/postgresql/14-pg_dump`
+> 2. It must be located alongside the existing _**versioned**_ postgres data dir, so for PG data dir at: `postgresql.postgresqlDataDir: /bitnami/postgresql/14/main`, for example, the existing versioned directory would be `/var/lib/postgresql/14`, and the dump dir must be created alongside it, at: `/var/lib/postgresql/14-pg_dump`
 
 - [ ] then rsync this dump directory over to ceph
 
@@ -126,13 +111,9 @@
 
 ## 3. Create Persistent Volumes
 
-> Assumes **cephfs volume credentials** already installed as a k8s Secret - see [this tip on
-> creating your own secret](./Installation-Upgrade-Tips.md#creating-volume-credentials-secret-for-the-pvs),
-> and [this DataONEorg/k8s-cluster example
-> ](https://github.com/DataONEorg/k8s-cluster/blob/main/storage/Ceph/CephFS/helm/secret.yaml).
+> Assumes **cephfs volume credentials** already installed as a k8s Secret - see [this tip on creating your own secret](./Installation-Upgrade-Tips.md#creating-volume-credentials-secret-for-the-pvs), and [this DataONEorg/k8s-cluster example](https://github.com/DataONEorg/k8s-cluster/blob/main/storage/Ceph/CephFS/helm/secret.yaml).
 
-- [ ] Get the current volume sizes from the legacy installation, to help with sizing the PVs -
-      [example](./Installation-Upgrade-Tips.md#get-sizing-information-for-pvs)
+- [ ] Get the current volume sizes from the legacy installation, to help with sizing the PVs - [example](./Installation-Upgrade-Tips.md#get-sizing-information-for-pvs)
 - [ ] Create PV for metacat data directory - [example](./pv--releasename-metacat-cephfs.yaml)
 - [ ] Create PV for PostgreSQL data directory - [example](./pv--releasename-postgres-cephfs.yaml)
 - [ ] Create PVC for PostgreSQL - [example](./pvc--releasename-postgres.yaml)
@@ -141,44 +122,29 @@
 
 ## 4. Values: Create a new values override file
 
-**e.g. see the
-[values-dev-cluster-example.yaml](../examples/values-dev-cluster-example.yaml)
-file.**
+**e.g. see the [values-dev-cluster-example.yaml](../examples/values-dev-cluster-example.yaml) file.**
 
-- [ ] TLS ("SSL") setup (`ingress.tls.hosts` - leave blank to use default, or change if aliases
-      needed...
-  - [ ] `(MIGRATION ONLY)` transfer any existing aliases and rewrite rules from legacy host; see
-        [hostname aliases tip](./Installation-Upgrade-Tips.md#where-to-find-existing-hostname-aliases)
-- [ ] Set up Node cert and replication etc. as needed -  [see
-      README](https://github.com/NCEAS/metacat/tree/main/helm#setting-up-certificates-for-dataone-replication).
-- [ ] [Install the ca
-      chain](https://github.com/NCEAS/metacat/tree/main/helm#install-the-ca-chain), and also
-      enable incoming client cert forwarding:
+- [ ] TLS ("SSL") setup (`ingress.tls.hosts` - leave blank to use default, or change if aliases needed...
+  - [ ] `(MIGRATION ONLY)` transfer any existing aliases and rewrite rules from legacy host; see [hostname aliases tip](./Installation-Upgrade-Tips.md#where-to-find-existing-hostname-aliases)
+- [ ] Set up Node cert and replication etc. as needed -  [see README](https://github.com/NCEAS/metacat/tree/main/helm#setting-up-certificates-for-dataone-replication).
+- [ ] [Install the ca chain](https://github.com/NCEAS/metacat/tree/main/helm#install-the-ca-chain), and also enable incoming client cert forwarding:
 
     ```yaml
     metacat:
       dataone.certificate.fromHttpHeader.enabled: true
     ```
 
-- [ ] `(MIGRATION ONLY)` Do a `diff` between the v2.19 properties file at
-      `$TC_HOME/webapps/metacat/WEB-INF/metacat.properties` on the legacy host, and the newest
-      `metacat.properties` from GitHub for the new version being installed, to see if any other
-      custom `metacat:` settings need to be transferred (e.g. `auth.allowedSubmitters:`, `guid.doi.username:`,
-      `guid.doi.uritemplate.metadata:`, `guid.doi.doishoulder.1:`, etc.)
+- [ ] `(MIGRATION ONLY)` Do a `diff` between the v2.19 properties file at `$TC_HOME/webapps/metacat/WEB-INF/metacat.properties` on the legacy host, and the newest `metacat.properties` from GitHub for the new version being installed, to see if any other custom `metacat:` settings need to be transferred (e.g. `auth.allowedSubmitters:`, `guid.doi.username:`, `guid.doi.uritemplate.metadata:`, `guid.doi.doishoulder.1:`, etc.)
 
 ### MetacatUI:
-Carefully review all Metacat's `global.metacatUi*` values and update as needed, depending upon
-whether you are using the MetacatUI sub-chart or not:
+Carefully review all Metacat's `global.metacatUi*` values and update as needed, depending upon whether you are using the MetacatUI sub-chart or not:
 - **For separately-deployed MetacatUI:**
-  - [ ] in the Metacat values overrides, set `global.includeMetacatUi: false` and override the
-    `global.metacatUiIngressBackend` settings subtree, and `global.metacatUiWebRoot`, if needed.
-    (`global.metacatUiThemeName` is not needed in Metacat values, for this type of deployment.)
+  - [ ] in the Metacat values overrides, set `global.includeMetacatUi: false` and override the `global.metacatUiIngressBackend` settings subtree, and `global.metacatUiWebRoot`, if needed. (`global.metacatUiThemeName` is not needed in Metacat values, for this type of deployment.)
   - [ ] in the values overrides for the separate MetacatUI chart:
     - Set `global.metacatUiThemeName` and `global.metacatExternalBaseUrl` (REQUIRED)
     - Override `global.metacatAppContext` if needed (default is 'metacat')
     - Override `global.metacatUiWebRoot` if needed (default is '/')
-    - Override `global.d1ClientCnUrl` to point at the sandbox CN
-      ("https://cn-sandbox.test.dataone.org/cn"), until final release (default is production CN)
+    - Override `global.d1ClientCnUrl` to point at the sandbox CN ("https://cn-sandbox.test.dataone.org/cn"), until final release (default is production CN)
 
 - **If using a bundled theme (arctic, knb etc.):**
   - for PROD, no further action required
@@ -203,9 +169,7 @@ whether you are using the MetacatUI sub-chart or not:
       sudo setfacl -R -d -m o:rx .
       ```
 
-- [ ] If the custom theme needs to be partially overridden by a separate config.js file (e.g.
-  `sfwmd.js` is used to override [the CERP
-  theme](https://github.com/NCEAS/metacatui-themes/tree/main/src/cerp/js/themes/cerp) above):
+- [ ] If the custom theme needs to be partially overridden by a separate config.js file (e.g. `sfwmd.js` is used to override [the CERP theme](https://github.com/NCEAS/metacatui-themes/tree/main/src/cerp/js/themes/cerp) above):
 
   - [ ] set `metacatui.appConfig.enabled:` to `false`
   - [ ] Create a configMap to replace `config.js`, as follows:
@@ -229,55 +193,37 @@ whether you are using the MetacatUI sub-chart or not:
 ## 5M. `(MIGRATION ONLY)` First Install
 
 > [!CAUTION]
-> IF MOVING DATA FROM AN EXISTING DEPLOYMENT THAT IS ALSO A DATAONE MEMBER NODE, DO NOT REGISTER
-> THIS NODE WITH THE PRODUCTION CN UNTIL YOU'RE READY TO GO LIVE, or bad things will happen...
+> IF MOVING DATA FROM AN EXISTING DEPLOYMENT THAT IS ALSO A DATAONE MEMBER NODE, DO NOT REGISTER THIS NODE WITH THE PRODUCTION CN UNTIL YOU'RE READY TO GO LIVE, or bad things will happen...
 
-- [ ] Point the deployment at the **SANDBOX CN** (and if you're not using the included MetacatUI
-      sub-chart, make sure your external MetacatUI instance is also pointing to the sandbox CN):
+- [ ] Point the deployment at the **SANDBOX CN** (and if you're not using the included MetacatUI sub-chart, make sure your external MetacatUI instance is also pointing to the sandbox CN):
 
     ```yaml
     global:
       d1ClientCnUrl: https://cn-sandbox.test.dataone.org/cn
     ```
 
-- [ ] The Node ID (in `metacat.dataone.nodeId` and `metacat.dataone.subject`) **MUST MATCH the
-      legacy deployment!** (Don't use a temp ID, or it will be persisted into hashstore!)
+- [ ] The Node ID (in `metacat.dataone.nodeId` and `metacat.dataone.subject`) **MUST MATCH the legacy deployment!** (Don't use a temp ID, or it will be persisted into hashstore!)
 - [ ] The `metacat.dataone.autoRegisterMemberNode:` flag **MUST NOT match today's date!**
-- [ ] Existing node already syncing to D1? Set `dataone.nodeSynchronize: false` until after final
-      switch-over!
-- [ ] Existing node already accepting D1 replicas? Set `dataone.nodeReplicate: false` after final
-      switch-over!
+- [ ] Existing node already syncing to D1? Set `dataone.nodeSynchronize: false` until after final switch-over!
+- [ ] Existing node already accepting D1 replicas? Set `dataone.nodeReplicate: false` after final switch-over!
 - [ ] Disable `livenessProbe` & `readinessProbe` temporarily (until DB and hashstore converted)
 
 > [!NOTE]
-> Metacat's DB upgrade only writes OLD datasets -- ones not starting `autogen` -- from DB to disk.
-> These should all be finished after the first upgrade - so provided subsequent `/var/metacat/`
-> rsyncs are only additive (don't `--delete` destination files not on source), then subsequent DB
-> upgrades after incremental rsyncs will be very fast.
-> [This tip](./Installation-Upgrade-Tips.md#see-how-many-old-datasets-exist-in-db-before-the-upgrade)
-> shows how to check the number of "old" datasets exist in DB, before the upgrade
+> Metacat's DB upgrade only writes OLD datasets -- ones not starting `autogen` -- from DB to disk. These should all be finished after the first upgrade - so provided subsequent `/var/metacat/` rsyncs are only additive (don't `--delete` destination files not on source), then subsequent DB upgrades after incremental rsyncs will be very fast. [This tip](./Installation-Upgrade-Tips.md#see-how-many-old-datasets-exist-in-db-before-the-upgrade) shows how to check the number of "old" datasets exist in DB, before the upgrade
 
 - [ ] set `storage.hashstore.disableConversion: true`, so the hashstore converter won't run yet
-- [ ] `helm install`, debug any startup and configuration issues, and allow database upgrade to
-      finish.
+- [ ] `helm install`, debug any startup and configuration issues, and allow database upgrade to finish.
 
-  > See [this tip](./Installation-Upgrade-Tips.md#monitor-database-upgrade-completion), for how
-  > to detect when database conversion finishes
+  > See [this tip](./Installation-Upgrade-Tips.md#monitor-database-upgrade-completion), for how to detect when database conversion finishes
 
 > [!TIP]
-> because hashstore conversion has not yet been done, it is expected for metacatUI to
-> display `Oops! It looks like there was a problem retrieving your search results.`, and for
-> `/metacat/d1/mn/v2/` api calls to display `Metacat has not been configured`
+> Because hashstore conversion has not yet been done, it is expected for metacatUI to display `Oops! It looks like there was a problem retrieving your search results.`, and for `/metacat/d1/mn/v2/` api calls to display `Metacat has not been configured`
 
-- [ ] Delete the `storage.hashstore.disableConversion:` setting, so the hashstore converter will
-      run, and do a `helm upgrade`. (How to detect when hashstore conversion finishes? See [This
-      tip](./Installation-Upgrade-Tips.md#monitor-hashstore-conversion-progress-and-completion))
+- [ ] Delete the `storage.hashstore.disableConversion:` setting, so the hashstore converter will run, and do a `helm upgrade`. (How to detect when hashstore conversion finishes? See [This tip](./Installation-Upgrade-Tips.md#monitor-hashstore-conversion-progress-and-completion))
 - [ ] When database upgrade and hashstore conversion have both finished, re-enable probes
 
 > [!NOTE]
-> Set the log level `INFO` before you start indexing, if you need to determine **exactly** when
-> indexing is complete (for benchmarking purposes).
-> To do so, `kc edit configmaps ${RELEASE_NAME}-indexer-configfiles` and restart all indexer pods.
+> Set the log level `INFO` before you start indexing, if you need to determine **exactly** when indexing is complete (for benchmarking purposes). To do so, `kc edit configmaps ${RELEASE_NAME}-indexer-configfiles` and restart all indexer pods.
 
 - [ ] Re-index all datasets (Did with 25 indexers for test.adc on dev; 50 on prod).
 
@@ -292,25 +238,22 @@ whether you are using the MetacatUI sub-chart or not:
   rm DELETEME_NODE_CERT.pem
   ```
 
-  > [See this tip](./Installation-Upgrade-Tips.md#monitor-indexing-progress) for monitoring indexing
-  > progress.
+  > [See this tip](./Installation-Upgrade-Tips.md#monitor-indexing-progress) for monitoring indexing progress.
 
 
 ## 6. `(MIGRATION ONLY)` FINAL SWITCH-OVER FROM LEGACY TO K8S
 
-> BEFORE STARTING: To reduce downtime during switch-over, flag any required values override
-> updates as @TODOs. E.g. If you've been using a temporary node name, hostname, and TLS setup,
-> flag these as `TODO`, for updates during switchover, with the new values in handy comments:
+> [!TIP]
+> BEFORE STARTING: To reduce downtime during switch-over, flag any required values override updates as @TODOs. E.g. If you've been using a temporary node name, hostname, and TLS setup, flag these as `TODO`, for updates during switchover, with the new values in handy comments:
 > - [ ] `global.metacatExternalBaseUrl`
 > - [ ] `global.d1ClientCnUrl`
-> - [ ] Any others that will need changing, e.g. `dataone.nodeSynchronize`, `dataone.nodeReplicate`
->       etc.
+> - [ ] Any others that will need changing, e.g. `dataone.nodeSynchronize`, `dataone.nodeReplicate` etc.
 >
 > [!NOTE]
-> If you need to accommodate hostname aliases, you'll need to update the `ingress.tls` section to
-> reflect the new hostname(s) - see [this tip](./Installation-Upgrade-Tips.md#where-to-find-existing-hostname-aliases).
+> If you need to accommodate hostname aliases, you'll need to update the `ingress.tls` section to reflect the new hostname(s) - see [this tip](./Installation-Upgrade-Tips.md#where-to-find-existing-hostname-aliases).
 
 ### = = = = = = = = = = = = = IN K8S CLUSTER: = = = = = = = = = = = = =
+
 - [ ] Make a backup of the `checksums` table so hashstore won't try to reconvert completed files:
 
      ```shell
@@ -332,8 +275,7 @@ whether you are using the MetacatUI sub-chart or not:
     sudo chown -R $USER:59997 data dataone documents logs
     ```
 
-- [ ] Move or delete the current PG data directory being used by k8s, so that the pg_dump will
-  automatically be ingested on next startup
+- [ ] Move or delete the current PG data directory being used by k8s, so that the pg_dump will automatically be ingested on next startup
 
     ```shell
     cd /mnt/ceph/repos/$REPO/postgresql
@@ -415,16 +357,11 @@ whether you are using the MetacatUI sub-chart or not:
 **When the `pgupgrade` initContainer has finished successfully...**
 
 > [!CAUTION]
-> - [ ] If the legacy host machine was running in a non-UTC timezone (e.g. Pacific time), we must
->       convert the timestamps in several tables to UTC by running the SQL queries defined in
->       [Installation-Upgrade-Tips.md](./Installation-Upgrade-Tips.md#convert-timestamps-to-utc).
+> - [ ] If the legacy host machine was running in a non-UTC timezone (e.g. Pacific time), we must convert the timestamps in several tables to UTC by running the SQL queries defined in [Installation-Upgrade-Tips.md](./Installation-Upgrade-Tips.md#convert-timestamps-to-utc).
 >
-> - A better strategy is to make the metacat pod run in the same timezone as the legacy instance,
->   until the entire migration is complete, and only then convert the timestamps to UTC using the
->   above queries.
+> - A better strategy is to make the metacat pod run in the same timezone as the legacy instance, until the entire migration is complete, and only then convert the timestamps to UTC using the above queries.
 
-- [ ] Restore the `checksums` table from the backup, so hashstore won't try to reconvert
-      completed files:
+- [ ] Restore the `checksums` table from the backup, so hashstore won't try to reconvert completed files:
 
     ```shell
     kubectl exec ${RELEASE_NAME}-0 -- bash -c \
@@ -433,8 +370,7 @@ whether you are using the MetacatUI sub-chart or not:
       && bash -c \$SCRIPT"
     ```
 
-- [ ] Delete the `storage.hashstore.disableConversion:` setting, so the hashstore converter will
-      run, and do a `helm upgrade`. Watch for completion:
+- [ ] Delete the `storage.hashstore.disableConversion:` setting, so the hashstore converter will run, and do a `helm upgrade`. Watch for completion:
 
     ```shell
     kubectl exec ${RELEASE_NAME}-postgresql-0 -- bash -c "psql -U metacat << EOF
@@ -446,9 +382,7 @@ whether you are using the MetacatUI sub-chart or not:
 
 **When hashstore conversion has finished successfully...**
 
-- [ ] Run `ANALYZE` to ensure PostgreSQL's stats are updated. This will ensure that `autovacuum`
-      will run automatically (`ANALYZE` is run by `autovacuum`, but `autovacuum` won't run unless
-      `ANALYZE` has been manually run after large updates):
+- [ ] Run `ANALYZE` to ensure PostgreSQL's stats are updated. This will ensure that `autovacuum` will run automatically (`ANALYZE` is run by `autovacuum`, but `autovacuum` won't run unless `ANALYZE` has been manually run after large updates):
 
     ```shell
     kubectl exec ${RELEASE_NAME}-postgresql-0 -- bash -c "psql -U metacat << EOF
@@ -456,8 +390,7 @@ whether you are using the MetacatUI sub-chart or not:
     EOF"
     ```
 
-- [ ] If an object went through the initial hashstore conversion, but then its sysmeta was
-      subsequently updated in legacy, we need to copy the new sysmeta from database to hashstore (because the "delta" conversion will have ignored that object). To do this, run:
+- [ ] If an object went through the initial hashstore conversion, but then its sysmeta was subsequently updated in legacy, we need to copy the new sysmeta from database to hashstore (because the "delta" conversion will have ignored that object). To do this, run:
     ```shell
     kubectl exec ${RELEASE_NAME}-0 -- bash -c \
       "SCRIPT=\$TC_HOME/webapps/metacat/WEB-INF/scripts/sql/hashstore-conversion/copy-sysmeta-to-hashstore.sh \
@@ -465,23 +398,17 @@ whether you are using the MetacatUI sub-chart or not:
       && bash -c \$SCRIPT"
     ```
 
-- [ ] Check values overrides and update any @TODOs to match live settings. See [BEFORE STARTING,
-  above](#6-migration-only-final-switch-over-from-legacy-to-k8s).
+- [ ] Check values overrides and update any @TODOs to match live settings. See [BEFORE STARTING, above](#6-migration-only-final-switch-over-from-legacy-to-k8s).
 - [ ] If applicable, re-enable `dataone.nodeSynchronize` and/or `dataone.nodeReplicate`
-- [ ] Point the deployment at the **PRODUCTION CN** (`https://cn.dataone.org/cn`, which is the
-      default) by deleting this entry:
+- [ ] Point the deployment at the **PRODUCTION CN** (`https://cn.dataone.org/cn`, which is the default) by deleting this entry:
 
     ```yaml
     ## TODO: DELETE ME WHEN READY TO GO LIVE! Will then default to production CN
     global:
       d1ClientCnUrl: https://cn-sandbox.test.dataone.org/cn
     ```
-- [ ] If you're not using the included MetacatUI sub-chart, make sure your external MetacatUI
-      instance is also pointing to the production CN (delete `global.d1ClientCnUrl` in its values
-      overrides, since it defaults to production). In either case, ensure the MetacatUI pod restarts
-- [ ] ONLY if you changed any `dataone.*` member node properties (`dataone.nodeId`,
-      `dataone.subject`, `dataone.nodeSynchronize`, `dataone.nodeReplicate`), push them to the CN by
-      setting:
+- [ ] If you're not using the included MetacatUI sub-chart, make sure your external MetacatUI instance is also pointing to the production CN (delete `global.d1ClientCnUrl` in its values overrides, since it defaults to production). In either case, ensure the MetacatUI pod restarts
+- [ ] ONLY if you changed any `dataone.*` member node properties (`dataone.nodeId`, `dataone.subject`, `dataone.nodeSynchronize`, `dataone.nodeReplicate`), push them to the CN by setting:
 
     ```yaml
     metacat:
@@ -507,15 +434,13 @@ whether you are using the MetacatUI sub-chart or not:
     # on your local machine:
     cd <metacat>/src/scripts/bash/k8s
     ./index-delta.sh <start-time>
+  
     # where <start-time> is the time an hour or more before the previous rsync,
     #     in the format: yyyy-mm-dd HH:MM:SS (with a space; e.g. 2024-11-01 14:01:00)
     ```
 
-- [ ] `git commit` a copy of the values overrides file used for this release, and update ChangeLog
-      with the commit `sha`.
+- [ ] `git commit` a copy of the values overrides file used for this release, and update ChangeLog with the commit `sha`.
 
 - [ ] Stop Tomcat, PostgreSQL and Apache on the legacy VM instance
-  - [ ] create an [issue here](https://github.nceas.ucsb.edu/NCEAS/Computing/issues) to retire the
-    VM ([template](https://github.nceas.ucsb.edu/NCEAS/Computing/blob/master/server_archiving.md#virtual-servers)
-  - [ ] Create an [issue here](https://github.nceas.ucsb.edu/NCEAS/Computing/issues) to Set Backups
-    for the Ceph Repo ([template](https://github.nceas.ucsb.edu/NCEAS/Computing/issues/364))
+  - [ ] create an [issue here](https://github.nceas.ucsb.edu/NCEAS/Computing/issues) to retire the VM ([template](https://github.nceas.ucsb.edu/NCEAS/Computing/blob/master/server_archiving.md#virtual-servers)
+  - [ ] Create an [issue here](https://github.nceas.ucsb.edu/NCEAS/Computing/issues) to Set Backups for the Ceph Repo ([template](https://github.nceas.ucsb.edu/NCEAS/Computing/issues/364))
