@@ -2,25 +2,33 @@
 
 > **= = = THIS IS A TEMPLATE - MAKE YOUR OWN COPY BEFORE CHECKING BOXES! = = =**
 
-> [!CAUTION]
-> This checklist has not yet been updated to reflect recent major PostgreSQL deployment changes (moving from Bitnami PostgreSQL sub-chart to CloudNative PG PostgreSQL Operator).
+## PURPOSE: This ordered checklist is for either:
+
+### Creation
+- Creating a new, empty, latest-version Metacat installation on a Kubernetes (K8s) cluster, or
+
+### Migration
+- Migrating and upgrading an existing, non-K8s Metacat v2.19.x instance to become a Metacat latest-version K8s installation.
 
 > [!IMPORTANT]
-> Before you begin...
-> 1. **PURPOSE:** This ordered checklist is for either:
->    * Creating a new, empty Metacat v3.2.0+ installation on a Kubernetes (K8s) cluster, or
->    * Migrating and upgrading an existing, non-K8s Metacat v2.19.x instance to become a Metacat
->      v3.2.0+ K8s installation.
->    * ***Very Important: Before starting a migration, you **must** have a fully-functioning
->      installation of Metacat version 2.19, running with PostgreSQL version 14. Migrating from
->      other versions of Metacat and/or PostgreSQL is not supported.***
->
-> 2. Sections marked `(FRESH INSTALL ONLY)` are needed ONLY for **new, empty installations.**
-> 3. Sections marked `(MIGRATION ONLY)` are needed ONLY for a **migration from an existing Metacat 2.19.x instance.**
-> 4. Unmarked sections are required for both types of installation
-> 5. For more in-depth explanation and details of configuration steps, see the [Metacat Helm README](https://github.com/NCEAS/metacat/tree/main/helm#readme).
-> 6. Some references below are specific to NCEAS infrastructure (e.g. ssh username/hostname; use of CephFS storage, etc); adjust as needed for your own installation.
-> 7. Assumptions: you have a working knowledge of Kubernetes deployment, including working with yaml files, helm and kubectl commands; your kubectl context is set for the target deployment location; you are able to ssh from the legacy host to the host where the target filesystem is mounted (in our case, cephfs).
+> * Before starting a migration, you **must** have a fully-functioning installation of Metacat version 2.19, running with PostgreSQL version 14. Migrating from prior versions of Metacat and/or PostgreSQL is not supported.***
+> * The migration procedure, below, has not yet been adapted to facilitate migration directly from an external database to a CloudNative PG PostgreSQL cluster. Until this is done, it is recommended first to migrate your legacy installation over to helm chart 2.1.3 (with Bitnami postgres sub-chart) and get it working there, as detailed below, before then upgrading to chart 3.0.0 or above.
+
+## Before You Begin
+
+For more in-depth explanation and details of configuration steps, see the [Metacat Helm README](https://github.com/NCEAS/metacat/tree/main/helm#readme).
+
+Some references below are specific to NCEAS infrastructure (e.g. ssh username/hostname; use of CephFS storage, etc); adjust as needed for your own installation.
+
+### Assumptions
+
+You have a working knowledge of Kubernetes deployment, including working with yaml files, helm and kubectl commands; your kubectl context is set for the target deployment location; you are able to ssh from the legacy host to the host where the target filesystem is mounted (in our case, cephfs).
+
+> [!NOTE]
+> - Sections marked `(FRESH INSTALL ONLY)` are needed ONLY for **new, empty installations.**
+> - Sections marked `(MIGRATION ONLY)` are needed ONLY for a **migration from an existing Metacat 2.19.x instance.**
+> - Unmarked sections are required for BOTH types of installation
+
 
 ## 1. `(MIGRATION ONLY)` Copy Data and Set Ownership & Permissions
 
@@ -86,8 +94,7 @@
   sudo chown -R 59997:59997 data dataone documents logs
   ```
 
-- [ ] ...then ensure all metacat `data` and `documents` files have `g+rw` permissions, otherwise,
-      hashstore converter can't create hard links:
+- [ ] ...then ensure all metacat `data` and `documents` files have `g+rw` permissions, otherwise, hashstore converter can't create hard links:
 
     ```shell
     sudo chmod -R g+rw data documents dataone
@@ -95,8 +102,7 @@
 
 ## 2. Create Secrets
 
-- [ ] Make a copy of the [`metacat/helm/admin/secrets.yaml`](secret--metacat.yaml) file and rename to
-      `${RELEASE_NAME}-metacat-secrets.yaml`
+- [ ] Make a copy of the [`metacat/helm/admin/secret--metacat.yaml`](secret--metacat.yaml) file and rename to `${RELEASE_NAME}-metacat-secrets.yaml`
 - [ ] edit to replace `${RELEASE_NAME}` with the correct release name:
 - [ ] edit to add the correct passwords for this release (some may be found in legacy
       `metacat.properties`; e.g. postgres, DOI, etc.)
@@ -108,6 +114,7 @@
 
 - [ ] Save a **GPG-ENCRYPTED** copy to secure storage.
 - [ ] **Delete** your local unencrypted copy.
+- [ ] Repeat these steps with [metacat/helm/admin/secret--cloudnative-pg.yaml](secret--cloudnative-pg.yaml) to create the secret that will be used by the CNPG cluster - see the instructions in the file.
 
 ## 3. Create Persistent Volumes
 
@@ -115,10 +122,9 @@
 
 - [ ] Get the current volume sizes from the legacy installation, to help with sizing the PVs - [example](./Installation-Upgrade-Tips.md#get-sizing-information-for-pvs)
 - [ ] Create PV for metacat data directory - [example](./pv--releasename-metacat-cephfs.yaml)
-- [ ] Create PV for PostgreSQL data directory - [example](./pv--releasename-postgres-cephfs.yaml)
-- [ ] Create PVC for PostgreSQL - [example](./pvc--releasename-postgres.yaml)
 - [ ] `Only if using a custom theme:` Create a PV for the MetacatUI theme directory
       [example](./pv--releasename-metacatui-theme-cephfs.yaml)
+- [ ] `(MIGRATION ONLY):` Create a PV and a PVC for PostgreSQL data directory, to be used by the Bitnami sub-chart. Alternatively, see ["Importing Data" in the DataONE CNPG README](https://github.com/DataONEorg/dataone-cnpg/blob/main/README.md#importing-data).
 
 ## 4. Values: Create a new values override file
 
@@ -137,7 +143,9 @@
 - [ ] `(MIGRATION ONLY)` Do a `diff` between the v2.19 properties file at `$TC_HOME/webapps/metacat/WEB-INF/metacat.properties` on the legacy host, and the newest `metacat.properties` from GitHub for the new version being installed, to see if any other custom `metacat:` settings need to be transferred (e.g. `auth.allowedSubmitters:`, `guid.doi.username:`, `guid.doi.uritemplate.metadata:`, `guid.doi.doishoulder.1:`, etc.)
 
 ### MetacatUI:
+
 Carefully review all Metacat's `global.metacatUi*` values and update as needed, depending upon whether you are using the MetacatUI sub-chart or not:
+
 - **For separately-deployed MetacatUI:**
   - [ ] in the Metacat values overrides, set `global.includeMetacatUi: false` and override the `global.metacatUiIngressBackend` settings subtree, and `global.metacatUiWebRoot`, if needed. (`global.metacatUiThemeName` is not needed in Metacat values, for this type of deployment.)
   - [ ] in the values overrides for the separate MetacatUI chart:
@@ -156,8 +164,9 @@ Carefully review all Metacat's `global.metacatUi*` values and update as needed, 
       ```yaml
       customTheme:
         enabled: true
-        claimName: metacatsfwmd-metacatui-customtheme
-        subPath: metacatui-themes/src/cerp/js/themes/cerp
+        autoUpdate: true
+        claimName: metacatsdr-metacatui-customtheme
+        subPath: "metacatui-themes/src/sdr/js/themes/sdr"
       ```
 
   - [ ] Ensure metacatui has read access
@@ -180,6 +189,14 @@ Carefully review all Metacat's `global.metacatUi*` values and update as needed, 
 
 
 ## 5F. `(FRESH INSTALL ONLY)` First Install
+
+- [ ] Install an empty database (Your CNPG Secret should already be in place)
+
+  ```shell
+  $ helm install <releasename> oci://dataoneorg.github.io/dataone-cnpg --version <version> \
+          -f ./examples/cnpg-cluster-empty-example.yaml  # or replace with your own file
+  ```
+  Don't `helm uninstall`, or the PVCs will be deleted and your data will become orphaned!
 
 - [ ] `helm install`, and debug any startup and configuration issues.
 - [ ] Create a DNS entry to point to your k8s ingress. Get the current IP address and hostname with:
@@ -212,6 +229,7 @@ Carefully review all Metacat's `global.metacatUi*` values and update as needed, 
 > Metacat's DB upgrade only writes OLD datasets -- ones not starting `autogen` -- from DB to disk. These should all be finished after the first upgrade - so provided subsequent `/var/metacat/` rsyncs are only additive (don't `--delete` destination files not on source), then subsequent DB upgrades after incremental rsyncs will be very fast. [This tip](./Installation-Upgrade-Tips.md#see-how-many-old-datasets-exist-in-db-before-the-upgrade) shows how to check the number of "old" datasets exist in DB, before the upgrade
 
 - [ ] set `storage.hashstore.disableConversion: true`, so the hashstore converter won't run yet
+- [ ] **If using chart version 3.0.0 or above**, ensure your CNPG Secret is already in place, and see ["Importing Data" in the DataONE CNPG README](https://github.com/DataONEorg/dataone-cnpg/blob/main/README.md#importing-data).
 - [ ] `helm install`, debug any startup and configuration issues, and allow database upgrade to finish.
 
   > See [this tip](./Installation-Upgrade-Tips.md#monitor-database-upgrade-completion), for how to detect when database conversion finishes
@@ -249,8 +267,7 @@ Carefully review all Metacat's `global.metacatUi*` values and update as needed, 
 > - [ ] `global.d1ClientCnUrl`
 > - [ ] Any others that will need changing, e.g. `dataone.nodeSynchronize`, `dataone.nodeReplicate` etc.
 >
-> [!NOTE]
-> If you need to accommodate hostname aliases, you'll need to update the `ingress.tls` section to reflect the new hostname(s) - see [this tip](./Installation-Upgrade-Tips.md#where-to-find-existing-hostname-aliases).
+> NOTE: if you need to accommodate hostname aliases, you'll need to update the `ingress.tls` section to reflect the new hostname(s) - see [this tip](./Installation-Upgrade-Tips.md#where-to-find-existing-hostname-aliases).
 
 ### = = = = = = = = = = = = = IN K8S CLUSTER: = = = = = = = = = = = = =
 
@@ -264,18 +281,18 @@ Carefully review all Metacat's `global.metacatUi*` values and update as needed, 
      ```
 
 - [ ] `helm uninstall` the running installation. (keep all secrets, PVCs etc!)
-- [ ] temporarily chown metacat and pg_dump data on cephfs (since your $USER will be writing during
-        `rsync`)
+- [ ] temporarily chown metacat and pg_dump data on cephfs (since your $USER will be writing during `rsync`)
 
     ```shell
-    sudo chown -R $USER:59996 /mnt/ceph/repos/$REPO/postgresql/14-pg_dump
-
     cd /mnt/ceph/repos/$REPO/metacat
 
     sudo chown -R $USER:59997 data dataone documents logs
+
+    # If using chart 2.1.3 with Bitnami postgres sub-chart:
+    sudo chown -R $USER:59996 /mnt/ceph/repos/$REPO/postgresql/14-pg_dump
     ```
 
-- [ ] Move or delete the current PG data directory being used by k8s, so that the pg_dump will automatically be ingested on next startup
+- [ ] (If using chart 2.1.3 with Bitnami postgres sub-chart) Move or delete the current PG data directory being used by k8s, so that the pg_dump will automatically be ingested on next startup
 
     ```shell
     cd /mnt/ceph/repos/$REPO/postgresql
@@ -287,7 +304,7 @@ Carefully review all Metacat's `global.metacatUi*` values and update as needed, 
 
 ### = = = = = = = = = = = = = ON LEGACY HOST = = = = = = = = = = = = =
 
-**ENSURE NOBODY IS IN THE MIDDLE OF A BIG UPLOAD!** (Can schedule off-hours, but how to monitor?)
+**ENSURE NOBODY IS IN THE MIDDLE OF A BIG UPLOAD!** (Schedule off-hours)
 
 - [ ] Edit `/var/lib/tomcat9/webapps/metacat/WEB-INF/metacat.properties` to change to:
 
@@ -307,7 +324,7 @@ Carefully review all Metacat's `global.metacatUi*` values and update as needed, 
       <property key="read_only_mode">true</property>
      ```
 
-- [ ] `pg_dump` on legacy host
+- [ ] (If using chart 2.1.3 with Bitnami postgres sub-chart) `pg_dump` on legacy host
 
     ```shell
     JOBS=20 # adjust for available cpu cores
@@ -334,6 +351,7 @@ Carefully review all Metacat's `global.metacatUi*` values and update as needed, 
      sudo rsync -rltDHX -e "ssh -i $HOME/.ssh/id_ed25519" --stats --human-readable \
                /var/metacat/logs/         $USER@$TARGET:/mnt/ceph/repos/$REPO/metacat/logs/
 
+     # If using chart 2.1.3 with Bitnami postgres sub-chart
      sudo rsync -rltDHX -e "ssh -i $HOME/.ssh/id_ed25519" --stats --human-readable \
          /var/lib/postgresql/14-pg_dump/  $USER@$TARGET:/mnt/ceph/repos/$REPO/postgresql/14-pg_dump/
      ```
@@ -343,6 +361,7 @@ Carefully review all Metacat's `global.metacatUi*` values and update as needed, 
 - [ ] fix ownership and permissions of newly-copied files:
 
      ```shell
+     # If using chart 2.1.3 with Bitnami postgres sub-chart
      sudo chown -R 59996:59996 /mnt/ceph/repos/$REPO/postgresql
 
      cd /mnt/ceph/repos/$REPO/metacat
@@ -352,7 +371,7 @@ Carefully review all Metacat's `global.metacatUi*` values and update as needed, 
      sudo chmod -R g+rw data documents dataone
      ```
 
-- [ ] `helm-install`, and ensure the `pgupgrade` initContainer finished successfully.
+- [ ] `helm-install`, and ensure the `pgupgrade` initContainer finished successfully (If using chart 2.1.3 with Bitnami postgres sub-chart).
 
 **When the `pgupgrade` initContainer has finished successfully...**
 
@@ -434,7 +453,7 @@ Carefully review all Metacat's `global.metacatUi*` values and update as needed, 
     # on your local machine:
     cd <metacat>/src/scripts/bash/k8s
     ./index-delta.sh <start-time>
-  
+
     # where <start-time> is the time an hour or more before the previous rsync,
     #     in the format: yyyy-mm-dd HH:MM:SS (with a space; e.g. 2024-11-01 14:01:00)
     ```
