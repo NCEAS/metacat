@@ -154,12 +154,13 @@ metacat:
   auth.administrators: ""
 
   ## @param metacat.database.connectionURI postgres database URI (or blank if using CloudNative PG)
+  ## NOTE: If using a CloudNative PostgreSQL cluster, leave 'database.connectionURI' blank, and
+  ## ensure that 'database.serviceName' is set instead (i.e. this value overrides
+  ## 'database.serviceName')
   ##
   ## Format:    jdbc:postgresql://<postgres-hostname>/<database-name>
   ##
-  ## NOTE: If using the CloudNative PG cluster that is deployed as part of the helm chart, leave
-  ## database.connectionURI blank, and it will be auto-populated. Otherwise, ensure <database-name>
-  ## is set correctly, and use the following values for <postgres-hostname>:
+  ## ensure <database-name> is set correctly, and use the following values for <postgres-hostname>:
   ##  *  The fully qualified domain name, for an existing postgresql instance hosted outside the
   ##     current k8s cluster
   ##  *  `<servicename>.<namespace>.svc.cluster.local` for an existing postgresql instance within
