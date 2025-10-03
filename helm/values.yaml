@@ -154,12 +154,13 @@ metacat:
   auth.administrators: ""
 
   ## @param metacat.database.connectionURI postgres database URI (or blank if using CloudNative PG)
+  ## NOTE: If using a CloudNative PostgreSQL cluster, leave 'database.connectionURI' blank, and
+  ## ensure that 'database.serviceName' is set instead (i.e. this value overrides
+  ## 'database.serviceName')
   ##
   ## Format:    jdbc:postgresql://<postgres-hostname>/<database-name>
   ##
-  ## NOTE: If using the CloudNative PG cluster that is deployed as part of the helm chart, leave
-  ## database.connectionURI blank, and it will be auto-populated. Otherwise, ensure <database-name>
-  ## is set correctly, and use the following values for <postgres-hostname>:
+  ## ensure <database-name> is set correctly, and use the following values for <postgres-hostname>:
   ##  *  The fully qualified domain name, for an existing postgresql instance hosted outside the
   ##     current k8s cluster
   ##  *  `<servicename>.<namespace>.svc.cluster.local` for an existing postgresql instance within
@@ -968,7 +969,7 @@ readinessProbe:
 ## cluster).
 ##
 database:
-  ## @param database.existingSecret REQUIRED Name of Secret holding database username & passwd
+  ## @param database.existingSecret REQUIRED Name of Secret holding the database username & password
   ## IMPORTANT:
   ##    - the secret must be of type 'kubernetes.io/basic-auth'
   ##    - the Secret must contain the exact key names: 'username' and 'password'
