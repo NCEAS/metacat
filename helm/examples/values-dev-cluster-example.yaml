@@ -5,9 +5,8 @@
 ##  helm install myrelease -n mynamespace ./helm -f ./helm/examples/values-dev-cluster-example.yaml
 ##
 ## or from pre-packaged chart:
-##  helm install myrelease -n mynamespace oci://ghcr.io/nceas/charts/metacat --version 1.2.0 \
-##       -f ./helm/examples/values-dev-cluster-example.yaml \
-##       --debug --render-subchart-notes
+##  helm install myrelease -n mynamespace -f ./helm/examples/values-dev-cluster-example.yaml \
+##       --debug --render-subchart-notes oci://ghcr.io/nceas/charts/metacat --version <myversion#>
 ##
 ## see values.yaml for full documentation on the following parameters
 ##
@@ -19,7 +18,7 @@ debug: &debug true
 global:
   metacatExternalBaseUrl: "https://metacat-dev.test.dataone.org/"
   d1ClientCnUrl: "https://cn-sandbox.test.dataone.org/cn"
-  storageClass: &storageClassName csi-cephfs-sc
+  storageClass: csi-cephfs-sc
   ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
   ## Use your own release name instead of metacatbrooke
   passwordsSecret: &passwordSecretName metacatbrooke-metacat-secrets
@@ -33,7 +32,6 @@ global:
       name: mcuibrooke-metacatui    # Use your own service name
 
 metacat:
-  server.name: metacat-dev.test.dataone.org
   auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
 
 #  storage.hashstore.disableConversion: true
@@ -53,7 +51,6 @@ metacat:
   dataone.replicationpolicy.default.numreplicas: "1"
 
 persistence:
-  storageClass: *storageClassName
   size: 100Gi
   accessModes:
     - ReadWriteMany
@@ -68,62 +65,49 @@ image:
 resources:
   requests:
     cpu: 1
-    memory: 4Gi
+    memory: 1Gi
   limits:
     cpu: 2
-    memory: 8Gi
+    memory: 4Gi
 
 tomcat:
-  heapMemory:
-    min: 1G
-    max: 2G
+  ## @param tomcat.jmxEnabled Enable JMX for Tomcat, to inspect JVM usage of CPU, memory, etc.
+  ## When JMX is enabled by setting this to 'true', you can view the JMX metrics using a JMX client
+  ## such as VisualVM or JConsole, connected via port-forwarding to the port set in tomcat.jmxPort
+  ##
+  jmxEnabled: true
 
 ingress:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
   tls:
-    - hosts: [] # defaults to metacat.server.name
+    - hosts: [] # defaults to global.metacatExternalBaseUrl
       secretName: ingress-nginx-tls-cert
 
-postgresql:
-  upgrader:
-    persistence:
-     existingClaim: data-metacatbrooke-postgresql-0
-
-  primary:
-    resources:
-      requests:
-        cpu: 1
-        memory: 1Gi
-      limits:
-        cpu: 2
-        memory: 4Gi
-    extendedConfiguration: |
-      max_connections = 250
-      max_wal_size=16384
-      min_wal_size=4096
-      shared_buffers = 1280MB
-
-    persistence:
-      size: 10Gi
-      selector:
-        matchLabels:
-          ## Use your own release name instead of metacatbrooke
-          metacatVolumeName: cephfs-metacatbrooke-metacat-postgresdata
-
-  auth:
-    existingSecret: *passwordSecretName
+# Pre-existing secret containing original metacat postgresql credentials
+database:
+  existingSecret: "{{ .Release.Name }}-metacat-cnpg"
+  serviceName: mcdb-cnpg-rw
 
 dataone-indexer:
   autoscaling:
     minReplicas: 1
     targetCPUUtilizationPercentage: 80
 
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1.0
+      memory: 4Gi
+
   image:
     pullPolicy: Always
     debug: *debug
 
   idxworker:
+    jmxEnabled: true
     # this actually puts container in debug loop mode - no indexer running
     debug: false
 
@@ -139,15 +123,14 @@ dataone-indexer:
         memory: 3072Mi
 
   solr:
-    javaMem: "-Xms512m -Xmx2g"
-    #    resourcesPreset: "large"  # (cpu: 1.0/1.5; mem: 2048Mi/3072Mi)
+    javaMem: "-XX:MaxRAMPercentage=75.0"
     resources:
       requests:
-        cpu: 1.0
-        memory: 2Gi
+        cpu: 500m
+        memory: 1Gi
       limits:
         cpu: 1.5
-        memory: 8Gi
+        memory: 4Gi
     extraVolumes:
       - name: solr-config
         configMap:

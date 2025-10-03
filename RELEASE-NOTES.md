@@ -4,6 +4,34 @@
 > If you are upgrading from a helm chart version earlier than 2.1.0, please see the [Upgrade
 > Notes](#chart-upgrade-notes) below. Failure to do so may result in loss of data!
 
+
+## Release Notes for helm chart 3.0.0
+
+**Release date: 2025-10-02**
+
+> [!NOTE]
+> The Metacat chart now assumes you will provide your own PostgreSQL instance. It no longer includes a PostgreSQL sub-chart
+
+We are moving away from using Bitnami helm charts, since Bitnami has stopped offering free, versioned container images, thus making it impractical to continue using their charts for production dependencies.
+
+If you wish to use the CloudNative PG Operator to deploy your PostgreSQL cluster, follow the instructions in [Appendix 5 of the helm/README.md](./helm/README.md#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg)
+
+(The dataone-indexer sub-chart version (1.3.3) is unchanged from the previous Metacat Helm chart release)
+
+### Other Enhancements:
+- changed default:
+  - `livenessProbe.enabled` changed to false, since Metacat typically can have a lot of latency when overloaded, but recovers elegantly (livenessProbe was causing needless container restarts)
+- added:
+  - `startupProbe`
+  - `database` section for PostgreSQL connection details
+  - Several JMX-related settings, to enable JMX monitoring of Metacat. See the `tomcat` section of `values.yaml` for details.
+  - `extraCatalinaOpts` - to allow additional Tomcat options to be set. Default: `-XX:MaxRAMPercentage=75` (to limit memory usage to 75% of container memory limit)
+- removed:
+  - `global.passwordsSecret`- now used only in one place - set it in `dataone-indexer.idxworker.existingPasswordSecret`
+  - `metacat.server.name` - now automatically populated
+  - `postgresql` section - no longer using PostgreSQL sub-chart
+
+
 ## Release Notes for helm chart 2.1.3
 
 **Release date: 2025-07-29**

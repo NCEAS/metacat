@@ -146,7 +146,7 @@ set postgresql HostName
 {{- define "metacat.postgresql.hostname" -}}
 {{- $dbUri := (index .Values.metacat "database.connectionURI") }}
 {{- if not $dbUri }}
-  {{- .Release.Name }}-postgresql-hl
+  {{- tpl .Values.database.serviceName . }}
 {{- else }}
   {{- regexFind "://[^/]+" $dbUri | trimPrefix "://" }}
 {{- end }}
@@ -164,3 +164,20 @@ Usage:
         {{- tpl (.value | toYaml) .context }}
     {{- end }}
 {{- end -}}
+
+{{/*
+Parse hostname from .Values.global.metacatExternalBaseUrl
+*/}}
+{{- define "metacat.server.name" -}}
+{{- $url := .Values.global.metacatExternalBaseUrl -}}
+{{- if $url -}}
+    {{- $parsed := regexFind "://([^/:]+)" $url -}}
+    {{- if $parsed -}}
+      {{- regexReplaceAll "/$" ( trimPrefix "://" $parsed ) "" }}
+    {{- else -}}
+      {{- "ERROR_.Values.global.metacatExternalBaseUrl_WRONG_FORMAT" }}
+    {{- end -}}
+{{- else -}}
+    {{- "ERROR_.Values.global.metacatExternalBaseUrl_NOT_FOUND" }}
+{{- end -}}
+{{- end }}
