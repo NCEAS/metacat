@@ -9,7 +9,7 @@
 
 **Release date: 2025-10-02**
 
-> [NOTE]
+> [!NOTE]
 > The Metacat chart now assumes you will provide your own PostgreSQL instance. It no longer includes a PostgreSQL sub-chart
 
 We are moving away from using Bitnami helm charts, since Bitnami has stopped offering free, versioned container images, thus making it impractical to continue using their charts for production dependencies.
