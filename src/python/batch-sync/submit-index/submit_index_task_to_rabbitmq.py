@@ -12,7 +12,7 @@ SYSMETA_CHANGE_ONLY = False
 # Path to the output file for logging successfully processed PIDs
 RESULTS_FILE_PATH = "/var/metacat/.metacat/reindex-script/sysmeta-processed.txt"
 # RabbitMQ URL
-RABBITMQ_URL = "localhost"
+RABBITMQ_HOST = "localhost"
 # RabbitMQ port number
 RABBITMQ_PORT_NUMBER = 5672
 # The time gap between two submission in seconds
@@ -35,11 +35,14 @@ EXCHANGE_NAME = "dataone-index"
 # Lock for thread-safe writing to the results file
 results_file_lock = threading.Lock()
 
-def get_rabbitmq_channel(username, password):
+def get_rabbitmq_channel(username, password, hostname):
     try:
         credentials = pika.PlainCredentials(username, password)
+        rmq_host = hostname if hostname else RABBITMQ_HOST
+        print(f"Trying to create a RabbitMQ channel at: {rmq_host}:{RABBITMQ_PORT_NUMBER} with "
+              f"username: {username} and password: {'*' * len(password)}")
         connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host=RABBITMQ_URL, port=RABBITMQ_PORT_NUMBER,
+            pika.ConnectionParameters(host=rmq_host, port=RABBITMQ_PORT_NUMBER,
                                       credentials=credentials))
         channel = connection.channel()
         channel.queue_declare(queue=QUEUE_NAME, durable=True, arguments={'x-max-priority': 10})
@@ -105,14 +108,16 @@ def main():
     Main function to read PIDs from a file and process them using a thread pool.
     """
     arguments = sys.argv[1:]
-    if len(arguments) == 2:
-        print("Arguments:", arguments)
-        rabbitmq_username = arguments[0]
-        rabbitmq_password = arguments[1]
+    if len(arguments) >= 2:
+        rabbitmq_username, rabbitmq_password, *rest = arguments
+        rabbitmq_hostname = rest[0] if rest else RABBITMQ_HOST  # optional hostname
         print(f"RabbitMQ username: {rabbitmq_username}")
+        print(f"RabbitMQ hostname: {rabbitmq_hostname}")
     else:
-        print("Usage: python3 submit_index_task_to_rabbitmq.py rabbitmq_username rabbitmq_password")
+        print("Usage: python3 submit_index_task_to_rabbitmq.py rabbitmq_username "
+              "rabbitmq_password [rabbitmq_hostname optional; default localhost]")
         sys.exit()
+
     # Ensure the directory for results_file_path exists
     try:
         results_dir = os.path.dirname(RESULTS_FILE_PATH)
@@ -140,7 +145,7 @@ def main():
 
     # Use a session object for connection pooling and default headers if needed
     # with requests.Session() as session:
-    with get_rabbitmq_channel(rabbitmq_username, rabbitmq_password) as channel:
+    with get_rabbitmq_channel(rabbitmq_username, rabbitmq_password, rabbitmq_hostname) as channel:
         processed_count = 0
         failed_count = 0
         total_pids = len(all_pids)
