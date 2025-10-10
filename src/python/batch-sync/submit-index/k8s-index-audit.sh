@@ -43,47 +43,18 @@ FINDER_SCRIPT="find_objects_to_reindex.py"
 MOUNT_PATH="/scripts"   # configMap mount
 PV_MOUNT="/var/metacat" # PVC mount used by scripts
 RMQ_SECRET_NAME="${RMQ_SECRET_NAME:-}"
-RMQ_SECRET_MOUNT="/etc/rmq-secret"
 RMQ_SECRET_KEY="rabbitmq-password"
 
 # CMD_ARGS from first arg or environment
 CMD_ARGS="${1:-${CMD_ARGS:-}}"
 # pretty-print CMD_ARGS
 cmd_args_pretty() {
-#  echo "$CMD_ARGS" | sed -E 's/--/\n  --/g' | sed '/^\s*$/d' | sed 's/^\s+//'
-#echo "$CMD_ARGS" \
-#  | sed -E 's/--/\n  --/g' \
-#  | sed '/^[[:space:]]*$/d' \
-#  | sed -E 's/^[[:space:]]+//' \
-#  | sed -E $'s/^(  --[^[:space:]]+)[[:space:]]+/\1\t/'
-
-#echo "$CMD_ARGS" \
-#  | sed -E 's/--/\n  --/g' \
-#  | sed '/^\s*$/d' \
-#  | sed -E $'s/^(  --[^[:space:]]+)[[:space:]]+/\1\t\t/'
 
 echo "$CMD_ARGS" \
   | sed -E 's/--/\n  --/g' \
   | sed '/^\s*$/d' \
   | sed -E $'s/^( *--[^ ]+)[ ]+([^ ].*)$/\\1\t\\2/'
-
-#  | sed -E $'s/^(\s*--[^\t ]+)[ ]+([^\t ].*)$/\\1\t\t\\2/'
-
 }
-#ARGS_PER_LINE=$(
-#set -f                  # disable pathname expansion
-#set -- $CMD_ARGS        # split into positional params
-#while (( $# )); do
-#  if (( $# < 2 )) || [[ -n $2 && $2 == --* ]]; then
-#    printf '  %s\n' "$1"
-#    shift
-#  else
-#    printf '  %s\t\t%s\n' "$1" "$2"
-#    shift 2
-#  fi
-#done
-#set +f                  # re-enable pathname expansion
-#)
 
 # extract interval in minutes from CMD_ARGS (expects --interval N)
 extract_interval() {
@@ -122,7 +93,7 @@ INTERVAL_MINUTES="$(extract_interval)"
 SCHEDULE="$(interval_to_cron "$INTERVAL_MINUTES")"
 echo
 echo "CMD_ARGS:"
-echo "$(cmd_args_pretty)"
+cmd_args_pretty
 #echo "                          $ARGS_PER_LINE"
 echo "Computed cron schedule:   $SCHEDULE"
 echo
@@ -132,7 +103,7 @@ echo
 echo "ConfigMap to create:      $CONFIGMAP_NAME"
 echo "CronJob to create:        $CRONJOB_NAME"
 echo
-read -p "Proceed to create/update resources? [y/N] " yn
+read -rp "Proceed to create/update resources? [y/N] " yn
 case "$yn" in
   [Yy]*) ;;
   *) echo "Aborted."; exit 1;;
