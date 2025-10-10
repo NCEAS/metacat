@@ -13,10 +13,6 @@ import requests
 
 # --- Configurable parameters ---
 INTERVAL_MINUTES = 15
-METACAT_HOST = "metacatbrooke-0"
-SOLR_HOST = "metacatbrooke-solr"
-METACAT_URL_TEMPLATE = f"https://{METACAT_HOST}/metacat/d1/mn/v2/object?fromDate={{date}}"
-SOLR_URL_TEMPLATE = (f"http://{SOLR_HOST}:8983/solr/metacat-index/select?q=dateModified:[{{date}}Z%20TO%20NOW]&fl=id,dateModified&rows=1000000&wt=json")
 RESULTS_FILE_PATH = "/var/metacat/.metacat/reindex-script/pids_to_process.txt"
 REINDEX_SCRIPT_PATH = "submit_index_task_to_rabbitmq.py"
 
@@ -82,7 +78,7 @@ def fetch_db_results(from_date, retries=3, timeout=10):
         if db_results:
             return db_results
 
-        # empty result -- maybe transient; retry a couple times
+        # empty result -- maybe transient; retry a couple of times
         if attempt < retries:
             time.sleep(1)
             continue
