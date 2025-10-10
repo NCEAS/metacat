@@ -1,9 +1,10 @@
 ## Goal
+
 These Python scripts are for auditing and submitting indexing tasks
 
-## submit_index_task_to_rabbitmq.py
+## 1. submit_index_task_to_rabbitmq.py
 
-Reads a list object PIDs from a file, and publishes them to a RabbitMQ service
+Reads a list of object PIDs from a file, and publishes them to a RabbitMQ service
 
 ### Dependencies
 - Python 3.10.0
@@ -35,21 +36,43 @@ To run the script against a rabbitmq pod in a kubernetes cluster, first ensure y
 ```
 ...and follow the instructions
 
-## find_objects_to_reindex.py
+## 2. find_objects_to_reindex.py
 
 Compares systemmetadata and solr entries that were modified within the last N minutes, and saves a list of object PIDs that need to be reindexed. Optionally calls `submit_index_task_to_rabbitmq.py` to submit the tasks to RabbitMQ.
 
-### Running
+### Option 1: run manually (either locally, using port forwarding, or on K8s, in an existing pod):
 
-Can run manually (either in an existing pod, or locally using port forwarding):
 ```shell
 $ python3 find_objects_to_reindex.py \
-    --metacat-host metacat-dev.test.dataone.org \
-    --solr-host localhost \
-    --debug  --interval 10
-    # optionally, add:
-    --submit \
-    --rmq-user metacat-rmq-guest --rmq-pwd mysecret123 --rmq-host localhost
+    --metacat-host <your_ssl_metacat_host> \
+    --solr-host <your_non_ssl_solr_host> \
+    --interval 10 \
+    --debug
 ```
 
-Can install as a cronjob in a kubernetes cluster using the provided `k8s-index-audit.sh` file.
+If you want the script to submit the tasks to RabbitMQ, set the `RMQ_PASSWORD` environment variable, add the `--submit` flag, and provide the RabbitMQ username and host:
+
+```shell
+export RMQ_PASSWORD="<your-rmq-password>"
+# then add the following flags to the command above:
+python3 [...etc...] --rmq-user <your_rmq_user> --rmq-host <your_non_ssl_rmq_host> --submit
+```
+
+### Option 2: install as a Kubernetes `Cronjob` in using the provided `k8s-index-audit.sh` file:
+
+```shell
+# Set the following env variables:
+# PVC_NAME is typically the metacat pod's "/var/metacat" PVC.
+# Used to store logs, state, etc.
+export PVC_NAME="your-pvc"
+
+# RMQ_SECRET_NAME is usually in the existing metacat Secret
+export RMQ_SECRET_NAME="your-rmq-secret"
+
+# CMD_ARGS - see above for available command-line args to pass
+# to the find_objects_to_reindex.py script
+export CMD_ARGS="--metacat-host arcticdata.io --solr-host metacatarctic-solr --interval 10 --debug"
+
+# run the script to create the cronjob
+./k8s-index-audit.sh
+```
