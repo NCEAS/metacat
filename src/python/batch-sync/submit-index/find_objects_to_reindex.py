@@ -13,6 +13,7 @@ import requests
 
 # --- Configurable parameters ---
 INTERVAL_MINUTES = 15
+ERROR_UNSET = "ERROR_NOT_SET"
 RESULTS_FILE_PATH = "/var/metacat/.metacat/reindex-script/pids_to_process.txt"
 REINDEX_SCRIPT_PATH = "submit_index_task_to_rabbitmq.py"
 
@@ -78,7 +79,7 @@ def fetch_db_results(from_date, retries=3, timeout=10):
         if db_results:
             return db_results
 
-        # empty result -- maybe transient; retry a couple of times
+        # empty result -- maybe transient; retry a couple times
         if attempt < retries:
             time.sleep(1)
             continue
@@ -210,7 +211,7 @@ def main():
     5. Optionally call the RabbitMQ submission script.
     6. Archive the identifiers file by renaming it with a timestamp.
     """
-    global METACAT_HOST, SOLR_HOST, METACAT_URL_TEMPLATE, SOLR_URL_TEMPLATE
+    global METACAT_HOST, SOLR_HOST, METACAT_URL_TEMPLATE, SOLR_URL_TEMPLATE, ERROR_UNSET
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--interval", type=int, default=INTERVAL_MINUTES, help="Interval in minutes")
@@ -218,8 +219,8 @@ def main():
     parser.add_argument("--rmq-user", dest="rmq_user", help="RabbitMQ username")
     parser.add_argument("--rmq-host", default=None, help="Host for RabbitMQ (overrides default)")
     parser.add_argument("--debug", action="store_true", help="Print debug output")
-    parser.add_argument("--metacat-host", default=METACAT_HOST, help="Host for Metacat (overrides METACAT_HOST)")
-    parser.add_argument("--solr-host", default=SOLR_HOST, help="Host for Solr (overrides SOLR_HOST)")
+    parser.add_argument("--metacat-host", default=ERROR_UNSET, help="Host for Metacat")
+    parser.add_argument("--solr-host", default=ERROR_UNSET, help="Host for Solr")
     args = parser.parse_args()
     rmq_pwd = os.environ.get("RMQ_PASSWORD")
 
