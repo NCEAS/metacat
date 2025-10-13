@@ -13,10 +13,7 @@ import requests
 
 # --- Configurable parameters ---
 INTERVAL_MINUTES = 15
-METACAT_HOST = "metacatbrooke-0"
-SOLR_HOST = "metacatbrooke-solr"
-METACAT_URL_TEMPLATE = f"https://{METACAT_HOST}/metacat/d1/mn/v2/object?fromDate={{date}}"
-SOLR_URL_TEMPLATE = (f"http://{SOLR_HOST}:8983/solr/metacat-index/select?q=dateModified:[{{date}}Z%20TO%20NOW]&fl=id,dateModified&rows=1000000&wt=json")
+ERROR_UNSET = "ERROR_NOT_SET"
 RESULTS_FILE_PATH = "/var/metacat/.metacat/reindex-script/pids_to_process.txt"
 REINDEX_SCRIPT_PATH = "submit_index_task_to_rabbitmq.py"
 
@@ -127,6 +124,7 @@ def parse_iso_to_utc(s):
         dt = dt.astimezone(timezone.utc)
     return dt
 
+
 def compare_results(db_results, solr_results):
     """
     Compare db_results and solr_results after normalizing timestamps to UTC.
@@ -139,31 +137,17 @@ def compare_results(db_results, solr_results):
             to_reindex.append(identifier)
             continue
 
-        db_dt = parse_iso_to_utc(db_date)
-        solr_dt = parse_iso_to_utc(solr_date)
+        db_date_normalized = parse_iso_to_utc(db_date)
+        solr_date_normalized = parse_iso_to_utc(solr_date)
 
-        if db_dt is None or solr_dt is None:
-            # fallback to string comparison when parsing fails
-            if db_date != solr_date:
-                to_reindex.append(identifier)
+        if db_date_normalized is None or solr_date_normalized is None:
+            to_reindex.append(identifier)
+            print(
+                f"Warning: could not parse dates for identifier {identifier}: db_date='{db_date}', solr_date='{solr_date}'")
         else:
-            if db_dt != solr_dt:
+            if db_date_normalized != solr_date_normalized:
                 to_reindex.append(identifier)
     return to_reindex
-
-# def compare_results(db_results, solr_results):
-#     """
-#     Compare the two result sets and return a list of identifiers to reindex.
-#     :param db_results: dict mapping identifier -> dateSysMetadataModified
-#     :param solr_results: dict mapping identifier -> dateModified
-#     :return:
-#     """
-#     to_reindex = []
-#     for identifier, db_date in db_results.items():
-#         solr_date = solr_results.get(identifier)
-#         if solr_date is None or db_date != solr_date:
-#             to_reindex.append(identifier)
-#     return to_reindex
 
 def write_to_file(identifiers, file_path):
     """
@@ -201,7 +185,7 @@ def clean_old_result_files(results_path, days=30):
     :return: list of removed file paths
     """
     now = time.time()
-    cutoff = now - days * 86400
+    cutoff = now - days * 86400 # days to seconds
     pattern = f"{results_path}_*"
     removed = []
 
@@ -227,18 +211,18 @@ def main():
     5. Optionally call the RabbitMQ submission script.
     6. Archive the identifiers file by renaming it with a timestamp.
     """
-    global METACAT_HOST, SOLR_HOST, METACAT_URL_TEMPLATE, SOLR_URL_TEMPLATE
+    global METACAT_HOST, SOLR_HOST, METACAT_URL_TEMPLATE, SOLR_URL_TEMPLATE, ERROR_UNSET
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--interval", type=int, default=INTERVAL_MINUTES, help="Interval in minutes")
     parser.add_argument("--submit", action="store_true", help="Call RabbitMQ submit script after writing file")
     parser.add_argument("--rmq-user", dest="rmq_user", help="RabbitMQ username")
-    parser.add_argument("--rmq-pwd", dest="rmq_pwd", help="RabbitMQ password")
     parser.add_argument("--rmq-host", default=None, help="Host for RabbitMQ (overrides default)")
     parser.add_argument("--debug", action="store_true", help="Print debug output")
-    parser.add_argument("--metacat-host", default=METACAT_HOST, help="Host for Metacat (overrides METACAT_HOST)")
-    parser.add_argument("--solr-host", default=SOLR_HOST, help="Host for Solr (overrides SOLR_HOST)")
+    parser.add_argument("--metacat-host", default=ERROR_UNSET, help="Host for Metacat")
+    parser.add_argument("--solr-host", default=ERROR_UNSET, help="Host for Solr")
     args = parser.parse_args()
+    rmq_pwd = os.environ.get("RMQ_PASSWORD")
 
     METACAT_HOST = args.metacat_host
     SOLR_HOST = args.solr_host
@@ -283,14 +267,14 @@ def main():
 
     if args.submit:
         print(f"Calling RabbitMQ submission script: {REINDEX_SCRIPT_PATH}")
-        if not (args.rmq_user and args.rmq_pwd):
+        if not (args.rmq_user and rmq_pwd):
             print("RabbitMQ username and password required for submission.")
             sys.exit(1)
         subprocess.run([
             sys.executable,
             REINDEX_SCRIPT_PATH,
             args.rmq_user,
-            args.rmq_pwd,
+            rmq_pwd,
             RABBITMQ_HOST
         ], check=True)
     else:
