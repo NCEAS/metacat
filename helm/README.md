@@ -239,15 +239,16 @@ These scenarios will be covered in future releases. In the meantime, please refe
 
 ### Metacat Persistence
 
-| Name                        | Description                                                          | Value               |
-| --------------------------- | -------------------------------------------------------------------- | ------------------- |
-| `persistence.enabled`       | Enable metacat data persistence using Persistent Volume Claims       | `true`              |
-| `persistence.storageClass`  | Override here or leave blank to use 'global.storageClass'            | `""`                |
-| `persistence.existingClaim` | Name of an existing Persistent Volume Claim to re-use                | `""`                |
-| `persistence.volumeName`    | Name of an existing Volume to use for volumeClaimTemplate            | `""`                |
-| `persistence.subPath`       | The subdirectory of the volume (see persistence.volumeName) to mount | `""`                |
-| `persistence.accessModes`   | PVC Access Mode for metacat volume                                   | `["ReadWriteMany"]` |
-| `persistence.size`          | PVC Storage Request for metacat volume                               | `1Gi`               |
+| Name                        | Description                                                          | Value                                   |
+| --------------------------- | -------------------------------------------------------------------- | --------------------------------------- |
+| `persistence.enabled`       | Enable metacat data persistence using Persistent Volume Claims       | `true`                                  |
+| `persistence.storageClass`  | Override here or leave blank to use 'global.storageClass'            | `""`                                    |
+| `persistence.existingClaim` | Name of an existing Persistent Volume Claim to re-use                | `""`                                    |
+| `persistence.volumeName`    | Name of an existing Persistent Volume for volumeClaimTemplate        | `""`                                    |
+| `persistence.pvcLabels`     | List of additional labels to add to PVC volumeClaimTemplate          | `velero.io/exclude-from-backup: "true"` |
+| `persistence.subPath`       | The subdirectory of the volume (see persistence.volumeName) to mount | `""`                                    |
+| `persistence.accessModes`   | PVC Access Mode for metacat volume                                   | `["ReadWriteMany"]`                     |
+| `persistence.size`          | PVC Storage Request for metacat volume                               | `1Gi`                                   |
 
 ### Networking & Monitoring
 

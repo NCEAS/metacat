@@ -13,7 +13,7 @@ spec:
   template:
     metadata:
       annotations:
-{{/*        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}*/}}
+        checksum/config: {{ include "metacat.config.checksum" . }}
           {{- with .Values.podAnnotations }}
             {{- toYaml . | nindent 8 }}
           {{- end }}
@@ -190,8 +190,10 @@ spec:
   {{ else }}
   volumeClaimTemplates:
   - metadata:
-      # can't do {release}-{function}-{instance} for statefulset, since k8s auto appends
-      # {podname}-{instance} (e.g. metacatknb-metacat-metacatknb-0)
+      {{- with .Values.persistence.pvcLabels }}
+      labels:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       name: {{ .Release.Name }}-metacat
     spec:
       {{- if .Values.persistence.volumeName }}

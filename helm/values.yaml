@@ -612,12 +612,19 @@ persistence:
   ##
   existingClaim: ""
 
-  ## @param persistence.volumeName Name of an existing Volume to use for volumeClaimTemplate
+  ## @param persistence.volumeName Name of an existing Persistent Volume for volumeClaimTemplate
   ## Set a value for 'volumeName' only if you want to re-use a Volume that has already been set up
   ## by a k8s admin ahead of time.
-  ## Leaving it blank will cause a pvc to be created dynamically using volumeClaimTemplates.
+  ## Leaving it blank will cause a PV and a PVC to be created dynamically.
   ##
   volumeName: ""
+
+  ## @param persistence.pvcLabels [object,default: velero.io/exclude-from-backup: "true"] Labels for PVC volumeClaimTemplate
+  ## Ignored if using an existingClaim (see above).
+  ##
+  pvcLabels:
+    ## Exclude this PVC from Velero backups?
+    velero.io/exclude-from-backup: "true"
 
   ## @param persistence.subPath The subdirectory of the volume (see persistence.volumeName) to mount
   ## Useful where one PV is used for multiple services, so each has its own subtree.
