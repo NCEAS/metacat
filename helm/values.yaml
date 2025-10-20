@@ -613,9 +613,11 @@ persistence:
   existingClaim: ""
 
   ## @param persistence.volumeName Name of an existing Persistent Volume for volumeClaimTemplate
+  ## Ignored if using an existingClaim (see above).
   ## Set a value for 'volumeName' only if you want to re-use a Volume that has already been set up
-  ## by a k8s admin ahead of time.
-  ## Leaving it blank will cause a PV and a PVC to be created dynamically.
+  ## by a k8s admin ahead of time. In this case, a PVC will be created dynamically, bound to the
+  ## specified PV.
+  ## Leaving volumeName blank will cause both a PV and a PVC to be created dynamically
   ##
   volumeName: ""
 
