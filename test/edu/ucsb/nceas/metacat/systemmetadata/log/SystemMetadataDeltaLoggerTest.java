@@ -3,7 +3,9 @@ package edu.ucsb.nceas.metacat.systemmetadata.log;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -11,11 +13,12 @@ import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -73,5 +76,122 @@ public class SystemMetadataDeltaLoggerTest {
         long newValue1 = modificationDateChange.path("new").longValue();
         assertEquals(now.getTime(), oldValue1);
         assertEquals(now2.getTime(), newValue1);
+
+        // Change the checksum
+        String sha1 = "SHA1";
+        String newChecksumStrValue ="1234adfadsfadfadf";
+        Checksum newChecksum = new Checksum();
+        newChecksum.setAlgorithm(sha1);
+        newChecksum.setValue(newChecksumStrValue);
+        sysmeta1.setChecksum(newChecksum);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        // Check that three fields changed
+        assertEquals(3, changes.size(), "Expected exactly three changed field");
+        assertTrue(changes.has("checksum"), "Expected change in checksum");
+        JsonNode checksumChange = changes.get("checksum");
+        String oldChecksumAlgorithm = checksumChange.path("old").path("algorithm").asText();
+        String oldChecksumValue = checksumChange.path("old").path("value").asText();
+        assertEquals("MD5", oldChecksumAlgorithm);
+        assertEquals("098f6bcd4621d373cade4e832627b4f6", oldChecksumValue);
+        String newChecksumAlgorithm = checksumChange.path("new").path("algorithm").asText();
+        String newChecksumValue = checksumChange.path("new").path("value").asText();
+        assertEquals(sha1, newChecksumAlgorithm);
+        assertEquals(newChecksumStrValue, newChecksumValue);
+
+        // Modify rights_holder
+        String newSubjectStr = "http://orcid.org/0009-0006-1234-1235";
+        Subject newSubject = new Subject();
+        newSubject.setValue(newSubjectStr);
+        sysmeta1.setRightsHolder(newSubject);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        // Check that four fields changed
+        assertEquals(4, changes.size(), "Expected exactly four changed field");
+        assertTrue(changes.has("rightsHolder"), "Expected change in checksum");
+        JsonNode rightsHolderNode = changes.get("rightsHolder");
+        String oldRightsHolderValue = rightsHolderNode.path("old").path("value").asText();
+        String newRightsHolderValue = rightsHolderNode.path("new").path("value").asText();
+        assertEquals(USER1, oldRightsHolderValue);
+        assertEquals(newSubjectStr, newRightsHolderValue);
+
+        // Change size even though it is impossible
+        BigInteger newSize = new BigInteger("10");
+        sysmeta1.setSize(newSize);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        // Check that five fields changed
+        assertEquals(5, changes.size(), "Expected exactly five changed field");
+        assertTrue(changes.has("size"), "Expected change in checksum");
+        long oldSizeValue = changes.path("size").path("old").longValue();
+        long newSizeValue = changes.path("size").path("new").longValue();
+        assertEquals(sysmeta.getSize().longValue(), oldSizeValue);
+        assertEquals(newSize.longValue(), newSizeValue);
+
+        // Change archived
+        sysmeta1.setArchived(true);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        // Check that six fields changed
+        assertEquals(6, changes.size(), "Expected exactly six changed field");
+        assertTrue(changes.has("archived"), "Expected change in checksum");
+        JsonNode archivedNode = changes.path("archived");
+        boolean oldArchived = archivedNode.path("old").asBoolean();
+        boolean newArchived = archivedNode.path("new").asBoolean();
+        assertFalse(oldArchived);
+        assertTrue(newArchived);
+
+        // Change the obsoletes field (add a new one)
+        String obsoletesStr = "obsoletesId";
+        Identifier obsoletesId = new Identifier();
+        obsoletesId.setValue(obsoletesStr);
+        sysmeta1.setObsoletes(obsoletesId);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        // Check that seven fields changed
+        assertEquals(7, changes.size(), "Expected exactly seven changed field");
+        assertTrue(changes.has("obsoletes"), "Expected change in checksum");
+        JsonNode obsoletesNode = changes.path("obsoletes");
+        assertEquals("null", obsoletesNode.path("old").asText());
+        assertEquals(obsoletesStr, obsoletesNode.path("new").path("value").asText());
+
+        // Change the authorative member node
+        String newAuthorativeMNstr = "urn:node:KNB";
+        NodeReference nodeReference = new NodeReference();
+        nodeReference.setValue(newAuthorativeMNstr);
+        sysmeta1.setAuthoritativeMemberNode(nodeReference);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        // Check that eight fields changed
+        assertEquals(8, changes.size(), "Expected exactly eight changed field");
+        JsonNode mnNode = changes.path("authoritativeMemberNode");
+        assertEquals(sysmeta.getAuthoritativeMemberNode().getValue(), mnNode.path("old").path(
+            "value").asText());
+        assertEquals(newAuthorativeMNstr, mnNode.path("new").path("value").asText());
+
+        // Remove the file name field from old system metadata
+        String fileNameStr = "foo.xml";
+        sysmeta.setFileName(fileNameStr);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        // Check that nine fields changed
+        assertEquals(9, changes.size(), "Expected exactly nine changed field");
+        JsonNode fileNameNode = changes.path("fileName");
+        assertEquals("null", fileNameNode.path("new").asText());
+        assertEquals(fileNameStr, fileNameNode.path("old").asText());
     }
 }
