@@ -2,11 +2,14 @@ package edu.ucsb.nceas.metacat.systemmetadata.log;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
+import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.junit.Test;
@@ -193,5 +196,186 @@ public class SystemMetadataDeltaLoggerTest {
         JsonNode fileNameNode = changes.path("fileName");
         assertEquals("null", fileNameNode.path("new").asText());
         assertEquals(fileNameStr, fileNameNode.path("old").asText());
+    }
+
+    /**
+     * Test the comparison of the access policies
+     * @throws Exception
+     */
+    @Test
+    public void testCompareAccessPolicies() throws Exception {
+        Date now = new Date();
+        Identifier guid = new Identifier();
+        guid.setValue("testCompareAccessPolicies");
+        Subject subject = new Subject();
+        subject.setValue(USER1);
+        InputStream object = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta =
+            D1NodeServiceTest.createSystemMetadata(guid, subject, object);
+        sysmeta.setDateUploaded(now);
+        Identifier guid1 = new Identifier();
+        guid1.setValue("testCompareAccessPolicies");
+        Thread.sleep(2);
+        Subject subject1 = new Subject();
+        subject1.setValue(USER1);
+        InputStream object1 = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta1 =
+            D1NodeServiceTest.createSystemMetadata(guid1, subject1, object1);
+        sysmeta1.setDateUploaded(now);
+        String difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(difference);
+        JsonNode changes = root.path("changes");
+        // Check that one field changed and there is no difference in the access policy
+        assertEquals(1, changes.size(), "Expected exactly one changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+        JsonNode modifiedDateNode = changes.path("dateSysMetadataModified");
+        assertEquals(sysmeta.getDateSysMetadataModified().getTime(),
+                     modifiedDateNode.path("old").longValue());
+        assertEquals(sysmeta1.getDateSysMetadataModified().getTime(),
+                     modifiedDateNode.path("new").longValue());
+
+        // Order of access rules doesn't matter
+        String user2 = "http://orcid.org/0009-0006-1234-1236";
+        String user3 = "http://orcid.org/0009-0006-1234-1237";
+        String user4 = "uid=foo,o=NCEAS,dc=dataone,dc=org";
+        Subject subject2 = new Subject();
+        subject2.setValue(user2);
+        Subject subject3 = new Subject();
+        subject3.setValue(user3);
+        Subject subject4 = new Subject();
+        subject4.setValue(user4);
+        AccessRule rule2 = new AccessRule();
+        rule2.addSubject(subject2);
+        rule2.addSubject(subject3);
+        rule2.addPermission(Permission.READ);
+        sysmeta.getAccessPolicy().addAllow(rule2);
+        AccessRule rule3 = new AccessRule();
+        rule3.addSubject(subject4);
+        rule3.addPermission(Permission.READ);
+        sysmeta.getAccessPolicy().addAllow(rule3);
+        assertEquals(3, sysmeta.getAccessPolicy().getAllowList().size());
+        assertEquals(user2, sysmeta.getAccessPolicy().getAllow(1).getSubject(0).getValue());
+        assertEquals(user3, sysmeta.getAccessPolicy().getAllow(1).getSubject(1).getValue());
+        assertEquals(user4, sysmeta.getAccessPolicy().getAllow(2).getSubject(0).getValue());
+        AccessRule rule4 = new AccessRule();
+        rule4.addSubject(subject4);
+        rule4.addPermission(Permission.READ);
+        sysmeta1.getAccessPolicy().addAllow(rule4);
+        AccessRule rule5 = new AccessRule();
+        rule5.addSubject(subject3);
+        rule5.addSubject(subject2);
+        rule5.addPermission(Permission.READ);
+        sysmeta1.getAccessPolicy().addAllow(rule5);
+        assertEquals(3, sysmeta1.getAccessPolicy().getAllowList().size());
+        assertEquals(user4, sysmeta1.getAccessPolicy().getAllow(1).getSubject(0).getValue());
+        // The subject order are different to the first sysmeta as well.
+        assertEquals(user3, sysmeta1.getAccessPolicy().getAllow(2).getSubject(0).getValue());
+        assertEquals(user2, sysmeta1.getAccessPolicy().getAllow(2).getSubject(1).getValue());
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        // Check that one field changed and there is no difference in the access policy (only
+        // having different order)
+        assertEquals(1, changes.size(), "Expected exactly one changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+        modifiedDateNode = changes.path("dateSysMetadataModified");
+        assertEquals(sysmeta.getDateSysMetadataModified().getTime(),
+                     modifiedDateNode.path("old").longValue());
+        assertEquals(sysmeta1.getDateSysMetadataModified().getTime(),
+                     modifiedDateNode.path("new").longValue());
+
+        // Modify a permission on sysmeta1
+        sysmeta1.getAccessPolicy().getAllow(2).clearPermissionList();
+        sysmeta1.getAccessPolicy().getAllow(2).addPermission(Permission.WRITE);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        assertEquals(2, changes.size(), "Expected exactly two changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+        assertTrue(changes.has("accessPolicy"), "Expected change in 'accessPolicy'");
+        JsonNode accessPolicyNode = changes.path("accessPolicy");
+        ArrayNode oldPolicies = (ArrayNode)(accessPolicyNode.path("old").path("allowList"));
+        assertEquals(3, oldPolicies.size());
+        assertEquals(user2, ((ArrayNode)(oldPolicies.get(1).path("subjectList"))).get(0).path(
+            "value").asText());
+        assertEquals(user3, ((ArrayNode)(oldPolicies.get(1).path("subjectList"))).get(1).path(
+            "value").asText());
+        assertEquals(
+            "READ", ((ArrayNode) (oldPolicies.get(1).path("permissionList"))).get(0).asText());
+        assertEquals(user4, ((ArrayNode)(oldPolicies.get(2).path("subjectList"))).get(0).path(
+            "value").asText());
+        assertEquals(
+            "READ", ((ArrayNode) (oldPolicies.get(2).path("permissionList"))).get(0).asText());
+        ArrayNode newPolicies = (ArrayNode)(accessPolicyNode.path("new").path("allowList"));
+        assertEquals(3, oldPolicies.size());
+        assertEquals(user4, ((ArrayNode)(newPolicies.get(1).path("subjectList"))).get(0).path(
+            "value").asText());
+        assertEquals(
+            "READ", ((ArrayNode) (newPolicies.get(1).path("permissionList"))).get(0).asText());
+        assertEquals(user3, ((ArrayNode)(newPolicies.get(2).path("subjectList"))).get(0).path(
+            "value").asText());
+        assertEquals(user2, ((ArrayNode)(newPolicies.get(2).path("subjectList"))).get(1).path(
+            "value").asText());
+        assertEquals(
+            "WRITE", ((ArrayNode) (newPolicies.get(2).path("permissionList"))).get(0).asText());
+
+        // Reverse the access policy changes. So there are no differences in the access policies
+        sysmeta1.getAccessPolicy().getAllow(2).clearPermissionList();
+        sysmeta1.getAccessPolicy().getAllow(2).addPermission(Permission.READ);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        assertEquals(1, changes.size(), "Expected exactly one changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+
+        // Add a new access rules
+        String user6 = "uid=somebody,o=NCEAS,dc=dataone,dc=org";
+        Subject subject6 = new Subject();
+        subject6.setValue(user6);
+        AccessRule rule6 = new AccessRule();
+        rule6.addSubject(subject6);
+        rule6.addPermission(Permission.CHANGE_PERMISSION);
+        sysmeta1.getAccessPolicy().addAllow(rule6);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        assertEquals(2, changes.size(), "Expected exactly two changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+        assertTrue(changes.has("accessPolicy"), "Expected change in 'accessPolicy'");
+        accessPolicyNode = changes.path("accessPolicy");
+        oldPolicies = (ArrayNode)(accessPolicyNode.path("old").path("allowList"));
+        assertEquals(3, oldPolicies.size());
+        assertEquals(user2, ((ArrayNode)(oldPolicies.get(1).path("subjectList"))).get(0).path(
+            "value").asText());
+        assertEquals(user3, ((ArrayNode)(oldPolicies.get(1).path("subjectList"))).get(1).path(
+            "value").asText());
+        assertEquals(
+            "READ", ((ArrayNode) (oldPolicies.get(1).path("permissionList"))).get(0).asText());
+        assertEquals(user4, ((ArrayNode)(oldPolicies.get(2).path("subjectList"))).get(0).path(
+            "value").asText());
+        assertEquals(
+            "READ", ((ArrayNode) (oldPolicies.get(2).path("permissionList"))).get(0).asText());
+        newPolicies = (ArrayNode)(accessPolicyNode.path("new").path("allowList"));
+        assertEquals(4, newPolicies.size());
+        assertEquals(user4, ((ArrayNode)(newPolicies.get(1).path("subjectList"))).get(0).path(
+            "value").asText());
+        assertEquals(
+            "READ", ((ArrayNode) (newPolicies.get(1).path("permissionList"))).get(0).asText());
+        assertEquals(user3, ((ArrayNode)(newPolicies.get(2).path("subjectList"))).get(0).path(
+            "value").asText());
+        assertEquals(user2, ((ArrayNode)(newPolicies.get(2).path("subjectList"))).get(1).path(
+            "value").asText());
+        assertEquals(
+            "READ", ((ArrayNode) (newPolicies.get(2).path("permissionList"))).get(0).asText());
+        assertEquals(user6, ((ArrayNode)(newPolicies.get(3).path("subjectList"))).get(0).path(
+            "value").asText());
+        assertEquals(
+            "CHANGE_PERMISSION",
+            ((ArrayNode) (newPolicies.get(3).path("permissionList"))).get(0).asText());
     }
 }
