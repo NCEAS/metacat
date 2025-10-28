@@ -34,10 +34,10 @@ public class SystemMetadataDeltaLoggerTest {
      * @throws Exception
      */
     @Test
-    public void testCompareMoidifiedFileds() throws Exception {
+    public void testCompareModifiedFields() throws Exception {
         Date now = new Date();
         Identifier guid = new Identifier();
-        guid.setValue("testCompareMoidifiedFileds");
+        guid.setValue("testCompareModifiedFields");
         Subject subject = new Subject();
         subject.setValue(USER1);
         InputStream object = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
@@ -46,7 +46,7 @@ public class SystemMetadataDeltaLoggerTest {
         sysmeta.setDateUploaded(now);
         sysmeta.setDateSysMetadataModified(now);
         Identifier guid1 = new Identifier();
-        guid1.setValue("testCompareMoidifiedFileds");
+        guid1.setValue("testCompareModifiedFields");
         Subject subject1 = new Subject();
         subject1.setValue(USER1);
         InputStream object1 = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
@@ -165,10 +165,10 @@ public class SystemMetadataDeltaLoggerTest {
         assertEquals("null", obsoletesNode.path("old").asText());
         assertEquals(obsoletesStr, obsoletesNode.path("new").path("value").asText());
 
-        // Change the authorative member node
-        String newAuthorativeMNstr = "urn:node:KNB";
+        // Change the authoritative member node
+        String newAuthoritiveMNstr = "urn:node:KNB";
         NodeReference nodeReference = new NodeReference();
-        nodeReference.setValue(newAuthorativeMNstr);
+        nodeReference.setValue(newAuthoritiveMNstr);
         sysmeta1.setAuthoritativeMemberNode(nodeReference);
         difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
         mapper = new ObjectMapper();
@@ -179,7 +179,7 @@ public class SystemMetadataDeltaLoggerTest {
         JsonNode mnNode = changes.path("authoritativeMemberNode");
         assertEquals(sysmeta.getAuthoritativeMemberNode().getValue(), mnNode.path("old").path(
             "value").asText());
-        assertEquals(newAuthorativeMNstr, mnNode.path("new").path("value").asText());
+        assertEquals(newAuthoritiveMNstr, mnNode.path("new").path("value").asText());
 
         // Remove the file name field from old system metadata
         String fileNameStr = "foo.xml";
