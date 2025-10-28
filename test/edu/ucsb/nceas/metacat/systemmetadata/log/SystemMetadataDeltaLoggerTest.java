@@ -10,6 +10,7 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Permission;
+import org.dataone.service.types.v1.ReplicationPolicy;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.junit.Before;
@@ -23,6 +24,7 @@ import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -32,12 +34,30 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class SystemMetadataDeltaLoggerTest {
     private static final String TEXT = "test";
     private static final String USER1 = "http://orcid.org/0009-0006-1234-1234";
-    SystemMetadata sysmeta;
-    SystemMetadata sysmeta1;
-    Date now;
+    private SystemMetadata sysmeta;
+    private SystemMetadata sysmeta1;
+    private Date now;
+    private String nodeStr1 = "urn:node:1";
+    private NodeReference node1 = new NodeReference();
+    private String nodeStr2 = "urn:node:2";
+    private NodeReference node2 = new NodeReference();
+    private String nodeStr3 = "urn:node:3";
+    private NodeReference node3 = new NodeReference();
+    private String nodeStr4 = "urn:node:4";
+    private NodeReference node4 = new NodeReference();
+    private String nodeStr5 = "urn:node:5";
+    private NodeReference node5 = new NodeReference();
+    private String nodeStr6 = "urn:node:6";
+    private NodeReference node6 = new NodeReference();
 
     @Before
     public void setUp() throws Exception {
+        node1.setValue(nodeStr1);
+        node2.setValue(nodeStr2);
+        node3.setValue(nodeStr3);
+        node4.setValue(nodeStr4);
+        node5.setValue(nodeStr5);
+        node6.setValue(nodeStr6);
         now = new Date();
         Identifier guid = new Identifier();
         String id = "testSystemMetadataDeltaLogger" + System.currentTimeMillis();
@@ -74,7 +94,6 @@ public class SystemMetadataDeltaLoggerTest {
      */
     @Test
     public void testCompareModifiedFields() throws Exception {
-        sysmeta.setDateSysMetadataModified(now);
         Date now2 = new Date();
         sysmeta1.setDateSysMetadataModified(now2);
         ObjectFormatIdentifier formatIdentifier = new ObjectFormatIdentifier();
@@ -96,7 +115,7 @@ public class SystemMetadataDeltaLoggerTest {
         JsonNode modificationDateChange = changes.get("dateSysMetadataModified");
         long oldValue1 = modificationDateChange.path("old").longValue();
         long newValue1 = modificationDateChange.path("new").longValue();
-        assertEquals(now.getTime(), oldValue1);
+        assertEquals(sysmeta.getDateSysMetadataModified().getTime(), oldValue1);
         assertEquals(now2.getTime(), newValue1);
 
         // Change the checksum
@@ -384,7 +403,113 @@ public class SystemMetadataDeltaLoggerTest {
      * Test the comparison of the replication policy changes
      * @throws Exception
      */
+    @Test
     public void testCompareReplicationPolicies() throws Exception {
+        assertNull(sysmeta.getReplicationPolicy());
+        assertNull(sysmeta1.getReplicationPolicy());
+        // The same replication policy results no records in the difference string about them
+        ReplicationPolicy policy1 = new ReplicationPolicy();
+        policy1.setNumberReplicas(Integer.parseInt("3"));
+        policy1.setReplicationAllowed(false);
+        ReplicationPolicy policy2 = new ReplicationPolicy();
+        policy2.setNumberReplicas(Integer.parseInt("3"));
+        policy2.setReplicationAllowed(false);
+        sysmeta.setReplicationPolicy(policy1);
+        sysmeta1.setReplicationPolicy(policy2);
+        String difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(difference);
+        JsonNode changes = root.path("changes");
+        // Check that one field changed and there is no difference in the access policy
+        assertEquals(1, changes.size(), "Expected exactly one changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
 
+        // The policy2 was changed
+        policy2.setReplicationAllowed(true);
+        policy2.setNumberReplicas(1);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        assertEquals(2, changes.size(), "Expected exactly two changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+        assertTrue(changes.has("replicationPolicy"), "Expected change in 'replicationPolicy'");
+        JsonNode node = changes.path("replicationPolicy");
+        assertFalse(node.path("old").path("replicationAllowed").booleanValue());
+        assertEquals(3, node.path("old").path("numberReplicas").intValue());
+        assertTrue(((ArrayNode)node.path("old").path("preferredMemberNodeList")).isEmpty());
+        assertTrue(((ArrayNode)node.path("old").path("blockedMemberNodeList")).isEmpty());
+        assertTrue(node.path("new").path("replicationAllowed").booleanValue());
+        assertEquals(1, node.path("new").path("numberReplicas").intValue());
+        assertTrue(((ArrayNode)node.path("new").path("preferredMemberNodeList")).isEmpty());
+        assertTrue(((ArrayNode)node.path("new").path("blockedMemberNodeList")).isEmpty());
+
+        // different order of the node list doesn't matter
+        policy1.setReplicationAllowed(true);
+        policy1.setNumberReplicas(2);
+        policy1.addPreferredMemberNode(node1);
+        policy1.addPreferredMemberNode(node2);
+        policy1.addBlockedMemberNode(node3);
+        policy1.addBlockedMemberNode(node4);
+        policy1.addBlockedMemberNode(node5);
+        sysmeta.setReplicationPolicy(policy1);
+        policy2.setReplicationAllowed(true);
+        policy2.setNumberReplicas(2);
+        policy2.addPreferredMemberNode(node2);
+        policy2.addPreferredMemberNode(node1);
+        policy2.addBlockedMemberNode(node3);
+        policy2.addBlockedMemberNode(node5);
+        policy2.addBlockedMemberNode(node4);
+        sysmeta1.setReplicationPolicy(policy2);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        // Check that one field changed and there is no difference in the access policy
+        assertEquals(1, changes.size(), "Expected exactly one changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+
+        // Add a new blocked node
+        policy1.addBlockedMemberNode(node6);
+        sysmeta.setReplicationPolicy(policy1);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        System.out.println(difference);
+        assertEquals(2, changes.size(), "Expected exactly two changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+        assertTrue(changes.has("replicationPolicy"), "Expected change in 'replicationPolicy'");
+        node = changes.path("replicationPolicy");
+        assertTrue(node.path("old").path("replicationAllowed").booleanValue());
+        assertEquals(2, node.path("old").path("numberReplicas").intValue());
+        assertEquals(2, ((ArrayNode)node.path("old").path("preferredMemberNodeList")).size());
+        assertEquals(nodeStr1, ((ArrayNode) node.path("old").path("preferredMemberNodeList")).get(0)
+            .path("value").asText());
+        assertEquals(nodeStr2, ((ArrayNode) node.path("old").path("preferredMemberNodeList")).get(1)
+            .path("value").asText());
+        assertEquals(4, ((ArrayNode)node.path("old").path("blockedMemberNodeList")).size());
+        assertEquals(nodeStr3, ((ArrayNode) node.path("old").path("blockedMemberNodeList")).get(0)
+            .path("value").asText());
+        assertEquals(nodeStr4, ((ArrayNode) node.path("old").path("blockedMemberNodeList")).get(1)
+            .path("value").asText());
+        assertEquals(nodeStr5, ((ArrayNode) node.path("old").path("blockedMemberNodeList")).get(2)
+            .path("value").asText());
+        assertEquals(nodeStr6, ((ArrayNode) node.path("old").path("blockedMemberNodeList")).get(3)
+            .path("value").asText());
+        assertTrue(node.path("new").path("replicationAllowed").booleanValue());
+        assertEquals(2, node.path("new").path("numberReplicas").intValue());
+        assertEquals(2, ((ArrayNode)node.path("new").path("preferredMemberNodeList")).size());
+        assertEquals(nodeStr2, ((ArrayNode) node.path("new").path("preferredMemberNodeList")).get(0)
+            .path("value").asText());
+        assertEquals(nodeStr1, ((ArrayNode) node.path("new").path("preferredMemberNodeList")).get(1)
+            .path("value").asText());
+        assertEquals(3, ((ArrayNode)node.path("new").path("blockedMemberNodeList")).size());
+        assertEquals(nodeStr3, ((ArrayNode) node.path("new").path("blockedMemberNodeList")).get(0)
+            .path("value").asText());
+        assertEquals(nodeStr5, ((ArrayNode) node.path("new").path("blockedMemberNodeList")).get(1)
+            .path("value").asText());
+        assertEquals(nodeStr4, ((ArrayNode) node.path("new").path("blockedMemberNodeList")).get(2)
+            .path("value").asText());
     }
 }
