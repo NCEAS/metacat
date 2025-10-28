@@ -12,6 +12,7 @@ import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -31,31 +32,49 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class SystemMetadataDeltaLoggerTest {
     private static final String TEXT = "test";
     private static final String USER1 = "http://orcid.org/0009-0006-1234-1234";
+    SystemMetadata sysmeta;
+    SystemMetadata sysmeta1;
+    Date now;
 
+    @Before
+    public void setUp() throws Exception {
+        now = new Date();
+        Identifier guid = new Identifier();
+        String id = "testSystemMetadataDeltaLogger" + System.currentTimeMillis();
+        guid.setValue(id);
+        Subject subject = new Subject();
+        subject.setValue(USER1);
+        InputStream object = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
+        sysmeta = D1NodeServiceTest.createSystemMetadata(guid, subject, object);
+        sysmeta.setDateUploaded(now);
+        Identifier guid1 = new Identifier();
+        guid1.setValue(id);
+        Thread.sleep(2);
+        Subject subject1 = new Subject();
+        subject1.setValue(USER1);
+        InputStream object1 = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
+        sysmeta1 = D1NodeServiceTest.createSystemMetadata(guid1, subject1, object1);
+        sysmeta1.setDateUploaded(now);
+        String difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(difference);
+        JsonNode changes = root.path("changes");
+        // Check that one field changed and there is no difference in the access policy
+        assertEquals(1, changes.size(), "Expected exactly one changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+        JsonNode modifiedDateNode = changes.path("dateSysMetadataModified");
+        assertEquals(sysmeta.getDateSysMetadataModified().getTime(),
+                     modifiedDateNode.path("old").longValue());
+        assertEquals(sysmeta1.getDateSysMetadataModified().getTime(),
+                     modifiedDateNode.path("new").longValue());
+    }
     /**
      * Test the compare method with modified system metadata fields
      * @throws Exception
      */
     @Test
     public void testCompareModifiedFields() throws Exception {
-        Date now = new Date();
-        Identifier guid = new Identifier();
-        guid.setValue("testCompareModifiedFields");
-        Subject subject = new Subject();
-        subject.setValue(USER1);
-        InputStream object = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
-        SystemMetadata sysmeta =
-            D1NodeServiceTest.createSystemMetadata(guid, subject, object);
-        sysmeta.setDateUploaded(now);
         sysmeta.setDateSysMetadataModified(now);
-        Identifier guid1 = new Identifier();
-        guid1.setValue("testCompareModifiedFields");
-        Subject subject1 = new Subject();
-        subject1.setValue(USER1);
-        InputStream object1 = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
-        SystemMetadata sysmeta1 =
-            D1NodeServiceTest.createSystemMetadata(guid1, subject1, object1);
-        sysmeta1.setDateUploaded(now);
         Date now2 = new Date();
         sysmeta1.setDateSysMetadataModified(now2);
         ObjectFormatIdentifier formatIdentifier = new ObjectFormatIdentifier();
@@ -204,24 +223,6 @@ public class SystemMetadataDeltaLoggerTest {
      */
     @Test
     public void testCompareAccessPolicies() throws Exception {
-        Date now = new Date();
-        Identifier guid = new Identifier();
-        guid.setValue("testCompareAccessPolicies");
-        Subject subject = new Subject();
-        subject.setValue(USER1);
-        InputStream object = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
-        SystemMetadata sysmeta =
-            D1NodeServiceTest.createSystemMetadata(guid, subject, object);
-        sysmeta.setDateUploaded(now);
-        Identifier guid1 = new Identifier();
-        guid1.setValue("testCompareAccessPolicies");
-        Thread.sleep(2);
-        Subject subject1 = new Subject();
-        subject1.setValue(USER1);
-        InputStream object1 = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
-        SystemMetadata sysmeta1 =
-            D1NodeServiceTest.createSystemMetadata(guid1, subject1, object1);
-        sysmeta1.setDateUploaded(now);
         String difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(difference);
@@ -377,5 +378,13 @@ public class SystemMetadataDeltaLoggerTest {
         assertEquals(
             "CHANGE_PERMISSION",
             ((ArrayNode) (newPolicies.get(3).path("permissionList"))).get(0).asText());
+    }
+
+    /**
+     * Test the comparison of the replication policy changes
+     * @throws Exception
+     */
+    public void testCompareReplicationPolicies() throws Exception {
+
     }
 }
