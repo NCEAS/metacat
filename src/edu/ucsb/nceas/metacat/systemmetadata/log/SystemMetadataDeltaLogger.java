@@ -2,14 +2,16 @@ package edu.ucsb.nceas.metacat.systemmetadata.log;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.Replica;
 import org.dataone.service.types.v1.ReplicationPolicy;
+import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.MediaType;
 import org.dataone.service.types.v2.MediaTypeProperty;
@@ -23,6 +25,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 /**
@@ -30,9 +34,16 @@ import java.util.stream.Collectors;
  * is called.
  * @author Tao
  */
-public class SystemMetadataDeltaLogger {
+public class SystemMetadataDeltaLogger implements Runnable {
+    private static final String UNKNOWN = "unknown";
     private static final String ID = "identifier";
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static Log logMetacat = LogFactory.getLog(SystemMetadataDeltaLogger.class);
+    private static ExecutorService executorService = Executors.newFixedThreadPool(2);
+
+    private String user;
+    private SystemMetadata oldSys;
+    private SystemMetadata newSys;
     // Fields to ignore when comparing SystemMetadata
     private static final Set<String> EXCLUDED_FIELDS = new HashSet<>(Arrays.asList(
         "class",
@@ -46,16 +57,69 @@ public class SystemMetadataDeltaLogger {
     ));
 
     /**
+     * Constructor
+     * @param session  the session who requests the change
+     * @param oldSys  the old version of the system metadata
+     * @param newSys  the new version of the system metadata
+     */
+    public SystemMetadataDeltaLogger(Session session, SystemMetadata oldSys,
+                                     SystemMetadata newSys) {
+        if (session != null && session.getSubject() != null) {
+            new SystemMetadataDeltaLogger(session.getSubject().getValue(), oldSys, newSys);
+        } else {
+            new SystemMetadataDeltaLogger(UNKNOWN, oldSys, newSys);
+        }
+    }
+
+    /**
+     * Constructor
+     * @param user  the user who requests the change
+     * @param oldSys  the old version of the system metadata
+     * @param newSys  the new version of the system metadata
+     */
+    public SystemMetadataDeltaLogger(String user, SystemMetadata oldSys,
+                                     SystemMetadata newSys) {
+        this.user = user;
+        if (this.user == null || this.user.isBlank()) {
+            this.user = UNKNOWN;
+        }
+        this.oldSys = oldSys;
+        this.newSys = newSys;
+    }
+
+    /**
+     * Log the system metadata difference in another thread only when it set the trace debug level
+     */
+    public void log() {
+        if (logMetacat.isTraceEnabled()) {
+            executorService.submit(this);
+        }
+    }
+
+    @Override
+    public void run() {
+        if (logMetacat.isTraceEnabled()) {
+            try {
+                String difference = compare(user, oldSys, newSys);
+                logMetacat.trace(difference);
+            } catch (Exception e) {
+                logMetacat.error("Could not log the system metadata delta since " + e.getMessage());
+            }
+        }
+    }
+
+    /**
      * Compare the oldSys and newSys and return the delta in the Json format.
      * The order changes don't count.
      * @param oldSys  the previous version of system metadata
      * @param newSys  the new version of system metadata
      * @return the delta change in the Json format
      */
-    public static String compare(SystemMetadata oldSys, SystemMetadata newSys)
+    public static String compare(String user, SystemMetadata oldSys, SystemMetadata newSys)
         throws JsonProcessingException, InvocationTargetException, IllegalAccessException {
         ObjectNode result = mapper.createObjectNode();
         result.put("timestamp", Instant.now().toString());
+        result.put("principal", user);
         // Case 1: creation
         if (oldSys == null && newSys != null) {
             result.put(ID, newSys.getIdentifier().getValue());

@@ -78,7 +78,7 @@ public class SystemMetadataDeltaLoggerTest {
         InputStream object1 = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
         sysmeta1 = D1NodeServiceTest.createSystemMetadata(guid1, subject1, object1);
         sysmeta1.setDateUploaded(now);
-        String difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        String difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(difference);
         JsonNode changes = root.path("changes");
@@ -102,7 +102,7 @@ public class SystemMetadataDeltaLoggerTest {
         ObjectFormatIdentifier formatIdentifier = new ObjectFormatIdentifier();
         formatIdentifier.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
         sysmeta1.setFormatId(formatIdentifier);
-        String difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        String difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(difference);
         JsonNode changes = root.path("changes");
@@ -128,7 +128,7 @@ public class SystemMetadataDeltaLoggerTest {
         newChecksum.setAlgorithm(sha1);
         newChecksum.setValue(newChecksumStrValue);
         sysmeta1.setChecksum(newChecksum);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -150,7 +150,7 @@ public class SystemMetadataDeltaLoggerTest {
         Subject newSubject = new Subject();
         newSubject.setValue(newSubjectStr);
         sysmeta1.setRightsHolder(newSubject);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -166,7 +166,7 @@ public class SystemMetadataDeltaLoggerTest {
         // Change size even though it is impossible
         BigInteger newSize = new BigInteger("10");
         sysmeta1.setSize(newSize);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -180,7 +180,7 @@ public class SystemMetadataDeltaLoggerTest {
 
         // Change archived
         sysmeta1.setArchived(true);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -198,7 +198,7 @@ public class SystemMetadataDeltaLoggerTest {
         Identifier obsoletesId = new Identifier();
         obsoletesId.setValue(obsoletesStr);
         sysmeta1.setObsoletes(obsoletesId);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -214,7 +214,7 @@ public class SystemMetadataDeltaLoggerTest {
         NodeReference nodeReference = new NodeReference();
         nodeReference.setValue(newAuthoritiveMNstr);
         sysmeta1.setAuthoritativeMemberNode(nodeReference);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -228,7 +228,7 @@ public class SystemMetadataDeltaLoggerTest {
         // Remove the file name field from old system metadata
         String fileNameStr = "foo.xml";
         sysmeta.setFileName(fileNameStr);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -245,7 +245,7 @@ public class SystemMetadataDeltaLoggerTest {
      */
     @Test
     public void testCompareAccessPolicies() throws Exception {
-        String difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        String difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(difference);
         JsonNode changes = root.path("changes");
@@ -295,7 +295,7 @@ public class SystemMetadataDeltaLoggerTest {
         // The subject order are different to the first sysmeta as well.
         assertEquals(user3, sysmeta1.getAccessPolicy().getAllow(2).getSubject(0).getValue());
         assertEquals(user2, sysmeta1.getAccessPolicy().getAllow(2).getSubject(1).getValue());
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -312,7 +312,7 @@ public class SystemMetadataDeltaLoggerTest {
         // Modify a permission on sysmeta1
         sysmeta1.getAccessPolicy().getAllow(2).clearPermissionList();
         sysmeta1.getAccessPolicy().getAllow(2).addPermission(Permission.WRITE);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -348,7 +348,7 @@ public class SystemMetadataDeltaLoggerTest {
         // Reverse the access policy changes. So there are no differences in the access policies
         sysmeta1.getAccessPolicy().getAllow(2).clearPermissionList();
         sysmeta1.getAccessPolicy().getAllow(2).addPermission(Permission.READ);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -363,7 +363,7 @@ public class SystemMetadataDeltaLoggerTest {
         rule6.addSubject(subject6);
         rule6.addPermission(Permission.CHANGE_PERMISSION);
         sysmeta1.getAccessPolicy().addAllow(rule6);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -403,7 +403,7 @@ public class SystemMetadataDeltaLoggerTest {
 
         // One doesn't have access rules, the another has
         sysmeta.setAccessPolicy(null);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -448,7 +448,7 @@ public class SystemMetadataDeltaLoggerTest {
         policy2.setReplicationAllowed(false);
         sysmeta.setReplicationPolicy(policy1);
         sysmeta1.setReplicationPolicy(policy2);
-        String difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        String difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(difference);
         JsonNode changes = root.path("changes");
@@ -459,7 +459,7 @@ public class SystemMetadataDeltaLoggerTest {
         // The policy2 was changed
         policy2.setReplicationAllowed(true);
         policy2.setNumberReplicas(1);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -493,7 +493,7 @@ public class SystemMetadataDeltaLoggerTest {
         policy2.addBlockedMemberNode(node5);
         policy2.addBlockedMemberNode(node4);
         sysmeta1.setReplicationPolicy(policy2);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -504,7 +504,7 @@ public class SystemMetadataDeltaLoggerTest {
         // Add a new blocked node
         policy1.addBlockedMemberNode(node6);
         sysmeta.setReplicationPolicy(policy1);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -545,7 +545,7 @@ public class SystemMetadataDeltaLoggerTest {
 
         // One doesn't have access rules, the another has
         sysmeta1.setReplicationPolicy(null);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -611,7 +611,7 @@ public class SystemMetadataDeltaLoggerTest {
         sysmeta1.addReplica(replica4);
         sysmeta1.addReplica(replica5);
         sysmeta1.addReplica(replica6);
-        String difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        String difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(difference);
         JsonNode changes = root.path("changes");
@@ -625,7 +625,7 @@ public class SystemMetadataDeltaLoggerTest {
         sysmeta1.addReplica(replica6);
         sysmeta1.addReplica(replica5);
         assertEquals(3, sysmeta1.getReplicaList().size());
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -634,13 +634,13 @@ public class SystemMetadataDeltaLoggerTest {
 
         // One status change matters
         replica5.setReplicationStatus(ReplicationStatus.COMPLETED);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
         assertEquals(2, changes.size(), "Expected exactly two changed field");
         assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -692,7 +692,7 @@ public class SystemMetadataDeltaLoggerTest {
 
         // Reset time matters. First reset the status.
         replica5.setReplicationStatus(ReplicationStatus.FAILED);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -700,7 +700,7 @@ public class SystemMetadataDeltaLoggerTest {
         assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
         Date now2 = new Date();
         replica5.setReplicaVerified(now2);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -755,7 +755,7 @@ public class SystemMetadataDeltaLoggerTest {
         sysmeta.clearReplicaList();
         sysmeta.setSerialVersion(BigInteger.ONE);
         sysmeta1.setSerialVersion(BigInteger.TWO);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -805,7 +805,7 @@ public class SystemMetadataDeltaLoggerTest {
         mediaType1.setName(mediaTypeStr1);
         // one does have a media type, one doesn't
         sysmeta1.setMediaType(mediaType1);
-        String difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        String difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(difference);
         JsonNode changes = root.path("changes");
@@ -818,7 +818,7 @@ public class SystemMetadataDeltaLoggerTest {
 
         //both have the same media type
         sysmeta.setMediaType(mediaType1);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -827,7 +827,7 @@ public class SystemMetadataDeltaLoggerTest {
 
         // They have different media type
         sysmeta.setMediaType(mediaType);
-        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
