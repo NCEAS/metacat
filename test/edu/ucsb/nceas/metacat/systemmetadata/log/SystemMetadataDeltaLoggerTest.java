@@ -404,7 +404,6 @@ public class SystemMetadataDeltaLoggerTest {
         // One doesn't have access rules, the another has
         sysmeta.setAccessPolicy(null);
         difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
-        System.out.println(difference);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
@@ -543,6 +542,34 @@ public class SystemMetadataDeltaLoggerTest {
             .path("value").asText());
         assertEquals(nodeStr4, ((ArrayNode) node.path("new").path("blockedMemberNodeList")).get(2)
             .path("value").asText());
+
+        // One doesn't have access rules, the another has
+        sysmeta1.setReplicationPolicy(null);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        assertEquals(2, changes.size(), "Expected exactly two changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+        assertTrue(changes.has("replicationPolicy"), "Expected change in 'replicationPolicy'");
+        node = changes.path("replicationPolicy");
+        assertTrue(node.path("old").path("replicationAllowed").booleanValue());
+        assertEquals(2, node.path("old").path("numberReplicas").intValue());
+        assertEquals(2, ((ArrayNode)node.path("old").path("preferredMemberNodeList")).size());
+        assertEquals(nodeStr1, ((ArrayNode) node.path("old").path("preferredMemberNodeList")).get(0)
+            .path("value").asText());
+        assertEquals(nodeStr2, ((ArrayNode) node.path("old").path("preferredMemberNodeList")).get(1)
+            .path("value").asText());
+        assertEquals(4, ((ArrayNode)node.path("old").path("blockedMemberNodeList")).size());
+        assertEquals(nodeStr3, ((ArrayNode) node.path("old").path("blockedMemberNodeList")).get(0)
+            .path("value").asText());
+        assertEquals(nodeStr4, ((ArrayNode) node.path("old").path("blockedMemberNodeList")).get(1)
+            .path("value").asText());
+        assertEquals(nodeStr5, ((ArrayNode) node.path("old").path("blockedMemberNodeList")).get(2)
+            .path("value").asText());
+        assertEquals(nodeStr6, ((ArrayNode) node.path("old").path("blockedMemberNodeList")).get(3)
+            .path("value").asText());
+        assertEquals("null", node.path("new").asText());
     }
 
     /**
@@ -723,6 +750,45 @@ public class SystemMetadataDeltaLoggerTest {
                      ((ArrayNode) node.path("new")).get(2).path("replicationStatus").asText());
         assertEquals(now2.getTime(),
                      ((ArrayNode) node.path("new")).get(2).path("replicaVerified").longValue());
+
+        // One has replicas and the other doesn't
+        sysmeta.clearReplicaList();
+        sysmeta.setSerialVersion(BigInteger.ONE);
+        sysmeta1.setSerialVersion(BigInteger.TWO);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        assertEquals(3, changes.size(), "Expected exactly three changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+        assertTrue(changes.has("replicaList"), "Expected change in 'replicaList'");
+        node = changes.path("replicaList");
+        assertTrue(((ArrayNode)node.path("old")).isEmpty());
+        assertEquals(nodeStr1,
+                     ((ArrayNode) node.path("new")).get(0).path("replicaMemberNode").path("value")
+                         .asText());
+        assertEquals(ReplicationStatus.COMPLETED.xmlValue().toUpperCase(),
+                     ((ArrayNode) node.path("new")).get(0).path("replicationStatus").asText());
+        assertEquals(now.getTime(),
+                     ((ArrayNode) node.path("new")).get(0).path("replicaVerified").longValue());
+        assertEquals(nodeStr3,
+                     ((ArrayNode) node.path("new")).get(1).path("replicaMemberNode").path("value")
+                         .asText());
+        assertEquals(ReplicationStatus.COMPLETED.xmlValue().toUpperCase(),
+                     ((ArrayNode) node.path("new")).get(1).path("replicationStatus").asText());
+        assertEquals(now.getTime(),
+                     ((ArrayNode) node.path("new")).get(1).path("replicaVerified").longValue());
+        assertEquals(nodeStr2,
+                     ((ArrayNode) node.path("new")).get(2).path("replicaMemberNode").path("value")
+                         .asText());
+        assertEquals(ReplicationStatus.FAILED.xmlValue().toUpperCase(),
+                     ((ArrayNode) node.path("new")).get(2).path("replicationStatus").asText());
+        assertEquals(now2.getTime(),
+                     ((ArrayNode) node.path("new")).get(2).path("replicaVerified").longValue());
+        assertTrue(changes.has("serialVersion"), "Expected change in 'serialVersion'");
+        node = changes.path("serialVersion");
+        assertEquals(1, node.path("old").intValue());
+        assertEquals(2, node.path("new").intValue());
     }
 
     /**
