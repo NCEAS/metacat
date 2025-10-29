@@ -914,7 +914,7 @@ service:
 
 ## Startup Probe
 ## Liveness and readiness probes are disabled until the startupProbe passes.
-## If the startupProbe fails more than 'failureThreshold' times, the container is restarted.ß
+## If the startupProbe fails more than 'failureThreshold' times, the container is restarted.
 ## @param startupProbe.enabled Enable startupProbe for the Metacat container
 ## @param startupProbe.httpGet.path The url path to probe during startup
 ##                Note that the context (first path element) must match the
