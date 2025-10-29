@@ -14,6 +14,7 @@ import org.dataone.service.types.v1.Replica;
 import org.dataone.service.types.v1.ReplicationPolicy;
 import org.dataone.service.types.v1.ReplicationStatus;
 import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v2.MediaType;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.junit.Before;
 import org.junit.Test;
@@ -692,5 +693,53 @@ public class SystemMetadataDeltaLoggerTest {
                      ((ArrayNode) node.path("new")).get(2).path("replicationStatus").asText());
         assertEquals(now2.getTime(),
                      ((ArrayNode) node.path("new")).get(2).path("replicaVerified").longValue());
+    }
+
+    /**
+     * Test to compare media types
+     * @throws Exception
+     */
+    @Test
+    public void testCompareMediaType() throws Exception {
+        String mediaTypeStr = "application/msword";
+        String mediaTypeStr1 = "application/x-rar-compressed";
+        MediaType mediaType = new MediaType();
+        mediaType.setName(mediaTypeStr);
+        MediaType mediaType1 = new MediaType();
+        mediaType1.setName(mediaTypeStr1);
+        // one does have a media type, one doesn't
+        sysmeta1.setMediaType(mediaType1);
+        String difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(difference);
+        JsonNode changes = root.path("changes");
+        assertEquals(2, changes.size(), "Expected exactly two changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+        assertTrue(changes.has("mediaType"), "Expected change in 'mediaType'");
+        JsonNode node = changes.path("mediaType");
+        assertEquals("null", node.path("old").asText());
+        assertEquals(mediaTypeStr1, node.path("new").path("name").asText());
+
+        //both have the same media type
+        sysmeta.setMediaType(mediaType1);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        assertEquals(1, changes.size(), "Expected exactly one changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+
+        // They have different media type
+        sysmeta.setMediaType(mediaType);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        assertEquals(2, changes.size(), "Expected exactly two changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+        assertTrue(changes.has("mediaType"), "Expected change in 'mediaType'");
+        node = changes.path("mediaType");
+        assertEquals(mediaTypeStr, node.path("old").path("name").asText());
+        assertEquals(mediaTypeStr1, node.path("new").path("name").asText());
     }
 }
