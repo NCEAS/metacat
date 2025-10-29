@@ -353,4 +353,20 @@ public class SystemMetadataDeltaLogger implements Runnable {
 
         return setA.equals(setB);
     }
+
+    /**
+     * Set a new Long instance. This is for test only.
+     * @param newLogMetacat
+     */
+    static void setLog(Log newLogMetacat) {
+        logMetacat = newLogMetacat;
+    }
+
+    /**
+     * Set a new ExecutorService instance. This is for test only
+     * @param newService
+     */
+    static void setExecutorService(ExecutorService newService) {
+        executorService = newService;
+    }
 }
