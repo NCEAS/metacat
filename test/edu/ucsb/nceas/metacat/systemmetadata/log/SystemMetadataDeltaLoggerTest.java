@@ -105,6 +105,8 @@ public class SystemMetadataDeltaLoggerTest {
         String difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(difference);
+        assertEquals(USER1, root.path("principal").asText());
+        assertTrue(root.has("timestamp"));
         JsonNode changes = root.path("changes");
         // Check that two fields changed
         assertEquals(2, changes.size(), "Expected exactly two changed field");
@@ -128,9 +130,10 @@ public class SystemMetadataDeltaLoggerTest {
         newChecksum.setAlgorithm(sha1);
         newChecksum.setValue(newChecksumStrValue);
         sysmeta1.setChecksum(newChecksum);
-        difference = SystemMetadataDeltaLogger.compare(USER1, sysmeta, sysmeta1);
+        difference = SystemMetadataDeltaLogger.compare(null, sysmeta, sysmeta1);
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
+        assertEquals("null", root.path("principal").asText());
         changes = root.path("changes");
         // Check that three fields changed
         assertEquals(3, changes.size(), "Expected exactly three changed field");
