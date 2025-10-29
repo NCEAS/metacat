@@ -10,7 +10,9 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Permission;
+import org.dataone.service.types.v1.Replica;
 import org.dataone.service.types.v1.ReplicationPolicy;
+import org.dataone.service.types.v1.ReplicationStatus;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.junit.Before;
@@ -476,7 +478,6 @@ public class SystemMetadataDeltaLoggerTest {
         mapper = new ObjectMapper();
         root = mapper.readTree(difference);
         changes = root.path("changes");
-        System.out.println(difference);
         assertEquals(2, changes.size(), "Expected exactly two changed field");
         assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
         assertTrue(changes.has("replicationPolicy"), "Expected change in 'replicationPolicy'");
@@ -511,5 +512,185 @@ public class SystemMetadataDeltaLoggerTest {
             .path("value").asText());
         assertEquals(nodeStr4, ((ArrayNode) node.path("new").path("blockedMemberNodeList")).get(2)
             .path("value").asText());
+    }
+
+    /**
+     * Test the comparison of the replicas
+     * @throws Exception
+     */
+    @Test
+    public void testCompareReplicas() throws Exception {
+        assertTrue(sysmeta.getReplicaList().isEmpty());
+        assertTrue(sysmeta1.getReplicaList().isEmpty());
+        // Same replicas
+        Replica replica1 = new Replica();
+        replica1.setReplicaMemberNode(node1);
+        replica1.setReplicationStatus(ReplicationStatus.COMPLETED);
+        replica1.setReplicaVerified(now);
+        Replica replica2 = new Replica();
+        replica2.setReplicaMemberNode(node2);
+        replica2.setReplicationStatus(ReplicationStatus.FAILED);
+        replica2.setReplicaVerified(now);
+        Replica replica3 = new Replica();
+        replica3.setReplicaMemberNode(node3);
+        replica3.setReplicationStatus(ReplicationStatus.COMPLETED);
+        replica3.setReplicaVerified(now);
+        sysmeta.addReplica(replica1);
+        sysmeta.addReplica(replica2);
+        sysmeta.addReplica(replica3);
+        Replica replica4 = new Replica();
+        replica4.setReplicaMemberNode(node1);
+        replica4.setReplicationStatus(ReplicationStatus.COMPLETED);
+        replica4.setReplicaVerified(now);
+        Replica replica5 = new Replica();
+        replica5.setReplicaMemberNode(node2);
+        replica5.setReplicationStatus(ReplicationStatus.FAILED);
+        replica5.setReplicaVerified(now);
+        Replica replica6 = new Replica();
+        replica6.setReplicaMemberNode(node3);
+        replica6.setReplicationStatus(ReplicationStatus.COMPLETED);
+        replica6.setReplicaVerified(now);
+        sysmeta1.addReplica(replica4);
+        sysmeta1.addReplica(replica5);
+        sysmeta1.addReplica(replica6);
+        String difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(difference);
+        JsonNode changes = root.path("changes");
+        assertEquals(1, changes.size(), "Expected exactly one changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+
+        // Order doesn't matter
+        sysmeta1.clearReplicaList();
+        assertTrue(sysmeta1.getReplicaList().isEmpty());
+        sysmeta1.addReplica(replica4);
+        sysmeta1.addReplica(replica6);
+        sysmeta1.addReplica(replica5);
+        assertEquals(3, sysmeta1.getReplicaList().size());
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        assertEquals(1, changes.size(), "Expected exactly one changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+
+        // One status change matters
+        replica5.setReplicationStatus(ReplicationStatus.COMPLETED);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        assertEquals(2, changes.size(), "Expected exactly two changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        assertEquals(2, changes.size(), "Expected exactly two changed field");
+        assertTrue(changes.has("replicaList"), "Expected change in 'replicaList'");
+        JsonNode node = changes.path("replicaList");
+        assertEquals(nodeStr1,
+                     ((ArrayNode) node.path("old")).get(0).path("replicaMemberNode").path("value")
+                         .asText());
+        assertEquals(ReplicationStatus.COMPLETED.xmlValue().toUpperCase(),
+                     ((ArrayNode) node.path("old")).get(0).path("replicationStatus").asText());
+        assertEquals(now.getTime(),
+                     ((ArrayNode) node.path("old")).get(0).path("replicaVerified").longValue());
+        assertEquals(nodeStr2,
+                     ((ArrayNode) node.path("old")).get(1).path("replicaMemberNode").path("value")
+                         .asText());
+        assertEquals(ReplicationStatus.FAILED.xmlValue().toUpperCase(),
+                     ((ArrayNode) node.path("old")).get(1).path("replicationStatus").asText());
+        assertEquals(now.getTime(),
+                     ((ArrayNode) node.path("old")).get(1).path("replicaVerified").longValue());
+        assertEquals(nodeStr3,
+                     ((ArrayNode) node.path("old")).get(2).path("replicaMemberNode").path("value")
+                         .asText());
+        assertEquals(ReplicationStatus.COMPLETED.xmlValue().toUpperCase(),
+                     ((ArrayNode) node.path("old")).get(2).path("replicationStatus").asText());
+        assertEquals(now.getTime(),
+                     ((ArrayNode) node.path("old")).get(2).path("replicaVerified").longValue());
+        assertEquals(nodeStr1,
+                     ((ArrayNode) node.path("new")).get(0).path("replicaMemberNode").path("value")
+                         .asText());
+        assertEquals(ReplicationStatus.COMPLETED.xmlValue().toUpperCase(),
+                     ((ArrayNode) node.path("new")).get(0).path("replicationStatus").asText());
+        assertEquals(now.getTime(),
+                     ((ArrayNode) node.path("new")).get(0).path("replicaVerified").longValue());
+        assertEquals(nodeStr3,
+                     ((ArrayNode) node.path("new")).get(1).path("replicaMemberNode").path("value")
+                         .asText());
+        assertEquals(ReplicationStatus.COMPLETED.xmlValue().toUpperCase(),
+                     ((ArrayNode) node.path("new")).get(1).path("replicationStatus").asText());
+        assertEquals(now.getTime(),
+                     ((ArrayNode) node.path("new")).get(1).path("replicaVerified").longValue());
+        assertEquals(nodeStr2,
+                     ((ArrayNode) node.path("new")).get(2).path("replicaMemberNode").path("value")
+                         .asText());
+        assertEquals(ReplicationStatus.COMPLETED.xmlValue().toUpperCase(),
+                     ((ArrayNode) node.path("new")).get(2).path("replicationStatus").asText());
+        assertEquals(now.getTime(),
+                     ((ArrayNode) node.path("new")).get(2).path("replicaVerified").longValue());
+
+        // Reset time matters. First reset the status.
+        replica5.setReplicationStatus(ReplicationStatus.FAILED);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        assertEquals(1, changes.size(), "Expected exactly one changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+        Date now2 = new Date();
+        replica5.setReplicaVerified(now2);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        assertEquals(2, changes.size(), "Expected exactly two changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+        assertTrue(changes.has("replicaList"), "Expected change in 'replicaList'");
+        node = changes.path("replicaList");
+        assertEquals(nodeStr1,
+                     ((ArrayNode) node.path("old")).get(0).path("replicaMemberNode").path("value")
+                         .asText());
+        assertEquals(ReplicationStatus.COMPLETED.xmlValue().toUpperCase(),
+                     ((ArrayNode) node.path("old")).get(0).path("replicationStatus").asText());
+        assertEquals(now.getTime(),
+                     ((ArrayNode) node.path("old")).get(0).path("replicaVerified").longValue());
+        assertEquals(nodeStr2,
+                     ((ArrayNode) node.path("old")).get(1).path("replicaMemberNode").path("value")
+                         .asText());
+        assertEquals(ReplicationStatus.FAILED.xmlValue().toUpperCase(),
+                     ((ArrayNode) node.path("old")).get(1).path("replicationStatus").asText());
+        assertEquals(now.getTime(),
+                     ((ArrayNode) node.path("old")).get(1).path("replicaVerified").longValue());
+        assertEquals(nodeStr3,
+                     ((ArrayNode) node.path("old")).get(2).path("replicaMemberNode").path("value")
+                         .asText());
+        assertEquals(ReplicationStatus.COMPLETED.xmlValue().toUpperCase(),
+                     ((ArrayNode) node.path("old")).get(2).path("replicationStatus").asText());
+        assertEquals(now.getTime(),
+                     ((ArrayNode) node.path("old")).get(2).path("replicaVerified").longValue());
+        assertEquals(nodeStr1,
+                     ((ArrayNode) node.path("new")).get(0).path("replicaMemberNode").path("value")
+                         .asText());
+        assertEquals(ReplicationStatus.COMPLETED.xmlValue().toUpperCase(),
+                     ((ArrayNode) node.path("new")).get(0).path("replicationStatus").asText());
+        assertEquals(now.getTime(),
+                     ((ArrayNode) node.path("new")).get(0).path("replicaVerified").longValue());
+        assertEquals(nodeStr3,
+                     ((ArrayNode) node.path("new")).get(1).path("replicaMemberNode").path("value")
+                         .asText());
+        assertEquals(ReplicationStatus.COMPLETED.xmlValue().toUpperCase(),
+                     ((ArrayNode) node.path("new")).get(1).path("replicationStatus").asText());
+        assertEquals(now.getTime(),
+                     ((ArrayNode) node.path("new")).get(1).path("replicaVerified").longValue());
+        assertEquals(nodeStr2,
+                     ((ArrayNode) node.path("new")).get(2).path("replicaMemberNode").path("value")
+                         .asText());
+        assertEquals(ReplicationStatus.FAILED.xmlValue().toUpperCase(),
+                     ((ArrayNode) node.path("new")).get(2).path("replicationStatus").asText());
+        assertEquals(now2.getTime(),
+                     ((ArrayNode) node.path("new")).get(2).path("replicaVerified").longValue());
     }
 }

@@ -243,12 +243,22 @@ public class SystemMetadataDeltaLogger {
         if (aList == null || bList == null) return false;
         if (aList.size() != bList.size()) return false;
 
-        Set<String> setA = aList.stream()
-            .map(r -> r.getReplicaMemberNode().getValue() + "|" + r.getReplicationStatus())
+        Set<String> setA = aList.stream().map(
+                r -> (r.getReplicaMemberNode() == null ? "null" :
+                      r.getReplicaMemberNode().getValue())
+                    + "|" + (r.getReplicationStatus() == null ? "null"
+                                                              : r.getReplicationStatus().xmlValue())
+                    + "|" + (r.getReplicaVerified() == null ? "null"
+                                                            : r.getReplicaVerified().getTime()))
             .collect(Collectors.toSet());
 
-        Set<String> setB = bList.stream()
-            .map(r -> r.getReplicaMemberNode().getValue() + "|" + r.getReplicationStatus())
+        Set<String> setB = bList.stream().map(
+                r -> (r.getReplicaMemberNode() == null ? "null" :
+                      r.getReplicaMemberNode().getValue())
+                    + "|" + (r.getReplicationStatus() == null ? "null"
+                                                              : r.getReplicationStatus().xmlValue())
+                    + "|" + (r.getReplicaVerified() == null ? "null"
+                                                            : r.getReplicaVerified().getTime()))
             .collect(Collectors.toSet());
 
         return setA.equals(setB);
