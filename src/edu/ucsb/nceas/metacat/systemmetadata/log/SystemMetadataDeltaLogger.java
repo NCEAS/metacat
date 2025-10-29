@@ -32,8 +32,7 @@ import java.util.stream.Collectors;
  */
 public class SystemMetadataDeltaLogger {
     private static final String ID = "identifier";
-    private static final ObjectMapper mapper = new ObjectMapper()
-        .enable(SerializationFeature.INDENT_OUTPUT);
+    private static final ObjectMapper mapper = new ObjectMapper();
     // Fields to ignore when comparing SystemMetadata
     private static final Set<String> EXCLUDED_FIELDS = new HashSet<>(Arrays.asList(
         "class",
