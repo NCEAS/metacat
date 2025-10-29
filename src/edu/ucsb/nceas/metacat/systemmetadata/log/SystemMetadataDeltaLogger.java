@@ -38,8 +38,15 @@ public class SystemMetadataDeltaLogger implements Runnable {
     private static final String UNKNOWN = "unknown";
     private static final String ID = "identifier";
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final int THREAD_POOL_SIZE = 2;
     private static Log logMetacat = LogFactory.getLog(SystemMetadataDeltaLogger.class);
-    private static ExecutorService executorService = Executors.newFixedThreadPool(2);
+    private static ExecutorService executorService =
+        Executors.newFixedThreadPool(THREAD_POOL_SIZE, r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            t.setName("SystemMetadataDeltaLogger-" + t.getId());
+            return t;
+        });
 
     private String user;
     private SystemMetadata oldSys;
@@ -64,11 +71,9 @@ public class SystemMetadataDeltaLogger implements Runnable {
      */
     public SystemMetadataDeltaLogger(Session session, SystemMetadata oldSys,
                                      SystemMetadata newSys) {
-        if (session != null && session.getSubject() != null) {
-            new SystemMetadataDeltaLogger(session.getSubject().getValue(), oldSys, newSys);
-        } else {
-            new SystemMetadataDeltaLogger(UNKNOWN, oldSys, newSys);
-        }
+        this((session != null && session.getSubject() != null) ?
+              session.getSubject().getValue() : UNKNOWN, oldSys,
+              newSys);
     }
 
     /**
