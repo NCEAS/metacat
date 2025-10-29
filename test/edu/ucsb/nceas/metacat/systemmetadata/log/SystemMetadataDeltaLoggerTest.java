@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import org.apache.commons.logging.Log;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
@@ -18,17 +19,27 @@ import org.dataone.service.types.v2.MediaType;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Test the SystemMetadataDeltaLogger class
@@ -53,8 +64,23 @@ public class SystemMetadataDeltaLoggerTest {
     private String nodeStr6 = "urn:node:6";
     private NodeReference node6 = new NodeReference();
 
+    private ExecutorService mockExecutor;
+    private Log mockLog;
+
     @Before
     public void setUp() throws Exception {
+        // Mock ExecutorService
+        mockExecutor = Mockito.mock(ExecutorService.class);
+        @SuppressWarnings("unchecked")
+        Future<?> mockFuture = (Future<?>) Mockito.mock(Future.class);
+        doReturn(mockFuture).when(mockExecutor).submit(any(Runnable.class));
+        // Inject the mocked executor into your class (assume setter exists or use reflection)
+        SystemMetadataDeltaLogger.setExecutorService(mockExecutor);
+        // Mock Log
+        mockLog = mock(Log.class);
+        SystemMetadataDeltaLogger.setLog(mockLog);
+
+
         node1.setValue(nodeStr1);
         node2.setValue(nodeStr2);
         node3.setValue(nodeStr3);
@@ -840,5 +866,43 @@ public class SystemMetadataDeltaLoggerTest {
         node = changes.path("mediaType");
         assertEquals(mediaTypeStr, node.path("old").path("name").asText());
         assertEquals(mediaTypeStr1, node.path("new").path("name").asText());
+    }
+
+    /**
+     * Test the log method when trace is disabled - The executor.submit method shouldn't be called.
+     * @throws Exception
+     */
+    @Test
+    public void testLogTraceDisabled() throws Exception {
+        // Arrange
+        when(mockLog.isTraceEnabled()).thenReturn(false);
+        SystemMetadata oldSys = mock(SystemMetadata.class);
+        SystemMetadata newSys = mock(SystemMetadata.class);
+        SystemMetadataDeltaLogger logger =
+            Mockito.spy(new SystemMetadataDeltaLogger("user", oldSys, newSys));
+        // Act
+        logger.log();
+
+        // Assert
+        // Should not submit to executor
+        verify(mockExecutor, never()).submit(any(Runnable.class));
+    }
+
+    /**
+     * Test the log method when trace is enabled - The executor.submit method should be called once.
+     * @throws Exception
+     */
+    @Test
+    public void testLogTraceEnabled() throws Exception {
+        // Arrange
+        when(mockLog.isTraceEnabled()).thenReturn(true);
+        SystemMetadata oldSys = mock(SystemMetadata.class);
+        SystemMetadata newSys = mock(SystemMetadata.class);
+        SystemMetadataDeltaLogger logger =
+            Mockito.spy(new SystemMetadataDeltaLogger("user", oldSys, newSys));
+        logger.log();
+
+        // Verify submit() was called
+        verify(mockExecutor, times(1)).submit(any(Runnable.class));
     }
 }
