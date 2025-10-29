@@ -400,6 +400,36 @@ public class SystemMetadataDeltaLoggerTest {
         assertEquals(
             "CHANGE_PERMISSION",
             ((ArrayNode) (newPolicies.get(3).path("permissionList"))).get(0).asText());
+
+        // One doesn't have access rules, the another has
+        sysmeta.setAccessPolicy(null);
+        difference = SystemMetadataDeltaLogger.compare(sysmeta, sysmeta1);
+        System.out.println(difference);
+        mapper = new ObjectMapper();
+        root = mapper.readTree(difference);
+        changes = root.path("changes");
+        assertEquals(2, changes.size(), "Expected exactly two changed field");
+        assertTrue(changes.has("dateSysMetadataModified"), "Expected change in 'modificationDate'");
+        assertTrue(changes.has("accessPolicy"), "Expected change in 'accessPolicy'");
+        accessPolicyNode = changes.path("accessPolicy");
+        assertEquals("null", accessPolicyNode.path("old").asText());
+        newPolicies = (ArrayNode)(accessPolicyNode.path("new").path("allowList"));
+        assertEquals(4, newPolicies.size());
+        assertEquals(user4, ((ArrayNode)(newPolicies.get(1).path("subjectList"))).get(0).path(
+            "value").asText());
+        assertEquals(
+            "READ", ((ArrayNode) (newPolicies.get(1).path("permissionList"))).get(0).asText());
+        assertEquals(user3, ((ArrayNode)(newPolicies.get(2).path("subjectList"))).get(0).path(
+            "value").asText());
+        assertEquals(user2, ((ArrayNode)(newPolicies.get(2).path("subjectList"))).get(1).path(
+            "value").asText());
+        assertEquals(
+            "READ", ((ArrayNode) (newPolicies.get(2).path("permissionList"))).get(0).asText());
+        assertEquals(user6, ((ArrayNode)(newPolicies.get(3).path("subjectList"))).get(0).path(
+            "value").asText());
+        assertEquals(
+            "CHANGE_PERMISSION",
+            ((ArrayNode) (newPolicies.get(3).path("permissionList"))).get(0).asText());
     }
 
     /**
