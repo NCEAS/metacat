@@ -14,6 +14,7 @@ import java.util.Vector;
 
 import javax.servlet.http.HttpServletResponse;
 
+import edu.ucsb.nceas.metacat.systemmetadata.log.SystemMetadataDeltaLogger;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
@@ -245,6 +246,11 @@ public class MetacatHandler {
                 // Since this is a new object, we don't need to check system metadata version
                 SystemMetadataManager.getInstance().store(sysmeta, changeModificationDate, conn,
                                                 SystemMetadataManager.SysMetaVersion.UNCHECKED);
+                // Since this is a new generated object, the old version of the system metadata
+                // is null for this object
+                SystemMetadataDeltaLogger logger = new SystemMetadataDeltaLogger(user, null,
+                                                                                 sysmeta);
+                logger.log();
                 if (action == Action.UPDATE) {
                     // add the newPid to the obsoletedBy list for the previous sysmeta
                     preSys.setObsoletedBy(pid);
@@ -257,6 +263,9 @@ public class MetacatHandler {
                     // Set changeModifyTime true
                     SystemMetadataManager.getInstance().store(preSys, true, conn,
                                                       SystemMetadataManager.SysMetaVersion.CHECKED);
+                    SystemMetadataDeltaLogger loggerOfObsoleted =
+                        new SystemMetadataDeltaLogger(user, backcopyOfPre, preSys);
+                    loggerOfObsoleted.log();
                 }
                 conn.commit();
             } catch (Exception e) {
