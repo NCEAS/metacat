@@ -1929,6 +1929,7 @@ public class MNodeService extends D1NodeService
                     }
                 }
                 // update the local copy of system metadata for the pid
+                boolean runArchiveMethod = false;
                 try {
                     if (needCheckAuthoriativeNode) {
                         //this is for the v2 api.
@@ -1967,6 +1968,7 @@ public class MNodeService extends D1NodeService
                                     archiveObject(logArchive, session, pid, newSysMeta,
                                                   needUpdateModificationDate,
                                                   SystemMetadataManager.SysMetaVersion.UNCHECKED);
+                                    runArchiveMethod = true;
                                 } catch (NotFound e) {
                                     throw new InvalidRequest("1334",
                                                              "Can't find the pid " + pid.getValue()
@@ -1983,12 +1985,17 @@ public class MNodeService extends D1NodeService
                             }
                         }
                     }
-                    // Set changeModifyTime false
-                    SystemMetadataManager.getInstance()
-                        .store(newSysMeta, false, SystemMetadataManager.SysMetaVersion.UNCHECKED);
-                    logMetacat.info(
-                        "Updated local copy of system metadata for pid " + pid.getValue()
-                            + " after change notification from the CN.");
+
+                    if (!runArchiveMethod) {
+                        // Only run it if the archived method hasn't been called. Otherwise, Metacat
+                        // will save twice.
+                        // Set changeModifyTime false
+                        SystemMetadataManager.getInstance()
+                            .store(newSysMeta, false, SystemMetadataManager.SysMetaVersion.UNCHECKED);
+                        logMetacat.info(
+                            "Updated local copy of system metadata for pid " + pid.getValue()
+                                + " after change notification from the CN.");
+                    }
 
                 } catch (RuntimeException e) {
                     String msg =
