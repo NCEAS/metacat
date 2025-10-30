@@ -33,6 +33,7 @@ import edu.ucsb.nceas.metacat.storage.ObjectInfo;
 import edu.ucsb.nceas.metacat.storage.Storage;
 import edu.ucsb.nceas.metacat.systemmetadata.MCSystemMetadata;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
+import edu.ucsb.nceas.metacat.systemmetadata.log.SystemMetadataDeltaLogger;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
@@ -2036,6 +2037,10 @@ public class MNodeService extends D1NodeService
         } finally {
             SystemMetadataManager.unLock(pid);
         }
+        // Log the system metadata difference
+        SystemMetadataDeltaLogger logger =
+            new SystemMetadataDeltaLogger(session, currentLocalSysMeta, newSysMeta);
+        logger.log();
 
         return true;
 
