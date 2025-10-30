@@ -96,8 +96,13 @@ public class SystemMetadataDeltaLogger implements Runnable {
      * Log the system metadata difference in another thread only when it set the trace debug level
      */
     public void log() {
-        if (logMetacat.isTraceEnabled()) {
-            executorService.submit(this);
+        try {
+            if (logMetacat.isTraceEnabled()) {
+                executorService.submit(this);
+            }
+        } catch (Exception e) {
+            logMetacat.error("Could not submit the system metadata delta log task into a "
+                                 + "executor service since " + e.getMessage());
         }
     }
 
