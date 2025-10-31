@@ -26,6 +26,7 @@ import java.util.concurrent.locks.Lock;
 import javax.servlet.http.HttpServletRequest;
 
 
+import edu.ucsb.nceas.metacat.systemmetadata.log.SystemMetadataDeltaLogger;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.LogFactory;
@@ -1138,6 +1139,9 @@ public abstract class D1NodeService {
             logMetacat.debug("D1Node.update - regularly update the system metadata of the pid "
                                  + pid.getValue());
             updateSystemMetadata(sysmeta, needUpdateModificationDate, sysMetaCheck);
+            SystemMetadataDeltaLogger logger =
+                new SystemMetadataDeltaLogger(session, currentSysmeta, sysmeta);
+            logger.log();
         }
 
         try {
