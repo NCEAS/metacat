@@ -44,6 +44,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -681,6 +682,7 @@ public class DocumentImplIT {
      */
     @Test
     public void testArchiveData() throws Exception {
+        String fileName = "filename";
         DBConnection dbConn = null;
         int serialNumber = -1;
         try {
@@ -733,8 +735,24 @@ public class DocumentImplIT {
             String user = "test";
             // Set changeDateModified false
             SystemMetadataManager.lock(guid);
+            // Set the wrong identifier in the system metadata to make the archive method fail
+            Identifier newId = new Identifier();
+            newId.setValue("foo1");
+            sys.setIdentifier(newId);
+            final SystemMetadata tempSys = sys;
+            assertFalse(tempSys.getArchived());
+            ServiceFailure e = assertThrows(
+                ServiceFailure.class,
+                () -> DocumentImpl.archive(
+                    accnum, guid, user, false,
+                    SystemMetadataManager.SysMetaVersion.UNCHECKED,
+                    tempSys));
+            assertTrue(e.getMessage().contains(newId.getValue()));
+            sys.setIdentifier(guid); //Reset the identifier back to make archive method succeed
+            sys.setFileName(fileName);
+            assertFalse(sys.getArchived());
             DocumentImpl.archive(accnum, guid, user, false,
-                                SystemMetadataManager.SysMetaVersion.UNCHECKED, null);
+                                SystemMetadataManager.SysMetaVersion.UNCHECKED, sys);
             SystemMetadataManager.unLock(guid);
             assertTrue("The identifier table should have value",
                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
@@ -766,6 +784,7 @@ public class DocumentImplIT {
             input.close();
             sys = SystemMetadataManager.getInstance().get(guid);
             assertTrue("System metadata should have archived true", sys.getArchived());
+            assertEquals(fileName, sys.getFileName());
             Date currentDateModified = sys.getDateSysMetadataModified();
             assertEquals("The current dateModified should equal the original one.",
                         originalDateModified.getTime(), currentDateModified.getTime());

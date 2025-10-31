@@ -1031,10 +1031,14 @@ public class DocumentImpl {
                 archiveDocToRevision(conn, docid, rev, user);
                 //update systemmetadata table and solr index
                 if (newSys != null) {
+                    if (!guid.getValue().equals(newSys.getIdentifier().getValue())) {
+                        throw new InvalidRequest("0000", "The identifier in the given system "
+                            + "metadata is " + newSys.getIdentifier().getValue() + " but it "
+                            + "doesn't match the one " + guid.getValue() + " as the method "
+                            + "parameter of DocumentImpl.archive.");
+                    }
                     if (newSys.getArchived() != true) {
-                        throw new InvalidRequest("0000", "The system metadata associated the "
-                            + "archive action for this object " + guid.getValue()+ " should have "
-                            + "the archived field with value of true.");
+                        newSys.setArchived(true);
                     }
                 } else {
                     // No new system coming from the request. Metacat gets it from db
