@@ -14,6 +14,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
+import edu.ucsb.nceas.metacat.systemmetadata.log.SystemMetadataDeltaLogger;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
@@ -144,10 +145,12 @@ public class CNodeService extends D1NodeService
 
         }
 
+        SystemMetadata originalSysmeta;
         SystemMetadata systemMetadata = null;
         try {
             SystemMetadataManager.lock(pid);
             try {
+                originalSysmeta = SystemMetadataManager.getInstance().get(pid);
                 if (IdentifierManager.getInstance().systemMetadataPIDExists(pid)) {
                     systemMetadata = SystemMetadataManager.getInstance().get(pid);
 
@@ -203,7 +206,9 @@ public class CNodeService extends D1NodeService
                     systemMetadata.getSerialVersion().add(BigInteger.ONE));
                 SystemMetadataManager.getInstance().store(systemMetadata);
                 notifyReplicaNodes(systemMetadata);
-
+                SystemMetadataDeltaLogger logger =
+                    new SystemMetadataDeltaLogger(session, originalSysmeta, systemMetadata);
+                logger.log();
             } catch (RuntimeException e) {
                 throw new ServiceFailure("4882", e.getMessage());
 
@@ -282,7 +287,7 @@ public class CNodeService extends D1NodeService
             } catch (SQLException e) {
                 throw new ServiceFailure("4882", e.getMessage());
             }
-
+            SystemMetadata originalSysmeta = SystemMetadataManager.getInstance().get(pid);
             // reflect that change in the system metadata
             List<Replica> updatedReplicas = new ArrayList<Replica>(systemMetadata.getReplicaList());
             for (Replica r : systemMetadata.getReplicaList()) {
@@ -301,6 +306,9 @@ public class CNodeService extends D1NodeService
                 boolean changeModificationDate = false;
                 SystemMetadataManager.getInstance().store(systemMetadata, changeModificationDate,
                                                     SystemMetadataManager.SysMetaVersion.CHECKED);
+                SystemMetadataDeltaLogger logger =
+                    new SystemMetadataDeltaLogger(session, originalSysmeta, systemMetadata);
+                logger.log();
             } catch (RuntimeException e) {
                 throw new ServiceFailure("4882", e.getMessage());
             } catch (InvalidRequest e) {
@@ -591,11 +599,12 @@ public class CNodeService extends D1NodeService
 
         }
 
-
+        SystemMetadata originSysmeta;
         SystemMetadata systemMetadata = null;
         try {
             SystemMetadataManager.lock(pid);
             try {
+                originSysmeta = SystemMetadataManager.getInstance().get(pid);
                 if (IdentifierManager.getInstance().systemMetadataPIDExists(pid)) {
                     systemMetadata = SystemMetadataManager.getInstance().get(pid);
                 }
@@ -652,6 +661,9 @@ public class CNodeService extends D1NodeService
                 systemMetadata.setSerialVersion(
                     systemMetadata.getSerialVersion().add(BigInteger.ONE));
                 SystemMetadataManager.getInstance().store(systemMetadata);
+                SystemMetadataDeltaLogger logger =
+                    new SystemMetadataDeltaLogger(session, originSysmeta, systemMetadata);
+                logger.log();
             } catch (RuntimeException e) {
                 throw new ServiceFailure("4882", e.getMessage());
             }
@@ -849,6 +861,7 @@ public class CNodeService extends D1NodeService
             systemMetadata.setReplicaList(replicas);
 
             // update the metadata
+            SystemMetadata originalSys = SystemMetadataManager.getInstance().get(pid);
             try {
                 systemMetadata.setSerialVersion(
                     systemMetadata.getSerialVersion().add(BigInteger.ONE));
@@ -857,6 +870,9 @@ public class CNodeService extends D1NodeService
                 boolean changeModificationDate = false;
                 SystemMetadataManager.getInstance().store(systemMetadata, changeModificationDate,
                                                     SystemMetadataManager.SysMetaVersion.CHECKED);
+                SystemMetadataDeltaLogger logger =
+                    new SystemMetadataDeltaLogger(session, originalSys, systemMetadata);
+                logger.log();
                 if (!status.equals(ReplicationStatus.QUEUED) && !status.equals(
                     ReplicationStatus.REQUESTED)) {
 
@@ -1286,6 +1302,10 @@ public class CNodeService extends D1NodeService
                 }
                 SystemMetadataManager.getInstance().store(sysmeta, changeModificationDate,
                                                     SystemMetadataManager.SysMetaVersion.UNCHECKED);
+                // null is the original system metadata since this action is to add system metadata
+                SystemMetadataDeltaLogger logger = new SystemMetadataDeltaLogger(session, null,
+                                                                                 sysmeta);
+                logger.log();
             } catch (RuntimeException e) {
                 logMetacat.error("Problem registering system metadata: " + pid.getValue(), e);
                 throw new ServiceFailure(
@@ -1468,7 +1488,7 @@ public class CNodeService extends D1NodeService
                 throw new NotFound("4460", "No record found for: " + pid.getValue());
 
             }
-
+            SystemMetadata originalSysmeta = SystemMetadataManager.getInstance().get(pid);
             // set the new rights holder
             systemMetadata.setRightsHolder(userId);
 
@@ -1478,7 +1498,9 @@ public class CNodeService extends D1NodeService
                     systemMetadata.getSerialVersion().add(BigInteger.ONE));
                 SystemMetadataManager.getInstance().store(systemMetadata);
                 notifyReplicaNodes(systemMetadata);
-
+                SystemMetadataDeltaLogger logger =
+                    new SystemMetadataDeltaLogger(session, originalSysmeta, systemMetadata);
+                logger.log();
             } catch (RuntimeException e) {
                 throw new ServiceFailure("4490", e.getMessage());
 
@@ -1839,6 +1861,7 @@ public class CNodeService extends D1NodeService
 
             }
 
+            SystemMetadata originalSys = SystemMetadataManager.getInstance().get(pid);
             // set the access policy
             systemMetadata.setAccessPolicy(accessPolicy);
 
@@ -1848,7 +1871,9 @@ public class CNodeService extends D1NodeService
                     systemMetadata.getSerialVersion().add(BigInteger.ONE));
                 SystemMetadataManager.getInstance().store(systemMetadata);
                 notifyReplicaNodes(systemMetadata);
-
+                SystemMetadataDeltaLogger logger =
+                    new SystemMetadataDeltaLogger(session, originalSys, systemMetadata);
+                logger.log();
             } catch (RuntimeException e) {
                 // convert Hazelcast RuntimeException to ServiceFailure
                 throw new ServiceFailure("4430", e.getMessage());
@@ -1955,6 +1980,7 @@ public class CNodeService extends D1NodeService
 
             // update the metadata
             try {
+                SystemMetadata originalSysmeta = SystemMetadataManager.getInstance().get(pid);
                 systemMetadata.setSerialVersion(
                     systemMetadata.getSerialVersion().add(BigInteger.ONE));
                 // Based on CN behavior discussion 9/16/15, we no longer want to
@@ -1966,6 +1992,9 @@ public class CNodeService extends D1NodeService
                 if (replicaStatus.equals(ReplicationStatus.COMPLETED)) {
                     notifyReplicaNodes(systemMetadata);
                 }
+                SystemMetadataDeltaLogger logger =
+                    new SystemMetadataDeltaLogger(session, originalSysmeta, systemMetadata);
+                logger.log();
             } catch (RuntimeException e) {
                 logMetacat.info("Unknown RuntimeException thrown: " + e.getCause().getMessage());
                 throw new ServiceFailure("4852", e.getMessage());
