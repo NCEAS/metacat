@@ -493,6 +493,7 @@ public class CNodeService extends D1NodeService
                     + ". We don't support it.");
             }
             boolean needModifyDate = true;
+            sysmeta.setArchived(true);
             archiveCNObjectWithNotificationReplica(session, pid, sysmeta, needModifyDate);
         } finally {
             SystemMetadataManager.unLock(pid);

@@ -734,7 +734,7 @@ public class DocumentImplIT {
             // Set changeDateModified false
             SystemMetadataManager.lock(guid);
             DocumentImpl.archive(accnum, guid, user, false,
-                                SystemMetadataManager.SysMetaVersion.UNCHECKED);
+                                SystemMetadataManager.SysMetaVersion.UNCHECKED, null);
             SystemMetadataManager.unLock(guid);
             assertTrue("The identifier table should have value",
                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
@@ -844,7 +844,7 @@ public class DocumentImplIT {
                     // Set changeDateModified false
                     SystemMetadataManager.lock(guid);
                     DocumentImpl.archive(accnum, guid, user, false,
-                                         SystemMetadataManager.SysMetaVersion.CHECKED);
+                                         SystemMetadataManager.SysMetaVersion.CHECKED, null);
                     fail("Test shouldn't get there since the above method should throw an exception");
                 } catch (Exception e) {
                     SystemMetadataManager.unLock(guid);
@@ -944,7 +944,7 @@ public class DocumentImplIT {
                 // False means not to change the dateModified field
                 SystemMetadataManager.lock(guid);
                 DocumentImpl.archive(accnum, guid, "test", false,
-                                    SystemMetadataManager.SysMetaVersion.CHECKED);
+                                    SystemMetadataManager.SysMetaVersion.CHECKED, null);
                 fail("Test cannot get there since the dataOfModified was change during archive");
             } catch (Exception e) {
                 SystemMetadataManager.unLock(guid);
@@ -954,7 +954,7 @@ public class DocumentImplIT {
             // False means not to change the dateModified field
             SystemMetadataManager.lock(guid);
             DocumentImpl.archive(accnum, guid, "test", false,
-                                SystemMetadataManager.SysMetaVersion.UNCHECKED);
+                                SystemMetadataManager.SysMetaVersion.UNCHECKED, null);
             SystemMetadataManager.unLock(guid);
         }
 
@@ -1094,7 +1094,7 @@ public class DocumentImplIT {
             // Set changeDateModified true
             SystemMetadataManager.lock(guid);
             DocumentImpl.archive(accnum, guid, user, true,
-                                SystemMetadataManager.SysMetaVersion.UNCHECKED);
+                                SystemMetadataManager.SysMetaVersion.UNCHECKED, null);
             SystemMetadataManager.unLock(guid);
             assertTrue("The identifier table should have value",
                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
@@ -1142,7 +1142,7 @@ public class DocumentImplIT {
             // Set changeDateModified true
             SystemMetadataManager.lock(newPid);
             DocumentImpl.archive(accnum2, newPid, user, true,
-                                SystemMetadataManager.SysMetaVersion.CHECKED);
+                                SystemMetadataManager.SysMetaVersion.CHECKED, null);
             SystemMetadataManager.unLock(newPid);
             //check record
             assertTrue("The identifier table should have value",
@@ -1273,7 +1273,7 @@ public class DocumentImplIT {
                     // Set changeDateModified true
                     SystemMetadataManager.lock(guid);
                     DocumentImpl.archive(accnum, guid, user, true,
-                                         SystemMetadataManager.SysMetaVersion.CHECKED);
+                                         SystemMetadataManager.SysMetaVersion.CHECKED, null);
                     fail("The test can't be here since archive should throw an exception");
                 } catch (Exception e) {
                     SystemMetadataManager.unLock(guid);

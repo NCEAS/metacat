@@ -32,6 +32,7 @@ import edu.ucsb.nceas.metacat.service.XMLSchema;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
+import edu.ucsb.nceas.metacat.systemmetadata.log.SystemMetadataDeltaLogger;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
@@ -988,12 +989,14 @@ public class DocumentImpl {
      * @param changeDateModified  if it needs to change the dateModified field in the system metadata
      * @param sysMetaCheck  check whether the version of the provided '@param sysMeta'
      *                       matches the version of the existing system metadata
+     * @param newSys  the new system associated with the archive action. It can be null.
      * @throws SQLException
      * @throws InvalidRequest
      * @throws ServiceFailure
      */
     public static void archive(String accnum, Identifier guid, String user,
-                boolean changeDateModified, SystemMetadataManager.SysMetaVersion sysMetaCheck)
+                boolean changeDateModified, SystemMetadataManager.SysMetaVersion sysMetaCheck,
+                               SystemMetadata newSys)
                                             throws SQLException, InvalidRequest, ServiceFailure {
         if (accnum == null || accnum.isBlank()) {
             throw new InvalidRequest("0000",
@@ -1027,25 +1030,31 @@ public class DocumentImpl {
                 // the xml_documents table and also delete the item from xml_documents
                 archiveDocToRevision(conn, docid, rev, user);
                 //update systemmetadata table and solr index
-                SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(guid);
-                if (sysMeta != null) {
-                    sysMeta.setArchived(true);
-                    SystemMetadataManager.getInstance().store(sysMeta, changeDateModified,
-                                                                conn, sysMetaCheck);
+                if (newSys != null) {
+                    if (newSys.getArchived() != true) {
+                        throw new InvalidRequest("0000", "The system metadata associated the "
+                            + "archive action for this object " + guid.getValue()+ " should have "
+                            + "the archived field with value of true.");
+                    }
                 } else {
-                    throw new InvalidRequest(
-                        "0000", "Can't archive this object " + guid.getValue()
-                        + " since the system metadata can't be found");
+                    // No new system coming from the request. Metacat gets it from db
+                    newSys = SystemMetadataManager.getInstance().get(guid);
+                    newSys.setArchived(true);
                 }
+                SystemMetadataManager.getInstance().store(newSys, changeDateModified,
+                                                                conn, sysMetaCheck);
                 // only commit if all of this was successful
                 conn.commit();
                 try {
                     //followRevisions is set false
-                    MetacatSolrIndex.getInstance().submit(guid, sysMeta, false);
+                    MetacatSolrIndex.getInstance().submit(guid, newSys, false);
                 } catch (Exception ee) {
                     logMetacat.error("DocumentImpl.archive - Metacat failed to submit index task: "
                                                                            + ee.getMessage());
                 }
+                SystemMetadataDeltaLogger logger = new SystemMetadataDeltaLogger(user, backup,
+                                                                                 newSys);
+                logger.log();
             } catch (Exception e) {
                 // rollback the archive action if there was an error
                 StringBuffer error = new StringBuffer();

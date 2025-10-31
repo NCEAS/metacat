@@ -1583,7 +1583,7 @@ public abstract class D1NodeService {
                 + " couldn't be identified since " + e.getMessage());
         }
         try {
-            DocumentImpl.archive(localId, pid, username, changeDateModified, sysMetaCheck);
+            DocumentImpl.archive(localId, pid, username, changeDateModified, sysMetaCheck, sysMeta);
             if (log) {
                 try {
                     EventLog.getInstance()

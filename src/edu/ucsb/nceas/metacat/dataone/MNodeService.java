@@ -3140,6 +3140,7 @@ public class MNodeService extends D1NodeService
                         QuotaServiceManager.ARCHIVEMETHOD);
                 boolean needModifyDate = true;
                 boolean logArchive = true;
+                sysmeta.setArchived(true);
                 super.archiveObject(logArchive, session, pid, sysmeta, needModifyDate,
                                     SystemMetadataManager.SysMetaVersion.CHECKED);
             } catch (InsufficientResources e) {
