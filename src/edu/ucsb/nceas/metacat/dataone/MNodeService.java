@@ -1930,6 +1930,7 @@ public class MNodeService extends D1NodeService
                     }
                 }
                 // update the local copy of system metadata for the pid
+                boolean sysmetaSaved = false;
                 try {
                     if (needCheckAuthoriativeNode) {
                         //this is for the v2 api.
@@ -1968,6 +1969,7 @@ public class MNodeService extends D1NodeService
                                     archiveObject(logArchive, session, pid, newSysMeta,
                                                   needUpdateModificationDate,
                                                   SystemMetadataManager.SysMetaVersion.UNCHECKED);
+                                    sysmetaSaved = true;
                                 } catch (NotFound e) {
                                     throw new InvalidRequest("1334",
                                                              "Can't find the pid " + pid.getValue()
@@ -1985,12 +1987,17 @@ public class MNodeService extends D1NodeService
                         }
                     }
                     // Set changeModifyTime false
-                    SystemMetadataManager.getInstance()
-                        .store(newSysMeta, false, SystemMetadataManager.SysMetaVersion.UNCHECKED);
-                    logMetacat.info(
-                        "Updated local copy of system metadata for pid " + pid.getValue()
-                            + " after change notification from the CN.");
-
+                    if (!sysmetaSaved) {
+                        SystemMetadataManager.getInstance()
+                            .store(newSysMeta, false, SystemMetadataManager.SysMetaVersion.UNCHECKED);
+                        logMetacat.info(
+                            "Updated local copy of system metadata for pid " + pid.getValue()
+                                + " after change notification from the CN.");
+                        // Log the system metadata difference
+                        SystemMetadataDeltaLogger logger =
+                            new SystemMetadataDeltaLogger(session, currentLocalSysMeta, newSysMeta);
+                        logger.log();
+                    }
                 } catch (RuntimeException e) {
                     String msg =
                         "SystemMetadata for pid " + pid.getValue() + " couldn't be updated: "
@@ -2037,13 +2044,7 @@ public class MNodeService extends D1NodeService
         } finally {
             SystemMetadataManager.unLock(pid);
         }
-        // Log the system metadata difference
-        SystemMetadataDeltaLogger logger =
-            new SystemMetadataDeltaLogger(session, currentLocalSysMeta, newSysMeta);
-        logger.log();
-
         return true;
-
     }
 
     /*
