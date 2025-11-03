@@ -6,6 +6,9 @@
 #   export PVC_NAME="your-pvc"
 #   # RMQ_SECRET_NAME is usually in the existing metacat Secret
 #   export RMQ_SECRET_NAME="your-rmq-secret"
+#   # RMQ_SECRET_KEY (optional - defaults to: 'password'): the key associated with the password, in
+#   # the existing metacat Secret. (e.g. Bitnami used 'rabbitmq-password' for this key)
+#   export RMQ_SECRET_KEY="rabbitmq-password"
 #   # See find_objects_to_reindex.py for available CMD_ARGS
 #   export CMD_ARGS="--rabbitmq-host localhost --rabbitmq-username metacat-rmq-guest --interval 15 --other-flags ..."
 #   ./k8s-index-audit.sh
@@ -31,6 +34,7 @@ if [[ -z "${RMQ_SECRET_NAME}" ]]; then
     echo "ERROR: RMQ_SECRET_NAME not set (name of the Secret containing the RabbitMQ password."
     echo "Set it in the environment, e.g.:"
     echo "$  export RMQ_SECRET_NAME='your-existing-metacat-secret'"
+    echo "Note that RMQ_SECRET_KEY can be overridden if needed (defaults to: 'password')"
     exit 1
 fi
 
@@ -43,7 +47,7 @@ FINDER_SCRIPT="find_objects_to_reindex.py"
 MOUNT_PATH="/scripts"   # configMap mount
 PV_MOUNT="/var/metacat" # PVC mount used by scripts
 RMQ_SECRET_NAME="${RMQ_SECRET_NAME:-}"
-RMQ_SECRET_KEY="rabbitmq-password"
+RMQ_SECRET_KEY="${RMQ_SECRET_KEY:-password}"
 
 # CMD_ARGS from first arg or environment
 CMD_ARGS="${1:-${CMD_ARGS:-}}"
