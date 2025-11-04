@@ -216,9 +216,7 @@ public class SystemMetadataDeltaLogger implements Runnable {
         if (oldValue == null || newValue == null) return false;
 
         // Checksum
-        if (oldValue instanceof Checksum && newValue instanceof Checksum) {
-            Checksum oldC = (Checksum) oldValue;
-            Checksum newC = (Checksum) newValue;
+        if (oldValue instanceof Checksum oldC && newValue instanceof Checksum newC) {
             return Objects.equals(oldC.getAlgorithm(), newC.getAlgorithm()) &&
                 Objects.equals(oldC.getValue(), newC.getValue());
         }
