@@ -125,7 +125,7 @@ public class SystemMetadataDeltaLogger implements Runnable {
      * @param newSys  the new version of system metadata
      * @return the delta change in the Json format
      */
-    public static String compare(String user, SystemMetadata oldSys, SystemMetadata newSys)
+    protected static String compare(String user, SystemMetadata oldSys, SystemMetadata newSys)
         throws JsonProcessingException, InvocationTargetException, IllegalAccessException {
         ObjectNode result = mapper.createObjectNode();
         result.put("timestamp", Instant.now().toString());
