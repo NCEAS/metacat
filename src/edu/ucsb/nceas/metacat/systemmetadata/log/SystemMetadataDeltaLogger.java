@@ -88,28 +88,27 @@ public class SystemMetadataDeltaLogger {
      */
     public void log(String user, final SystemMetadata oldSys,
                     final SystemMetadata newSys) {
+        if (!logMetacat.isTraceEnabled()) return;
         if (user == null || user.isBlank()) {
             user = UNKNOWN;
         }
         final String finalUser = user;
         try {
-            if (logMetacat.isTraceEnabled()) {
-                Runnable logRunnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        if (logMetacat.isTraceEnabled()) {
-                            try {
-                                String difference = compare(finalUser, oldSys, newSys);
-                                logMetacat.trace(difference);
-                            } catch (Exception e) {
-                                logMetacat.error("Could not log the system metadata delta since "
-                                                     + e.getMessage());
-                            }
+            Runnable logRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    if (logMetacat.isTraceEnabled()) {
+                        try {
+                            String difference = compare(finalUser, oldSys, newSys);
+                            logMetacat.trace(difference);
+                        } catch (Exception e) {
+                            logMetacat.error("Could not log the system metadata delta since "
+                                                 + e.getMessage());
                         }
                     }
-                };
-                executorService.submit(logRunnable);
-            }
+                }
+            };
+            executorService.submit(logRunnable);
         } catch (Exception e) {
             logMetacat.error("Could not submit the system metadata delta log task into a "
                                  + "executor service since " + e.getMessage());
