@@ -57,6 +57,8 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  */
 public class MetacatHandler {
     private static Log logMetacat = LogFactory.getLog(MetacatHandler.class);
+    private static SystemMetadataDeltaLogger systemMetadataDeltaLogger =
+        new SystemMetadataDeltaLogger();
 
     // Constants -- these should be final in a servlet
     private static final String PROLOG = "<?xml version=\"1.0\"?>";
@@ -248,9 +250,7 @@ public class MetacatHandler {
                                                 SystemMetadataManager.SysMetaVersion.UNCHECKED);
                 // Since this is a new generated object, the old version of the system metadata
                 // is null for this object
-                SystemMetadataDeltaLogger logger = new SystemMetadataDeltaLogger(user, null,
-                                                                                 sysmeta);
-                logger.log();
+                systemMetadataDeltaLogger.log(user, null, sysmeta);
                 if (action == Action.UPDATE) {
                     // add the newPid to the obsoletedBy list for the previous sysmeta
                     preSys.setObsoletedBy(pid);
@@ -263,9 +263,7 @@ public class MetacatHandler {
                     // Set changeModifyTime true
                     SystemMetadataManager.getInstance().store(preSys, true, conn,
                                                       SystemMetadataManager.SysMetaVersion.CHECKED);
-                    SystemMetadataDeltaLogger loggerOfObsoleted =
-                        new SystemMetadataDeltaLogger(user, backcopyOfPre, preSys);
-                    loggerOfObsoleted.log();
+                    systemMetadataDeltaLogger.log(user, backcopyOfPre, preSys);
                 }
                 conn.commit();
             } catch (Exception e) {

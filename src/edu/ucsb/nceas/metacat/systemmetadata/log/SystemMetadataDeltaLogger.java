@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
  * is called.
  * @author Tao
  */
-public class SystemMetadataDeltaLogger implements Runnable {
+public class SystemMetadataDeltaLogger {
     private static final String UNKNOWN = "unknown";
     private static final String ID = "identifier";
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -48,9 +48,6 @@ public class SystemMetadataDeltaLogger implements Runnable {
             return t;
         });
 
-    private String user;
-    private SystemMetadata oldSys;
-    private SystemMetadata newSys;
     // Fields to ignore when comparing SystemMetadata
     private static final Set<String> EXCLUDED_FIELDS = new HashSet<>(Arrays.asList(
         "class",
@@ -64,57 +61,58 @@ public class SystemMetadataDeltaLogger implements Runnable {
     ));
 
     /**
-     * Constructor
-     * @param session  the session who requests the change
-     * @param oldSys  the old version of the system metadata
-     * @param newSys  the new version of the system metadata
+     * Default constructor
      */
-    public SystemMetadataDeltaLogger(Session session, SystemMetadata oldSys,
-                                     SystemMetadata newSys) {
-        this((session != null && session.getSubject() != null) ?
-              session.getSubject().getValue() : UNKNOWN, oldSys,
-              newSys);
-    }
+    public SystemMetadataDeltaLogger() {
 
-    /**
-     * Constructor
-     * @param user  the user who requests the change
-     * @param oldSys  the old version of the system metadata
-     * @param newSys  the new version of the system metadata
-     */
-    public SystemMetadataDeltaLogger(String user, SystemMetadata oldSys,
-                                     SystemMetadata newSys) {
-        this.user = user;
-        if (this.user == null || this.user.isBlank()) {
-            this.user = UNKNOWN;
-        }
-        this.oldSys = oldSys;
-        this.newSys = newSys;
     }
 
     /**
      * Log the system metadata difference in another thread only when it set the trace debug level
+     * @param session  the session who requests the change
+     * @param oldSys  the old version of the system metadata
+     * @param newSys  the new version of the system metadata
      */
-    public void log() {
+    public void log(final Session session, final SystemMetadata oldSys,
+                              final SystemMetadata newSys) {
+        log(
+            (session != null && session.getSubject() != null) ? session.getSubject().getValue()
+                                                              : UNKNOWN, oldSys, newSys);
+    }
+
+    /**
+     * Log the system metadata difference in another thread only when it set the trace debug level
+     * @param user  the user who requests the change
+     * @param oldSys  the old version of the system metadata
+     * @param newSys  the new version of the system metadata
+     */
+    public void log(String user, final SystemMetadata oldSys,
+                    final SystemMetadata newSys) {
+        if (user == null || user.isBlank()) {
+            user = UNKNOWN;
+        }
+        final String finalUser = user;
         try {
             if (logMetacat.isTraceEnabled()) {
-                executorService.submit(this);
+                Runnable logRunnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        if (logMetacat.isTraceEnabled()) {
+                            try {
+                                String difference = compare(finalUser, oldSys, newSys);
+                                logMetacat.trace(difference);
+                            } catch (Exception e) {
+                                logMetacat.error("Could not log the system metadata delta since "
+                                                     + e.getMessage());
+                            }
+                        }
+                    }
+                };
+                executorService.submit(logRunnable);
             }
         } catch (Exception e) {
             logMetacat.error("Could not submit the system metadata delta log task into a "
                                  + "executor service since " + e.getMessage());
-        }
-    }
-
-    @Override
-    public void run() {
-        if (logMetacat.isTraceEnabled()) {
-            try {
-                String difference = compare(user, oldSys, newSys);
-                logMetacat.trace(difference);
-            } catch (Exception e) {
-                logMetacat.error("Could not log the system metadata delta since " + e.getMessage());
-            }
         }
     }
 

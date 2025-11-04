@@ -879,9 +879,9 @@ public class SystemMetadataDeltaLoggerTest {
         SystemMetadata oldSys = mock(SystemMetadata.class);
         SystemMetadata newSys = mock(SystemMetadata.class);
         SystemMetadataDeltaLogger logger =
-            Mockito.spy(new SystemMetadataDeltaLogger("user", oldSys, newSys));
+            Mockito.spy(new SystemMetadataDeltaLogger());
         // Act
-        logger.log();
+        logger.log("user", oldSys, newSys);
 
         // Assert
         // Should not submit to executor
@@ -899,8 +899,8 @@ public class SystemMetadataDeltaLoggerTest {
         SystemMetadata oldSys = mock(SystemMetadata.class);
         SystemMetadata newSys = mock(SystemMetadata.class);
         SystemMetadataDeltaLogger logger =
-            Mockito.spy(new SystemMetadataDeltaLogger("user", oldSys, newSys));
-        logger.log();
+            Mockito.spy(new SystemMetadataDeltaLogger());
+        logger.log("user", oldSys, newSys);
 
         // Verify submit() was called
         verify(mockExecutor, times(1)).submit(any(Runnable.class));

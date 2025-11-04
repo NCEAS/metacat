@@ -1994,9 +1994,7 @@ public class MNodeService extends D1NodeService
                             "Updated local copy of system metadata for pid " + pid.getValue()
                                 + " after change notification from the CN.");
                         // Log the system metadata difference
-                        SystemMetadataDeltaLogger logger =
-                            new SystemMetadataDeltaLogger(session, currentLocalSysMeta, newSysMeta);
-                        logger.log();
+                        systemMetadataDeltaLogger.log(session, currentLocalSysMeta, newSysMeta);
                     }
                 } catch (RuntimeException e) {
                     String msg =
@@ -2114,9 +2112,7 @@ public class MNodeService extends D1NodeService
                     // Set needToUpdateModificationTime true
                     this.updateSystemMetadata(sysmeta, true,
                                               SystemMetadataManager.SysMetaVersion.CHECKED);
-                    SystemMetadataDeltaLogger logger =
-                        new SystemMetadataDeltaLogger(session, originalSysmeta, sysmeta);
-                    logger.log();
+                    systemMetadataDeltaLogger.log(session, originalSysmeta, sysmeta);
                 }
             } finally {
                 SystemMetadataManager.unLock(pid);

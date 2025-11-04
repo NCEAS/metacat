@@ -138,6 +138,8 @@ public class DocumentImpl {
     protected long rootnodeid;
 
     private static Log logMetacat = LogFactory.getLog(DocumentImpl.class);
+    private static SystemMetadataDeltaLogger systemMetadataDeltaLogger =
+        new SystemMetadataDeltaLogger();
 
     /**
      * Default constructor
@@ -1056,9 +1058,7 @@ public class DocumentImpl {
                     logMetacat.error("DocumentImpl.archive - Metacat failed to submit index task: "
                                                                            + ee.getMessage());
                 }
-                SystemMetadataDeltaLogger logger = new SystemMetadataDeltaLogger(user, backup,
-                                                                                 newSys);
-                logger.log();
+                systemMetadataDeltaLogger.log(user, backup, newSys);
             } catch (Exception e) {
                 // rollback the archive action if there was an error
                 StringBuffer error = new StringBuffer();

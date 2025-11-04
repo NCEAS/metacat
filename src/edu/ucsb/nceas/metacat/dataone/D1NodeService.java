@@ -101,6 +101,8 @@ public abstract class D1NodeService {
 
     /* reference to the metacat handler */
     protected static MetacatHandler handler = new MetacatHandler();
+    protected static SystemMetadataDeltaLogger systemMetadataDeltaLogger =
+        new SystemMetadataDeltaLogger();
 
     /**
      * limit paged results sets to a configured maximum
@@ -1139,9 +1141,7 @@ public abstract class D1NodeService {
             logMetacat.debug("D1Node.update - regularly update the system metadata of the pid "
                                  + pid.getValue());
             updateSystemMetadata(sysmeta, needUpdateModificationDate, sysMetaCheck);
-            SystemMetadataDeltaLogger logger =
-                new SystemMetadataDeltaLogger(session, currentSysmeta, sysmeta);
-            logger.log();
+            systemMetadataDeltaLogger.log(session, currentSysmeta, sysmeta);
         }
 
         try {
