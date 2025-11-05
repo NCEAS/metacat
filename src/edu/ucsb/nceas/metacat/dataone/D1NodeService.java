@@ -26,6 +26,7 @@ import java.util.concurrent.locks.Lock;
 import javax.servlet.http.HttpServletRequest;
 
 
+import edu.ucsb.nceas.metacat.systemmetadata.log.SystemMetadataDeltaLogger;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.LogFactory;
@@ -100,6 +101,8 @@ public abstract class D1NodeService {
 
     /* reference to the metacat handler */
     protected static MetacatHandler handler = new MetacatHandler();
+    protected static SystemMetadataDeltaLogger systemMetadataDeltaLogger =
+        new SystemMetadataDeltaLogger();
 
     /**
      * limit paged results sets to a configured maximum
@@ -1138,6 +1141,7 @@ public abstract class D1NodeService {
             logMetacat.debug("D1Node.update - regularly update the system metadata of the pid "
                                  + pid.getValue());
             updateSystemMetadata(sysmeta, needUpdateModificationDate, sysMetaCheck);
+            systemMetadataDeltaLogger.log(session, currentSysmeta, sysmeta);
         }
 
         try {
@@ -1583,7 +1587,7 @@ public abstract class D1NodeService {
                 + " couldn't be identified since " + e.getMessage());
         }
         try {
-            DocumentImpl.archive(localId, pid, username, changeDateModified, sysMetaCheck);
+            DocumentImpl.archive(localId, pid, username, changeDateModified, sysMetaCheck, sysMeta);
             if (log) {
                 try {
                     EventLog.getInstance()
