@@ -8,11 +8,13 @@ import sys
 import time
 import xml.etree.ElementTree as ET
 
+
 # Third-party
 import requests
 
 # --- Configurable parameters ---
-INTERVAL_MINUTES = 15
+INTERVAL_MINUTES = 10
+DELAY_MINUTES = 10
 ERROR_UNSET = "ERROR_NOT_SET"
 RESULTS_FILE_PATH = "/var/metacat/.metacat/reindex-script/pids_to_process.txt"
 REINDEX_SCRIPT_PATH = "submit_index_task_to_rabbitmq.py"
@@ -21,7 +23,7 @@ def get_iso_date(minutes_ago):
     dt = datetime.utcnow() - timedelta(minutes=minutes_ago)
     return dt.strftime("%Y-%m-%dT%H:%M:%S")
 
-def fetch_db_results(from_date, retries=3, timeout=10):
+def fetch_db_results(from_date, to_date, retries=3, timeout=10):
     """
     Fetch objectInfo entries from the Metacat service.
     :param from_date: ISO 8601 date string (e.g. "2023-10-01T12:00:00")
@@ -33,7 +35,10 @@ def fetch_db_results(from_date, retries=3, timeout=10):
     - Validates that the response looks like XML and prints a short debug snippet
       if it doesn't.
     """
-    url = METACAT_URL_TEMPLATE.format(date=from_date)
+    url = METACAT_URL_TEMPLATE.format(from_date=from_date, to_date=to_date)
+    print("from_date: ", from_date)
+    print("to_date:   ", to_date)
+    print("url:       ", url)
 
     for attempt in range(1, retries + 1):
         try:
@@ -163,7 +168,7 @@ def write_to_file(identifiers, file_path):
 
 def archive_old_results():
     """
-    rename the reindex script by appending "_" + run_ts (sanitize colons)
+    rename the previous results by appending "_" + run_ts (sanitize colons)
     """
     src = RESULTS_FILE_PATH
     run_ts = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
@@ -201,20 +206,56 @@ def clean_old_result_files(results_path, days=30):
 
     return removed
 
+def needs_catchup(results_path, start_time):
+    """
+    If the most-recent log file is older than 'start_time', return its timestamp. Otherwise
+    return None.
+    Used to determine whether a "catch-up" run is needed, to reindex any that were missed
+    :param results_path: base path, e.g. `RESULTS_FILE_PATH`
+    :param start_time: epoch timestamp calculated from (current time - interval - delay)
+    :return: timestamp of most-recent log file if older than start_time, else None
+    """
+    pattern = f"{results_path}_*"
+    matching_files = [
+        path for path in glob.glob(pattern)
+        if os.path.isfile(path)
+    ]
+
+    if not matching_files:
+        return None
+
+    # Sort by modification time, newest first
+    try:
+        most_recent_file = max(matching_files, key=os.path.getmtime)
+        print("most_recent_file: ", most_recent_file)
+        most_recent_mtime = os.path.getmtime(most_recent_file)
+        print("most_recent_mtime: ", most_recent_mtime)
+    except (OSError, ValueError):
+        return None
+
+    start_timestamp = datetime.fromisoformat(start_time.replace('Z', '+00:00')).timestamp()
+    print("start_timestamp: ", start_timestamp)
+    if most_recent_mtime < (start_timestamp - 60000):  # 1 minute error margin (60,000mS)
+        dt = datetime.utcfromtimestamp(most_recent_mtime)
+        return dt.strftime("%Y-%m-%dT%H:%M:%S")
+
+    return None
+
 def main():
     """
     Main function to find objects to reindex and optionally submit them.
     1. Parse command-line arguments.
     2. Fetch results from Metacat and Solr.
     3. Compare results and find identifiers to reindex.
-    4. Write identifiers to a file.
+    4. Write identifiers to a file with a timestamp.
     5. Optionally call the RabbitMQ submission script.
-    6. Archive the identifiers file by renaming it with a timestamp.
     """
-    global METACAT_HOST, SOLR_HOST, METACAT_URL_TEMPLATE, SOLR_URL_TEMPLATE, ERROR_UNSET
+    global METACAT_HOST, SOLR_HOST, METACAT_URL_TEMPLATE, SOLR_URL_TEMPLATE, ERROR_UNSET, \
+        INTERVAL_MINUTES, DELAY_MINUTES
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--interval", type=int, default=INTERVAL_MINUTES, help="Interval in minutes")
+    parser.add_argument("--delay", type=int, default=DELAY_MINUTES, help="Delay in minutes")
     parser.add_argument("--submit", action="store_true", help="Call RabbitMQ submit script after writing file")
     parser.add_argument("--rmq-user", dest="rmq_user", help="RabbitMQ username")
     parser.add_argument("--rmq-host", default=None, help="Host for RabbitMQ (overrides default)")
@@ -227,21 +268,31 @@ def main():
     METACAT_HOST = args.metacat_host
     SOLR_HOST = args.solr_host
     RABBITMQ_HOST = args.rmq_host
-    METACAT_URL_TEMPLATE = f"https://{METACAT_HOST}/metacat/d1/mn/v2/object?fromDate={{date}}"
+    METACAT_URL_TEMPLATE = (f"https://{METACAT_HOST}/metacat/d1/mn/v2/object?fromDate={{from_date}}&toDate={{to_date}}")
     SOLR_URL_TEMPLATE = (
         f"http://{SOLR_HOST}:8983/solr/metacat-index/select?"
         "q=dateModified:[{date}Z%20TO%20NOW]&fl=id,dateModified&rows=1000000&wt=json"
     )
 
-    from_date = get_iso_date(args.interval)
+    from_date = get_iso_date(args.interval + args.delay)
+
+    catchup_date = needs_catchup(RESULTS_FILE_PATH, from_date)
+    if (catchup_date):
+        print("Needs a catch-up run; adjusting from_date to last run time: ", catchup_date)
+        from_date = catchup_date
+    else:
+        print("Up to date - no catch-up needed.")
+
+    to_date = get_iso_date(args.delay)
 
     if args.debug:
         print("from_date:", from_date)
-        print("METACAT_URL_TEMPLATE:", METACAT_URL_TEMPLATE.format(date=from_date))
+        print("to_date:", to_date)
+        print("METACAT_URL_TEMPLATE:", METACAT_URL_TEMPLATE.format(from_date=from_date, to_date=to_date))
         print("SOLR_URL_TEMPLATE:", SOLR_URL_TEMPLATE.format(date=from_date))
 
     try:
-        db_results = fetch_db_results(from_date)
+        db_results = fetch_db_results(from_date, to_date)
         solr_results = fetch_solr_results(from_date)
     except requests.exceptions.RequestException as e:
         print("Network error while contacting remote service:")
