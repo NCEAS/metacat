@@ -5,12 +5,13 @@ import os
 import pika
 import sys
 import time  # For potential delays or timeouts
+from datetime import datetime
 
 # --- Configuration ---
 # If the type of the index task is systemMetacat_change_only
 SYSMETA_CHANGE_ONLY = False
 # Path to the output file for logging successfully processed PIDs
-RESULTS_FILE_PATH = "/var/metacat/.metacat/reindex-script/sysmeta-processed.txt"
+RESULTS_FILE_BASEPATH = "/var/metacat/.metacat/reindex-script/sysmeta-processed"
 # RabbitMQ URL
 RABBITMQ_HOST = "localhost"
 # RabbitMQ port number
@@ -107,6 +108,8 @@ def main():
     """
     Main function to read PIDs from a file and process them using a thread pool.
     """
+    global RESULTS_FILE_PATH
+
     arguments = sys.argv[1:]
     if len(arguments) >= 2:
         rabbitmq_username, rabbitmq_password, *rest = arguments
@@ -117,6 +120,11 @@ def main():
         print("Usage: python3 submit_index_task_to_rabbitmq.py rabbitmq_username "
               "rabbitmq_password [rabbitmq_hostname optional; default localhost]")
         sys.exit()
+
+    # Add timestamp to results filename
+    run_ts = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
+    safe_ts = run_ts.replace(":", "-")
+    RESULTS_FILE_PATH = f"{RESULTS_FILE_BASEPATH}_{safe_ts}.txt"
 
     # Ensure the directory for results_file_path exists
     try:
