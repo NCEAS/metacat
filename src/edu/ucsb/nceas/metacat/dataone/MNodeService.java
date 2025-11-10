@@ -33,6 +33,7 @@ import edu.ucsb.nceas.metacat.storage.ObjectInfo;
 import edu.ucsb.nceas.metacat.storage.Storage;
 import edu.ucsb.nceas.metacat.systemmetadata.MCSystemMetadata;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
+import edu.ucsb.nceas.metacat.systemmetadata.log.SystemMetadataDeltaLogger;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
@@ -1929,6 +1930,7 @@ public class MNodeService extends D1NodeService
                     }
                 }
                 // update the local copy of system metadata for the pid
+                boolean sysmetaSaved = false;
                 try {
                     if (needCheckAuthoriativeNode) {
                         //this is for the v2 api.
@@ -1967,6 +1969,7 @@ public class MNodeService extends D1NodeService
                                     archiveObject(logArchive, session, pid, newSysMeta,
                                                   needUpdateModificationDate,
                                                   SystemMetadataManager.SysMetaVersion.UNCHECKED);
+                                    sysmetaSaved = true;
                                 } catch (NotFound e) {
                                     throw new InvalidRequest("1334",
                                                              "Can't find the pid " + pid.getValue()
@@ -1984,12 +1987,15 @@ public class MNodeService extends D1NodeService
                         }
                     }
                     // Set changeModifyTime false
-                    SystemMetadataManager.getInstance()
-                        .store(newSysMeta, false, SystemMetadataManager.SysMetaVersion.UNCHECKED);
-                    logMetacat.info(
-                        "Updated local copy of system metadata for pid " + pid.getValue()
-                            + " after change notification from the CN.");
-
+                    if (!sysmetaSaved) {
+                        SystemMetadataManager.getInstance()
+                            .store(newSysMeta, false, SystemMetadataManager.SysMetaVersion.UNCHECKED);
+                        logMetacat.info(
+                            "Updated local copy of system metadata for pid " + pid.getValue()
+                                + " after change notification from the CN.");
+                        // Log the system metadata difference
+                        systemMetadataDeltaLogger.log(session, currentLocalSysMeta, newSysMeta);
+                    }
                 } catch (RuntimeException e) {
                     String msg =
                         "SystemMetadata for pid " + pid.getValue() + " couldn't be updated: "
@@ -2036,9 +2042,7 @@ public class MNodeService extends D1NodeService
         } finally {
             SystemMetadataManager.unLock(pid);
         }
-
         return true;
-
     }
 
     /*
@@ -2075,7 +2079,7 @@ public class MNodeService extends D1NodeService
     }
 
     private SystemMetadata makePublicIfNot(SystemMetadata sysmeta, Identifier pid,
-        boolean needIndex)
+        boolean needIndex, Session session)
         throws ServiceFailure, InvalidToken, NotFound, NotImplemented, InvalidRequest {
         // check if it is publicly readable
         boolean isPublic = false;
@@ -2094,6 +2098,7 @@ public class MNodeService extends D1NodeService
             // well, certainly not authorized for public read!
         }
         if (!isPublic) {
+            SystemMetadata originalSysmeta = SystemMetadataManager.getInstance().get(pid);
             try {
                 SystemMetadataManager.lock(pid);
                 if (sysmeta.getAccessPolicy() != null) {
@@ -2107,6 +2112,7 @@ public class MNodeService extends D1NodeService
                     // Set needToUpdateModificationTime true
                     this.updateSystemMetadata(sysmeta, true,
                                               SystemMetadataManager.SysMetaVersion.CHECKED);
+                    systemMetadataDeltaLogger.log(session, originalSysmeta, sysmeta);
                 }
             } finally {
                 SystemMetadataManager.unLock(pid);
@@ -2357,7 +2363,7 @@ public class MNodeService extends D1NodeService
         sysmeta.setObsoletedBy(null);
 
         // ensure it is publicly readable
-        sysmeta = makePublicIfNot(sysmeta, originalIdentifier, false);
+        sysmeta = makePublicIfNot(sysmeta, originalIdentifier, false, session);
 
         //Get the bytes
         InputStream inputStream = null;
@@ -2472,7 +2478,7 @@ public class MNodeService extends D1NodeService
                 oreSysMeta.setFileName("resourceMap_" + newOreIdentifier.getValue() + ".rdf.xml");
 
                 // ensure ORE is publicly readable
-                oreSysMeta = makePublicIfNot(oreSysMeta, potentialOreIdentifier, false);
+                oreSysMeta = makePublicIfNot(oreSysMeta, potentialOreIdentifier, false, session);
                 List<Identifier> dataIdentifiers =
                     modifier.getSubjectsOfDocumentedBy(newIdentifier);
                 // ensure all data objects allow public read
@@ -2480,7 +2486,7 @@ public class MNodeService extends D1NodeService
                     List<String> pidsToSync = new ArrayList<String>();
                     for (Identifier dataId : dataIdentifiers) {
                         SystemMetadata dataSysMeta = this.getSystemMetadata(session, dataId);
-                        dataSysMeta = makePublicIfNot(dataSysMeta, dataId, true);
+                        dataSysMeta = makePublicIfNot(dataSysMeta, dataId, true, session);
                         pidsToSync.add(dataId.getValue());
 
                     }
@@ -3135,6 +3141,7 @@ public class MNodeService extends D1NodeService
                         QuotaServiceManager.ARCHIVEMETHOD);
                 boolean needModifyDate = true;
                 boolean logArchive = true;
+                sysmeta.setArchived(true);
                 super.archiveObject(logArchive, session, pid, sysmeta, needModifyDate,
                                     SystemMetadataManager.SysMetaVersion.CHECKED);
             } catch (InsufficientResources e) {
@@ -3420,14 +3427,14 @@ public class MNodeService extends D1NodeService
         //if the user has the write permission, it will be all set
         authDel.doUpdateAuth(session, existingSysMeta, Permission.WRITE, this.getCurrentNodeId());
         existingSysMeta =
-            makePublicIfNot(existingSysMeta, pid, true);//make the metadata file public
+            makePublicIfNot(existingSysMeta, pid, true, session);//make the metadata file public
         Identifier oreIdentifier = getNewestORE(session, pid);
         if (oreIdentifier != null) {
             //make the result map public
             SystemMetadata oreSysmeta =
                 getSystemMetadataForPID(oreIdentifier, serviceFailureCode, invalidRequestCode,
                     notFoundCode, true);
-            oreSysmeta = makePublicIfNot(oreSysmeta, oreIdentifier, true);
+            oreSysmeta = makePublicIfNot(oreSysmeta, oreIdentifier, true, session);
             if (enforcePublicEntirePackageInPublish) {
                 //make data objects public readable if needed
                 InputStream oreInputStream = this.get(session, oreIdentifier);
@@ -3438,7 +3445,7 @@ public class MNodeService extends D1NodeService
                         ResourceMapModifier.getSubjectsOfDocumentedBy(pid, model);
                     for (Identifier dataId : dataIdentifiers) {
                         SystemMetadata dataSysMeta = this.getSystemMetadata(session, dataId);
-                        dataSysMeta = makePublicIfNot(dataSysMeta, dataId, true);
+                        dataSysMeta = makePublicIfNot(dataSysMeta, dataId, true, session);
                     }
                 }
             }

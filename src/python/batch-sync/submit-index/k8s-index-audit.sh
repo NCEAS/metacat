@@ -10,7 +10,8 @@
 #   # the existing metacat Secret. (e.g. Bitnami used 'rabbitmq-password' for this key)
 #   export RMQ_SECRET_KEY="rabbitmq-password"
 #   # See find_objects_to_reindex.py for available CMD_ARGS
-#   export CMD_ARGS="--rabbitmq-host localhost --rabbitmq-username metacat-rmq-guest --interval 15 --other-flags ..."
+#   export CMD_ARGS="--rabbitmq-host localhost --rabbitmq-username metacat-rmq-guest --interval
+#   15 --delay 10 --other-flags ..."
 #   ./k8s-index-audit.sh
 #
 # Or pass CMD_ARGS as first argument:
@@ -103,6 +104,7 @@ echo "Computed cron schedule:   $SCHEDULE"
 echo
 echo "PVC_NAME:                 $PVC_NAME"
 echo "RMQ_SECRET_NAME:          $RMQ_SECRET_NAME"
+echo "RMQ_SECRET_KEY:           $RMQ_SECRET_KEY"
 echo
 echo "ConfigMap to create:      $CONFIGMAP_NAME"
 echo "CronJob to create:        $CRONJOB_NAME"
@@ -167,10 +169,10 @@ spec:
                   mkdir -p "${PV_MOUNT}/.metacat/reindex-script"
                   pip install --no-cache-dir pika requests || true
                   # run finder script with args taken from configmap key
-                  # run finder script with args taken from configmap key
-                  ARGS="\$(cat '${MOUNT_PATH}/find_objects_args')"
+                  cd ${MOUNT_PATH}
+                  ARGS="\$(cat './find_objects_args')"
                   echo "ARGS: \$ARGS"
-                  python3 -u "${MOUNT_PATH}/${FINDER_SCRIPT}" \$ARGS
+                  python3 -u "./${FINDER_SCRIPT}" \$ARGS
               volumeMounts:
                 - name: metacat-pvc
                   mountPath: ${PV_MOUNT}
