@@ -140,8 +140,8 @@ spec:
             - name: METACAT_RABBITMQ_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-metacat-secrets
-                  key: rabbitmq-password
+                  name: {{ index .Values "dataone-indexer" "rabbitmq" "existingPasswordSecret" }}
+                  key: {{ index .Values "dataone-indexer" "rabbitmq" "passwordKey" }}
                   optional: false
             - name: CATALINA_OPTS
               value: {{ join " " .Values.tomcat.extraCatalinaOpts }}
