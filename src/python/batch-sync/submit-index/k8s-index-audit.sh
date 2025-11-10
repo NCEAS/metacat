@@ -11,7 +11,7 @@
 #   export RMQ_SECRET_KEY="rabbitmq-password"
 #   # See find_objects_to_reindex.py for available CMD_ARGS
 #   export CMD_ARGS="--metacat-host arcticdata.io --solr-host metacatarctic-solr --rmq-host \
-#           localhost --rmq-username metacat-rmq-guest --interval 10 --delay 10 --submit --debug" \
+#           localhost --rmq-user metacat-rmq-guest --interval 10 --delay 10 --submit --debug" \
 #               ./k8s-index-audit.sh
 #
 # Or pass CMD_ARGS as first argument:
