@@ -1552,39 +1552,6 @@
         <delete file="./${name}-src-${release}.tar"/>
     </target>
 
-    <target name="deb-package" depends="distbin"
-            description="create a debian installation package">
-        <delete dir="${deb.pkg.dir}"/>
-        <mkdir dir="${deb.pkg.dir}/DEBIAN"/>
-        <copy todir="${deb.pkg.dir}/DEBIAN" filtering="yes">
-            <fileset dir="./src/scripts/debian"
-                     includes="control postinst"/>
-        </copy>
-
-        <mkdir
-                dir="${deb.pkg.dir}/usr/share/metacat-${metacat.version}"/>
-        <copy
-                todir="${deb.pkg.dir}/usr/share/metacat-${metacat.version}"
-                filtering="yes">
-            <fileset dir="./src/scripts/debian"
-                     excludes="control postinst"/>
-        </copy>
-        <chmod file="${deb.pkg.dir}/DEBIAN/postinst" perm="755"/>
-
-        <copy file="${dist.dir}/${metacat.context}.war"
-              todir="${deb.pkg.dir}/usr/share/metacat-${metacat.version}"/>
-        <copy file="./metacat-bin-${metacat.version}.tar.gz"
-              tofile="${deb.pkg.dir}/metacat_${metacat.version}.orig.tar.gz"/>
-
-        <exec dir="${pkg.dir}" executable="dpkg" os="Linux, Unix"
-              failonerror="true">
-            <arg line="--build debian"/>
-        </exec>
-
-        <move file="${pkg.dir}/debian.deb"
-              tofile="${pkg.dir}/metacat_${metacat.version}${metacat.releaseCandidate}_all.deb"/>
-    </target>
-
     <target name="stylesheettest">
         <xslt in="${input}" out="eml.html"
               style="${style-common-cvsrelpath}/eml-2.0.0/eml-2.0.0.xsl">
