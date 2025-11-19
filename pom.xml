@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.ecoinformatics</groupId>
     <artifactId>metacat</artifactId>
-    <version>3.2.2</version>
+    <version>3.3.0-SNAPSHOT</version>
     <name>metacat</name>
     <packaging>war</packaging>
     <url>http://maven.apache.org</url>
@@ -12,7 +12,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <d1_libclient_version>2.3.1</d1_libclient_version>
         <d1_portal_version>2.3.3</d1_portal_version>
-        <metacat_common_version>3.2.2</metacat_common_version>
+        <metacat_common_version>3.3.0-SNAPSHOT</metacat_common_version>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.source>17</maven.compiler.source>
     </properties>
@@ -44,13 +44,13 @@
             <name>central maven repo1 https</name>
             <url>https://repo1.maven.org/maven2</url>
         </repository>
-        <repository>
-            <id>github</id>
-            <url>https://maven.pkg.github.com/nceas/osti-elink</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
+<!--        <repository>-->
+<!--            <id>github</id>-->
+<!--            <url>https://maven.pkg.github.com/nceas/osti-elink</url>-->
+<!--            <snapshots>-->
+<!--                <enabled>true</enabled>-->
+<!--            </snapshots>-->
+<!--        </repository>-->
     </repositories>
     <!-- Import multiple JUnit BOMs. -->
     <dependencyManagement>
@@ -106,6 +106,10 @@
             <type>jar</type>
             <!-- exclude extraneous artifacts (jars) -->
             <exclusions>
+                <exclusion>
+                  <groupId>edu.uiuc.ncsa.myproxy</groupId>
+                  <artifactId>oa4mp-client-loader-oauth1</artifactId>
+                </exclusion>
                 <exclusion>
                   <groupId>org.jibx</groupId>
                   <artifactId>jibx-tools</artifactId>
