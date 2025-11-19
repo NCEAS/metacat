@@ -44,13 +44,6 @@
             <name>central maven repo1 https</name>
             <url>https://repo1.maven.org/maven2</url>
         </repository>
-<!--        <repository>-->
-<!--            <id>github</id>-->
-<!--            <url>https://maven.pkg.github.com/nceas/osti-elink</url>-->
-<!--            <snapshots>-->
-<!--                <enabled>true</enabled>-->
-<!--            </snapshots>-->
-<!--        </repository>-->
     </repositories>
     <!-- Import multiple JUnit BOMs. -->
     <dependencyManagement>
