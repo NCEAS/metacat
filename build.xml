@@ -559,7 +559,6 @@
                 <include name="**/*.sql"/>
                 <exclude name="**/CVS*"/>
                 <exclude name="**/.#*"/>
-                <exclude name="edu/ucsb/nceas/workflowscheduler/**"/>
             </fileset>
         </copy>
         <available file="lib/style/common/emlb6toeml2" type="dir"
