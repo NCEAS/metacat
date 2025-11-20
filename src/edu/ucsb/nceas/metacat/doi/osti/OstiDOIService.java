@@ -67,7 +67,8 @@ public class OstiDOIService extends DOIService{
                 ostiClient = new OSTIElinkClient(username, password, serviceBaseUrl, errorAgent);
                 String ostiPath =
                     SystemUtil.getContextDir() + FileUtil.getFS() + "style" + FileUtil.getFS()
-                        + "common" + FileUtil.getFS() + "osti" + FileUtil.getFS() + "eml2osti.xsl";
+                        + "common" + FileUtil.getFS() + "osti" + FileUtil.getFS()
+                        + "eml2ostijson.xsl";
                 logMetacat.debug("The osti xsl file path is " + ostiPath);
                 eml2osti = transformerFactory.newTemplates(new StreamSource(ostiPath));
             }
