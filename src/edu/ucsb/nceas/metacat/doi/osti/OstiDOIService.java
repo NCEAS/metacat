@@ -51,7 +51,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  */
 public class OstiDOIService extends DOIService{
     private static Log logMetacat = LogFactory.getLog(OstiDOIService.class);
-    private static Templates eml2osti = null;                                                                      
+    private static Templates eml2osti = null;
     private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();
     
     private OSTIElinkClient ostiClient = null;
@@ -84,7 +84,7 @@ public class OstiDOIService extends DOIService{
     /**
      * Generate a DOI using the DOI service as configured
      * @return  the identifier which was minted by the DOI service
-     * @throws EZIDException
+     * @throws DOIException
      * @throws InvalidRequest
      */
     public Identifier generateDOI() throws DOIException, InvalidRequest {
@@ -101,13 +101,20 @@ public class OstiDOIService extends DOIService{
         }
     }
 
-    
+
     /**
      * Submit the metadata in the osti service for a specific identifier(DOI). The identifier can
      * be a SID or PID
      * This implementation will be call by the registerMetadata on the super class.
      * @param identifier  the identifier to identify the metadata which will be updated
      * @param  sysMeta  the system metadata associated with the identifier
+     * @throws DOIException
+     * @throws NotImplemented
+     * @throws ServiceFailure
+     * @throws InvalidToken
+     * @throws NotFound
+     * @throws IOException
+     * @throws NotAuthorized
      */
     protected void submitDOIMetadata(Identifier identifier, SystemMetadata sysMeta)
         throws DOIException, NotImplemented, ServiceFailure,
@@ -181,20 +188,11 @@ public class OstiDOIService extends DOIService{
      * Make the status of the identifier to be public 
      * @param session  the subjects call the method
      * @param identifer  the identifier of the object which will be published. 
-     * @throws InvalidRequest 
-     * @throws NotImplemented 
-     * @throws NotAuthorized 
-     * @throws ServiceFailure 
-     * @throws InvalidToken 
-     * @throws NotFound
-     * @throws InvalidSystemMetadata 
-     * @throws InsufficientResources 
-     * @throws UnsupportedType 
-     * @throws IdentifierNotUnique 
+     * @throws InvalidRequest
+     * @throws ServiceFailure
      */
-    public void publishIdentifier(Session session, Identifier identifier) throws InvalidToken, 
-    ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, 
-    UnsupportedType, InsufficientResources, InvalidSystemMetadata {
+    public void publishIdentifier(Session session, Identifier identifier)
+        throws ServiceFailure, InvalidRequest {
         if (!doiEnabled) {
             throw new InvalidRequest("2193", "DOI scheme is not enabled at this node.");
         }
@@ -251,6 +249,7 @@ public class OstiDOIService extends DOIService{
      * @param doi  the identifier to identify the OSTI metadata
      * @return  the OSTI metadata associated with the identifier
      * @throws OSTIElinkException
+     * @throws InvalidRequest
      */
     public String getMetadata(Identifier doi) throws OSTIElinkException, InvalidRequest {
         if (!doiEnabled) {
