@@ -10,10 +10,12 @@ Metacat is repository software for preserving data and metadata (documentation a
 > 2. If you are considering **migrating an existing Metacat installation to Kubernetes**, note that ***before starting a migration, you must have a fully-functioning installation of Metacat version 2.19, running with PostgreSQL version 14. Migrating from other versions of Metacat and/or PostgreSQL is not supported.*** See [this checklist](./admin/MetacatQuickRef.md) for the necessary migration steps.
 >
 >
-> 3. If you are upgrading from a previous Helm Chart major version (e.g. from chart v1.2.0 to chart v.2.0.0), first check the [Metacat Release Notes](../RELEASE-NOTES.md) to see if this involves a change in the major version of the PostgreSQL application deployed by the included Bitnami PostgreSQL sub-chart. If it does, manual intervention may be required -- see the [Major Version Upgrades](#major-version-upgrades) section.
+> 3. If you are upgrading from a previous Helm Chart major version (e.g. from chart v1.2.0 to chart v.2.0.0), first check the [Metacat Release Notes](../RELEASE-NOTES.md) to determine whether you will need to take specific actions before or during the upgrade (for example, if there is a change in the major version of the underlying **PostgreSQL** application). -- see the [Major Version Upgrades](#major-version-upgrades) section.
 >
 >
-> 4. This deployment does not currently work on Apple Silicon machines (e.g. in Rancher Desktop), because the official Docker image for at least one of the dependencies (RabbitMQ) doesn't yet work in that environment.
+> 4. This chart assumes you have:
+>    - a pre-existing PostgreSQL database. We recommend CloudNative PG - see [Appendix 5](#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg) to create a PostgreSQL cluster.
+>    - the RabbitMQ Cluster Operator installed on your Kubernetes cluster - see [Appendix 6](#appendix-6-the-rabbitmq-cluster-operator).
 
 ---
 
@@ -38,6 +40,7 @@ Metacat is repository software for preserving data and metadata (documentation a
   - [Appendix 3: Troubleshooting Mutual Authentication](#appendix-3-troubleshooting-mutual-authentication)
   - [Appendix 4: Debugging and Logging](#appendix-4-debugging-and-logging)
   - [Appendix 5: Initial Creation of a PostgreSQL Cluster using CloudNative PG](#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg)
+  - [Appendix 6: The RabbitMQ Cluster Operator](#appendix-6-the-rabbitmq-cluster-operator)
 
 ---
 
@@ -48,9 +51,9 @@ This chart deploys a [Metacat](https://github.com/NCEAS/metacat) deployment on a
 ## TL;DR
 
 > [!NOTE]
-> This chart assumes you have a pre-existing PostgreSQL database (deployed either within or outside your Kubernetes cluster). We recommend CloudNative PG - see [Appendix 5](#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg) to create a PostgreSQL cluster.
+> This chart assumes you have a pre-existing PostgreSQL database (deployed either within or outside your Kubernetes cluster) and the RabbitMQ Cluster Operator pre-installed - see [Appendix 5](#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg) and [Appendix 6](#appendix-6-the-rabbitmq-cluster-operator) for details.
 
-1. You should not need to edit much in [values.yaml](./values.yaml), but you can look at the contents of the values override files (like the ones in the [./examples directory](./examples)), to see which settings typically need to be overridden (e.g. your postrges connection params, plus any values that contain the release name). Save your settings in a yaml file, e.g: `/path/to/your/values-overrides.yaml`
+1. You should not need to edit much in [values.yaml](./values.yaml), but you can look at the contents of the values override files (like the ones in the [./examples directory](./examples)), to see which settings typically need to be overridden (e.g. your postrgeSQL connection params, plus any values that contain the release name). Save your settings in a yaml file, e.g: `/path/to/your/values-overrides.yaml`
 2. Add your credentials to [./admin/secrets.yaml](helm/admin/secret--metacat.yaml), and add to cluster:
 
     ```shell
@@ -75,10 +78,11 @@ are available...
 
 ## Prerequisites
 
-- Kubernetes 1.23.3+
-- Helm 3.16.1+
+- Kubernetes 1.26+
+- Helm 3.18.6+
 - A pre-existing PostgreSQL database. We recommend using the [CloudNative PG Operator v1.27.0+](https://cloudnative-pg.io/), although any suitable PostgreSQL database may be used (deployed either within or outside your Kubernetes cluster).
 - The Kubernetes open source community version of [the nginx ingress controller](https://kubernetes.github.io/ingress-nginx/) (see the [Networking section](#networking-and-certificates), below).
+- The [RabbitMQ Cluster Operator](https://www.rabbitmq.com/kubernetes/operator/operator-overview) installed on your Kubernetes cluster. Alternatively, metacat can be configured to use your existing RabbitMQ instance; see [Appendix 6](#appendix-6-the-rabbitmq-cluster-operator).
 
 ## Installing the Chart
 
@@ -127,7 +131,7 @@ The `helm uninstall` command removes all the Kubernetes components associated wi
 > [!IMPORTANT]
 > If you are upgrading across **major** versions of the Metacat Helm chart (e.g. from chart 1.x.x to chart 2.x.x), always check the [Metacat Release Notes](../RELEASE-NOTES.md) to determine whether you will need to take specific actions before or during the upgrade (for example, if there is a change in the major version of the underlying **PostgreSQL** application).
 
-### Upgrading from the Bitnami PostgreSQL sub-chart to the CloudNative PG Operator
+### Migrating from the Bitnami PostgreSQL sub-chart to the CloudNative PG Operator
 
 The Metacat chart now assumes you will provide your own PostgreSQL instance, and the chart needs only its connection parameters. If you wish to use the CloudNative PG Operator to deploy your PostgreSQL cluster, follow the instructions in [Appendix 5: Initial Creation of a PostgreSQL Cluster using CloudNative PG](#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg)
 
@@ -135,6 +139,16 @@ The Metacat chart now assumes you will provide your own PostgreSQL instance, and
 
 These scenarios will be covered in future releases. In the meantime, please refer to the [CloudNative PG documentation](https://cloudnative-pg.io/documentation/current/postgres_upgrades/).
 
+### Migrating from the Bitnami RabbitMQ (sub-)sub-chart to the RabbitMQ Cluster Operator
+
+> [!CAUTION]
+> We recommend that your application is in read-only mode and your RabbitMQ queue is drained before performing this migration, otherwise indexing tasks may not be completed.
+
+The indexer subchart now relies on the RabbitMQ Cluster Operator, instead of using the Bitnami RabbitMQ (sub-)sub-chart. Please follow the instructions in [Appendix 6: The RabbitMQ Cluster Operator](#appendix-6-the-rabbitmq-cluster-operator) to install the operator.
+
+### Upgrading between major versions of RabbitMQ Using the RabbitMQ Cluster Operator
+
+These scenarios will be covered in future releases. In the meantime, please refer to the [DataONE K8s Cluster documentation](https://github.com/DataONEorg/k8s-cluster/blob/main/operators/rabbitmq/rabbitmq-operator.md). We recommend that your application is in read-only mode and your RabbitMQ queue is drained before performing major version upgrades.
 
 ## Parameters
 
@@ -168,8 +182,7 @@ These scenarios will be covered in future releases. In the meantime, please refe
 | `metacat.solr.baseURL`            | The url to access solr, or leave blank to use sub-chart         | `""`                |
 | `metacat.solr.coreName`           | The solr core (solr standalone) or collection name (solr cloud) | `""`                |
 | `metacat.replication.logdir`      | Location for the replication logs                               | `/var/metacat/logs` |
-| `metacat.index.rabbitmq.hostname` | the hostname of the rabbitmq instance that will be used         | `""`                |
-| `metacat.index.rabbitmq.username` | the username for connecting to the RabbitMQ instance            | `metacat-rmq-guest` |
+| `metacat.index.rabbitmq.hostname` | rabbitmq instance hostname. Leave blank to autopopulate         | `""`                |
 
 ### OPTIONAL DataONE Member Node (MN) Parameters
 
@@ -245,7 +258,7 @@ These scenarios will be covered in future releases. In the meantime, please refe
 | `persistence.storageClass`  | Override here or leave blank to use 'global.storageClass'            | `""`                                    |
 | `persistence.existingClaim` | Name of an existing Persistent Volume Claim to re-use                | `""`                                    |
 | `persistence.volumeName`    | Name of an existing Persistent Volume for volumeClaimTemplate        | `""`                                    |
-| `persistence.pvcLabels`     | List of additional labels to add to PVC volumeClaimTemplate          | `velero.io/exclude-from-backup: "true"` |
+| `persistence.pvcLabels`     | Labels for PVC volumeClaimTemplate                                   | `velero.io/exclude-from-backup: "true"` |
 | `persistence.subPath`       | The subdirectory of the volume (see persistence.volumeName) to mount | `""`                                    |
 | `persistence.accessModes`   | PVC Access Mode for metacat volume                                   | `["ReadWriteMany"]`                     |
 | `persistence.size`          | PVC Storage Request for metacat volume                               | `1Gi`                                   |
@@ -286,12 +299,12 @@ These scenarios will be covered in future releases. In the meantime, please refe
 
 ### PostgreSQL Database Connection Parameters
 
-| Name                      | Description                                                       | Value     |
-| ------------------------- | ----------------------------------------------------------------- | --------- |
-| `database.existingSecret` | REQUIRED Name of Secret holding the database username & password  | `""`      |
-| `database.dbName`         | The name of the PostgreSQL database to connect to                 | `metacat` |
-| `database.serviceName`    | (REQUIRED if DB on k8s) name of the Service exposing the database | `""`      |
-| `database.port`           | Override default database port (5432) - only if not using CNPG    | `5432`    |
+| Name                      | Description                                                       | Value                              |
+| ------------------------- | ----------------------------------------------------------------- | ---------------------------------- |
+| `database.existingSecret` | REQUIRED Name of Secret holding the database username & password  | `{{ .Release.Name }}-metacat-cnpg` |
+| `database.dbName`         | The name of the PostgreSQL database to connect to                 | `metacat`                          |
+| `database.serviceName`    | (REQUIRED if DB on k8s) name of the Service exposing the database | `""`                               |
+| `database.port`           | Override default database port (5432) - only if not using CNPG    | `5432`                             |
 
 ### Tomcat Configuration
 
@@ -306,23 +319,23 @@ These scenarios will be covered in future releases. In the meantime, please refe
 
 ### dataone-indexer Sub-Chart
 
-| Name                                                         | Description                                       | Value                                 |
-| ------------------------------------------------------------ | ------------------------------------------------- | ------------------------------------- |
-| `dataone-indexer.podSecurityContext.fsGroup`                 | gid used to access mounted volumes                | `59997`                               |
-| `dataone-indexer.podSecurityContext.supplementalGroups`      | additional vol access gids                        | `[]`                                  |
-| `dataone-indexer.podSecurityContext.fsGroupChangePolicy`     | ownership & perms mgmt                            | `OnRootMismatch`                      |
-| `dataone-indexer.persistence.subPath`                        | The subdirectory of the volume to mount           | `""`                                  |
-| `dataone-indexer.rabbitmq.extraConfiguration`                | extra config, to be appended to rmq config        | `consumer_timeout = 144000000`        |
-| `dataone-indexer.rabbitmq.auth.username`                     | set the username that rabbitmq will use           | `metacat-rmq-guest`                   |
-| `dataone-indexer.rabbitmq.auth.existingPasswordSecret`       | location of rabbitmq password                     | `${RELEASE_NAME}-metacat-secrets`     |
-| `dataone-indexer.solr.javaMem`                               | Java memory options to pass to the Solr container | `-Xms512m -Xmx2g`                     |
-| `dataone-indexer.solr.customCollection`                      | name of the solr collection to use                | `metacat-index`                       |
-| `dataone-indexer.solr.coreNames`                             | Solr core names to be created                     | `["metacat-core"]`                    |
-| `dataone-indexer.solr.persistence.size`                      | solr Persistent Volume size                       | `100Gi`                               |
-| `dataone-indexer.solr.extraVolumes[0].name`                  | DO NOT EDIT - referenced by sub-chart             | `solr-config`                         |
-| `dataone-indexer.solr.extraVolumes[0].configMap.name`        | see notes in values.yaml                          | `${RELEASE_NAME}-indexer-configfiles` |
-| `dataone-indexer.solr.extraVolumes[0].configMap.defaultMode` | DO NOT EDIT                                       | `777`                                 |
-| `dataone-indexer.solr.zookeeper.persistence.size`            | Persistent Volume size                            | `100Gi`                               |
+| Name                                                         | Description                                           | Value                                 |
+| ------------------------------------------------------------ | ----------------------------------------------------- | ------------------------------------- |
+| `dataone-indexer.podSecurityContext.fsGroup`                 | gid used to access mounted volumes                    | `59997`                               |
+| `dataone-indexer.podSecurityContext.supplementalGroups`      | additional vol access gids                            | `[]`                                  |
+| `dataone-indexer.podSecurityContext.fsGroupChangePolicy`     | ownership & perms mgmt                                | `OnRootMismatch`                      |
+| `dataone-indexer.persistence.subPath`                        | The subdirectory of the volume to mount               | `""`                                  |
+| `dataone-indexer.idxworker.rabbitmqSecret`                   | (OPTIONAL) location of rmq username+password          | `""`                                  |
+| `dataone-indexer.rabbitmq.enabled`                           | Enable rabbitmq provisioning in the indexer sub-chart | `true`                                |
+| `dataone-indexer.rabbitmq.replicaCount`                      | Total rabbitmq pods (always use an odd number)        | `1`                                   |
+| `dataone-indexer.solr.javaMem`                               | Java memory options to pass to the Solr container     | `-Xms512m -Xmx2g`                     |
+| `dataone-indexer.solr.customCollection`                      | name of the solr collection to use                    | `metacat-index`                       |
+| `dataone-indexer.solr.coreNames`                             | Solr core names to be created                         | `["metacat-core"]`                    |
+| `dataone-indexer.solr.persistence.size`                      | solr Persistent Volume size                           | `100Gi`                               |
+| `dataone-indexer.solr.extraVolumes[0].name`                  | DO NOT EDIT - referenced by sub-chart                 | `solr-config`                         |
+| `dataone-indexer.solr.extraVolumes[0].configMap.name`        | see notes in values.yaml                              | `${RELEASE_NAME}-indexer-configfiles` |
+| `dataone-indexer.solr.extraVolumes[0].configMap.defaultMode` | DO NOT EDIT                                           | `777`                                 |
+| `dataone-indexer.solr.zookeeper.persistence.size`            | Persistent Volume size                                | `100Gi`                               |
 
 
 ## Configuration and installation details
@@ -663,14 +676,14 @@ $ kubectl logs -f metacatknb-0 -c dependencies
 > [!NOTE]
 > This is a separate process from installing the Metacat Helm chart, and only needs to be done once. See [these important warnings](https://github.com/DataONEorg/dataone-cnpg?tab=readme-ov-file#secrets--credentials) about not changing credentials!
 
-We recomment using the [CloudNative PG](https://cloudnative-pg.io/) operator to install and manage a PostgreSQL cluster for use with Metacat. The operator automates many of the tasks involved in installing, configuring, and managing a PostgreSQL cluster, including backups, failover, and scaling. Installing CNPG is beyond the scope of this document, but you can find detailed instructions in the [DataONE K8s Cluster documentation](https://github.com/DataONEorg/k8s-cluster/blob/main/postgres/postgres.md#cloudnativepg-operator-installation).
+We recommend using the [CloudNative PG](https://cloudnative-pg.io/) operator to install and manage a PostgreSQL cluster for use with Metacat. The operator automates many of the tasks involved in installing, configuring, and managing a PostgreSQL cluster, including backups, failover, and scaling. Installing CNPG is beyond the scope of this document, but you can find detailed instructions in the [DataONE K8s Cluster documentation](https://github.com/DataONEorg/k8s-cluster/blob/main/operators/postgres/postgres.md#cloudnativepg-operator-installation).
 
 Once the CNPG operator is installed, you can create a PostgreSQL cluster easily, using the [DataONE CNPG Helm Chart](https://github.com/DataONEorg/dataone-cnpg).
 
 ### Before installing the chart
 
 1. Ensure you have set the correct values for the database name and the database owner (username) in your values overrides. (If you deploy with the wrong values, it's difficult to change them after the fact).
-2. If you are planning to provide your own database password instead of having CNPG create one for you (e.g. if you're migrating data from an existing database), you can use [this yaml template](helm/admin/secret--cloudnative-pg.yaml) to create your secret - see the instructions in the file.
+2. If you are planning to provide your own database password instead of having CNPG create one for you (e.g. if you're migrating data from an existing database), you can use [this yaml template](./admin/secret--cloudnative-pg.yaml) to create your secret - see the instructions in the file. The value of `database.existingSecret` in your values overrides should match the name of the secret you create. If not overridden, it will default to `<releasename>-metacat-cnpg` (where `<releasename>` is the name of the **metacat** release, not the cnpg release!)
 3. Finally, double-check all your values, and then install the chart, as follows:
 
 ### EITHER: Fresh Metacat Install with an Empty Database
@@ -683,3 +696,14 @@ $ helm install <releasename> oci://dataoneorg.github.io/dataone-cnpg --version <
 ### OR: Migrating Metacat from an Existing Database (e.g. Bitnami Postgres)
 
 Follow the detailed instructions on ["Importing Data" in the DataONE CNPG README](https://github.com/DataONEorg/dataone-cnpg/blob/main/README.md#importing-data).
+
+## Appendix 6: The RabbitMQ Cluster Operator
+
+> [!NOTE]
+> This is a separate process from installing the Metacat Helm chart, and only needs to be done once.
+
+We recommend using the [RabbitMQ Cluster Operator](https://www.rabbitmq.com/kubernetes/operator/operator-overview) to install and manage a RabbitMQ cluster for use with Metacat. Installing it is beyond the scope of this document, but is simple - see the [DataONE K8s Cluster documentation](https://github.com/DataONEorg/k8s-cluster/blob/main/operators/rabbitmq/rabbitmq-operator.md#rabbitmq-cluster-operator-installationupgrade).
+
+Once the operator is installed, the Metacat Helm chart will automatically use it to create the RabbitMQ resources it needs. The RabbitMQ cluster can be customized using the parameters under `dataone-indexer.rabbitmq.*` in the [dataone-indexer Sub-Chart](#dataone-indexer-sub-chart) section, above.
+
+Alternatively, if you wish to provide and manage your own RabbitMQ instance, you can do so by setting `dataone-indexer.rabbitmq.enabled: false` in your values.yaml overrides, and then providing the connection details using the parameters `metacat.index.rabbitmq.hostname`, and `dataone-indexer.idxworker.rabbitmqSecret`. (Inspect the dataone-indexer subchart values.yaml file to see the full range of options available).

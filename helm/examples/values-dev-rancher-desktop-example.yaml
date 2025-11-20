@@ -12,54 +12,24 @@ global:
   d1ClientCnUrl: "https://cn-sandbox.test.dataone.org/cn"
   storageClass: local-path
   ephemeralVolumeStorageClass: local-path
-  passwordsSecret: &passwordSecretName metacatrd-metacat-secrets
 
 metacat:
-  server.name: localhost
   auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
 
 image:
   debug: *debug
   pullPolicy: Always
-  tag: "DEVELOP"
-
-
-# probes will kill remote debugger
-livenessProbe:
-  enabled: false
-readinessProbe:
-  enabled: false
 
 persistence:
-  existingClaim: &mcclaim metacatrd-metacat-0
+  existingClaim: metacatrd-metacat-0
 
-
-postgresql:
-  image:
-    debug: true
-  primary:
-    resourcesPreset: "micro"
-    persistence:
-      existingClaim: &pgclaim metacatrd-metacat-postgresql-0
-  upgrader:
-    persistence:
-      existingClaim: *pgclaim
-  auth:
-    existingSecret: *passwordSecretName
-
+database:
+  serviceName: mcdbrd-cnpg-rw
 
 dataone-indexer:
-  persistence:
-    ## MUST MATCH name of PVC created by metacat chart. NOTE: uses deployment name
-    claimName: *mcclaim
-
   autoscaling:
     minReplicas: 1
     targetCPUUtilizationPercentage: 80
-
-  rabbitmq:
-    auth:
-      existingPasswordSecret: *passwordSecretName
 
   solr:
     replicaCount: 1
@@ -72,3 +42,9 @@ dataone-indexer:
           defaultMode: 0777
     zookeeper:
       replicaCount: 1
+
+# probes will kill remote debugger
+#livenessProbe:
+#  enabled: false
+#readinessProbe:
+#  enabled: false

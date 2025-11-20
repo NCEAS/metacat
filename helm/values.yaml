@@ -1140,19 +1140,25 @@ dataone-indexer:
     rabbitmqSecret: ""
 
   rabbitmq:
+    ## @param dataone-indexer.rabbitmq.enabled Enable rabbitmq provisioning in the indexer sub-chart
+    ## Requires the RabbitMQ Cluster Operator to be pre-installed. Set to false if you want to
+    ## connect to your own existing RabbitMQ deployment (and set 'metacat.index.rabbitmq.hostname',
+    ## and 'dataone-indexer.idxworker.rabbitmqSecret'
+    ##
     enabled: true
 
-    ## @param rabbitmq.replicaCount Number of desired rabbitmq pods (always use an odd number)
+    ## @param dataone-indexer.rabbitmq.replicaCount Total rabbitmq pods (always use an odd number)
     ## see: https://www.rabbitmq.com/docs/clustering#node-count
     ##
     replicaCount: 1
 
-    ## @param rabbitmq.additionalConfig Additional rabbitmq configuration settings
-    ## Default consumer_timeout is 30 mins (i.e. 18000000mS). Increase this to 1hr to avoid timeouts
-    ## with large resource maps
-    ## 144000000 = 4 hours
+    ## @skip dataone-indexer.rabbitmq.additionalConfig Additional rabbitmq configuration settings
     ##
     additionalConfig:
+      ## @skip dataone-indexer.rabbitmq.additionalConfig.consumer_timeout RabbitMQ consumer timeout
+      ## Default consumer_timeout is 30 mins (i.e. 18000000mS). Increase this to 1hr to avoid
+      ## timeouts with large resource maps
+      ## 144000000 = 4 hours
       consumer_timeout: "144000000"
 
   solr:
