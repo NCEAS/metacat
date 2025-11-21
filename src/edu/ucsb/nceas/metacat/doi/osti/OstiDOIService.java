@@ -3,6 +3,8 @@ package edu.ucsb.nceas.metacat.doi.osti;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
@@ -12,20 +14,18 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.ucsb.nceas.osti_elink.v2.json.PublishIdentifierCommand;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
-import org.dataone.service.exceptions.IdentifierNotUnique;
-import org.dataone.service.exceptions.InsufficientResources;
 import org.dataone.service.exceptions.InvalidRequest;
-import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.exceptions.InvalidToken;
 import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
-import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
@@ -53,9 +53,10 @@ public class OstiDOIService extends DOIService{
     private static Log logMetacat = LogFactory.getLog(OstiDOIService.class);
     private static Templates eml2osti = null;
     private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();
-    
+
     private OSTIElinkClient ostiClient = null;
     private OSTIElinkErrorAgent errorAgent = null;
+
     /**
      * Constructor
      */
@@ -80,7 +81,7 @@ public class OstiDOIService extends DOIService{
                     + "transform eml objects to OSTI documents: ", e);
         }
     }
-    
+
     /**
      * Generate a DOI using the DOI service as configured
      * @return  the identifier which was minted by the DOI service
@@ -103,9 +104,9 @@ public class OstiDOIService extends DOIService{
 
 
     /**
-     * Submit the metadata in the osti service for a specific identifier(DOI). The identifier can
+     * Submit the metadata in the osti service for a specific identifier (DOI). The identifier can
      * be a SID or PID
-     * This implementation will be call by the registerMetadata on the super class.
+     * This implementation will be called by the registerMetadata on the super class.
      * @param identifier  the identifier to identify the metadata which will be updated
      * @param  sysMeta  the system metadata associated with the identifier
      * @throws DOIException
@@ -183,7 +184,7 @@ public class OstiDOIService extends DOIService{
             }
         }
     }
-    
+
     /**
      * Make the status of the identifier to be public 
      * @param session  the subjects call the method
@@ -200,27 +201,34 @@ public class OstiDOIService extends DOIService{
         logMetacat.debug("OstiDOIService.publishIdentifier - The site url for pid "
                                                      + identifier.getValue() + " is: " + siteUrl);
         try {
-            String ostiMeta = generateXMLWithSiteURL(siteUrl);
+            String ostiMeta = generateJsonWithSiteURL(siteUrl);
             logMetacat.debug("OstiDOIService.publishIdentifier - the metadata is\n" + ostiMeta); 
             ostiClient.setMetadata(identifier.getValue(), ostiMeta);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | JsonProcessingException e) {
             throw new ServiceFailure("1030", e.getMessage());
         }
     }
-    
+
     /**
-     * Create a xml file with the site_url element
+     * Create a json file with the site_url element
+     * {
+     *  "site_url": "https://foo.com",
+     *  "workflow_status": "R"
+     * }
      * @param siteURL  the value of the site_url element
-     * @return  the complete xml string
+     * @return  the complete json string
+     * @throws JsonProcessingException
      */
-    protected String generateXMLWithSiteURL(String siteURL) {
-        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><records><record><site_url>";
-        xml = xml + StringEscapeUtils.escapeXml(siteURL);
-        xml = xml + "</site_url></record></records>";
-        logMetacat.debug("OstiDOIService.generateXMLWithSiteUR - the metadata is: " + xml);
-        return xml;
+    protected String generateJsonWithSiteURL(String siteURL) throws JsonProcessingException {
+        Map<String, Object> params = new HashMap<>();
+        params.put(PublishIdentifierCommand.SITE_URL, siteURL);
+        params.put(PublishIdentifierCommand.WORKFLOW_STATUS,
+                   PublishIdentifierCommand.RELEASED_STATUS);
+        String payload = new ObjectMapper().writeValueAsString(params);
+        logMetacat.debug("The publishing metadata is: " + payload);
+        return payload;
     }
-    
+
     /**
      * Generate the OSTI document for the given eml
      * @param eml  the source eml 
@@ -243,7 +251,7 @@ public class OstiDOIService extends DOIService{
                             + "the metadata is\n" + meta);
         return meta;
     }
-    
+
     /**
      * Get the metadata for the given identifier
      * @param doi  the identifier to identify the OSTI metadata
