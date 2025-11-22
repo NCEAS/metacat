@@ -247,8 +247,7 @@ public class OstiDOIService extends DOIService{
         }
         transformer.transform(new StreamSource(eml), result);
         meta = writer.toString();
-        logMetacat.debug("OstiDOIService.generateOstiMetadata(after eml tranforming) - "
-                            + "the metadata is\n" + meta);
+        logMetacat.debug("After transforming eml - the metadata is\n" + meta);
         return meta;
     }
 
