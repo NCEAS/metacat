@@ -8,7 +8,7 @@ debug: &debug true
 global:
   metacatUiThemeName: "knb"
   metacatUiWebRoot: "/"
-  metacatExternalBaseUrl: "https://localhost:80/"
+  metacatExternalBaseUrl: "http://localhost:80/"
   d1ClientCnUrl: "https://cn-sandbox.test.dataone.org/cn"
   storageClass: local-path
   ephemeralVolumeStorageClass: local-path
@@ -18,15 +18,19 @@ metacat:
 
 image:
   debug: *debug
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
 
 persistence:
-  existingClaim: metacatrd-metacat-0
+  existingClaim: &pvcname metacatrd-metacat-0
 
 database:
   serviceName: mcdbrd-cnpg-rw
 
 dataone-indexer:
+  persistence:
+    ## MUST MATCH name of PVC created by metacat chart. NOTE: uses deployment name
+    claimName: *pvcname
+
   autoscaling:
     minReplicas: 1
     targetCPUUtilizationPercentage: 80
