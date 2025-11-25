@@ -21,7 +21,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: "3.1.0-SNAPSHOT"
+version: "4.0.0-SNAPSHOT"
 icon: https://github.com/NCEAS/metacat/blob/develop/docs/dev/images/metacat-logo.png
 
 # This is the version number of the application being deployed. This version number should be
@@ -41,5 +41,5 @@ dependencies:
 
   - name: dataone-indexer
     repository: oci://ghcr.io/dataoneorg/charts
-    version: 1.4.0-SNAPSHOT
+    version: 2.0.0-SNAPSHOT
     condition: global.dataone-indexer.enabled
