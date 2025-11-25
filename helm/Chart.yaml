@@ -21,7 +21,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: "3.1.0-SNAPSHOT"
+version: "4.0.0-SNAPSHOT"
 icon: https://github.com/NCEAS/metacat/blob/develop/docs/dev/images/metacat-logo.png
 
 # This is the version number of the application being deployed. This version number should be
@@ -30,7 +30,7 @@ icon: https://github.com/NCEAS/metacat/blob/develop/docs/dev/images/metacat-logo
 # It is recommended to use it with quotes.
 # NOTE that the chart will pull the docker image whose tag matches this value, if 'image.tag' is
 # not set in values.yaml
-appVersion: "3.2.2"
+appVersion: "3.3.0-SNAPSHOT"
 
 # Chart dependencies - also see https://github.com/bitnami/charts/tree/main/bitnami
 dependencies:
@@ -41,10 +41,5 @@ dependencies:
 
   - name: dataone-indexer
     repository: oci://ghcr.io/dataoneorg/charts
-    version: 1.4.0-SNAPSHOT
+    version: 2.0.0-SNAPSHOT
     condition: global.dataone-indexer.enabled
-    import-values:
-      - child: solr
-        parent: dataone-indexer.solr
-      - child: rabbitmq
-        parent: dataone-indexer.rabbitmq

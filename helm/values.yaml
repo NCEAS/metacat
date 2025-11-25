@@ -223,14 +223,14 @@ metacat:
   ##
   replication.logdir: /var/metacat/logs
 
-  ## @param metacat.index.rabbitmq.hostname the hostname of the rabbitmq instance that will be used
+  ## @param metacat.index.rabbitmq.hostname rabbitmq instance hostname. Leave blank to autopopulate
+  ## from the RabbitMQ Cluster Operator instance that is bundled with the indexer sub-chart.
   ##
-  index.rabbitmq.hostname: ""    # Leave blank to autopopulate with indexer sub-chart hostname
+  index.rabbitmq.hostname: "" # Leave blank to autopopulate from rmq bundled with indexer sub-chart
+  ##
+  ## Note that index.rabbitmq.username and index.rabbitmq.password should not be defined here; they
+  ## are retrieved automatically from the secret named in 'dataone-indexer.idxworker.rabbitmqSecret'
 
-  ## @param metacat.index.rabbitmq.username the username for connecting to the RabbitMQ instance
-  ## at `index.rabbitmq.hostname`.
-  ##
-  index.rabbitmq.username: &rmqUsername metacat-rmq-guest
 
   ## @section OPTIONAL DataONE Member Node (MN) Parameters
   ##
@@ -404,7 +404,7 @@ metacat:
   ## for crawling (recommended - see https://knb.ecoinformatics.org/knb/docs/sitemaps.html)
   ##
   ## NOTE: If you are creating a non-production deployment, leave 'sitemap.enabled: false', and
-  ## the chart will automatically create a robotx.txt file that prevents any search engine indexing
+  ## the chart will automatically create a robots.txt file that prevents any search engine indexing
   ##
   ## When 'sitemap.enabled: true', Metacat automatically generates a sitemap index file, at:
   ##
@@ -996,7 +996,7 @@ database:
   ##      database:
   ##        existingSecret: "mycnpgreleasename-cnpg-app"
   ##
-  existingSecret: ""
+  existingSecret: "{{ .Release.Name }}-metacat-cnpg"
 
   ## @param database.dbName The name of the PostgreSQL database to connect to
   ##
@@ -1127,32 +1127,39 @@ dataone-indexer:
     ## increase number of tries from 25 to:
     resourcemapMaxTries: 200
 
+    ## @param dataone-indexer.idxworker.rabbitmqSecret (OPTIONAL) location of rmq username+password
+    ## Leave blank to use the Secret created at deploy-time by the RabbitMQ Cluster Operator that
+    ## is bundled with the indexer subchart.
+    ##
+    ## IMPORTANT - IF NOT USING THE AUTO-CREATED SECRET:
+    ## - Set 'existingPasswordSecret' to the name of an existing Secret containing the RabbitMQ
+    ##   username and password
+    ## - Your Secret must contain the keys defined in: 'dataone-indexer.idxworker.UserKey' and
+    ##   'dataone-indexer.idxworker.passwordKey'
+    ##
+    rabbitmqSecret: ""
+
   rabbitmq:
-    ## @param dataone-indexer.rabbitmq.extraConfiguration extra config, to be appended to rmq config
-    ## Default consumer_timeout is 30 mins (i.e. 18000000mS). Increase this to 1hr to avoid timeouts
-    ## with large resource maps
+    ## @param dataone-indexer.rabbitmq.enabled Enable rabbitmq provisioning in the indexer sub-chart
+    ## Requires the RabbitMQ Cluster Operator to be pre-installed. Set to false if you want to
+    ## connect to your own existing RabbitMQ deployment (and set 'metacat.index.rabbitmq.hostname',
+    ## and 'dataone-indexer.idxworker.rabbitmqSecret'
     ##
-    ## 144000000 = 4 hours
+    enabled: true
+
+    ## @param dataone-indexer.rabbitmq.replicaCount Total rabbitmq pods (always use an odd number)
+    ## see: https://www.rabbitmq.com/docs/clustering#node-count
     ##
-    extraConfiguration: |-
-      consumer_timeout = 144000000
+    replicaCount: 1
 
-    auth:
-      ## @param dataone-indexer.rabbitmq.auth.username set the username that rabbitmq will use
-      ##
-      username: *rmqUsername
-
-      ## @param dataone-indexer.rabbitmq.auth.existingPasswordSecret location of rabbitmq password
-      ## This is usually the secret deployed using your own private, edited version of
-      ## '../admin/secret--metacat.yaml'.
-      ##
-      ## IMPORTANT:
-      ## - The Secret must contain the exact key name: 'rabbitmq-password'
-      ## - Make sure you edit this, to replace ${RELEASE_NAME} with yours! For example, if
-      ##   the release name is 'myrelease':
-      ##   existingPasswordSecret: myrelease-metacat-secrets
-      ##
-      existingPasswordSecret: ${RELEASE_NAME}-metacat-secrets
+    ## @skip dataone-indexer.rabbitmq.additionalConfig Additional rabbitmq configuration settings
+    ##
+    additionalConfig:
+      ## @skip dataone-indexer.rabbitmq.additionalConfig.consumer_timeout RabbitMQ consumer timeout
+      ## Default consumer_timeout is 30 mins (i.e. 18000000mS). Increase this to 1hr to avoid
+      ## timeouts with large resource maps
+      ## 144000000 = 4 hours
+      consumer_timeout: "144000000"
 
   solr:
     ## @param dataone-indexer.solr.javaMem Java memory options to pass to the Solr container

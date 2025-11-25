@@ -38,7 +38,7 @@ spec:
               ## wait for RabbitMQ to be ready...
               ##
               RMQHOST={{ include "metacat.rabbitmq.hostname" . }};
-              {{- $amqp := index .Values "dataone-indexer" "rabbitmq" "service" "ports" "amqp" }}
+              {{- $amqp := index .Values "dataone-indexer" "idxworker" "rabbitmqHostPort" }}
               RMQPORT={{ index .Values "dataone-indexer" "rabbitmq" "hostport" | default $amqp -}};
               echo "* * * Checking if RabbitMQ is ready at $RMQHOST:$RMQPORT * * *";
               until nc -z $RMQHOST $RMQPORT > /dev/null; do
@@ -137,11 +137,17 @@ spec:
                 secretKeyRef:
                   name: {{ tpl .Values.database.existingSecret . }}
                   key: password
+            - name: METACAT_RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{  include "rmq.secret.name" . }}
+                  key: {{ (index .Values "dataone-indexer" "idxworker" "rabbitmqUserKey") }}
+                  optional: false
             - name: METACAT_RABBITMQ_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-metacat-secrets
-                  key: rabbitmq-password
+                  name: {{  include "rmq.secret.name" . }}
+                  key: {{ ( index .Values "dataone-indexer" "idxworker" "rabbitmqPasswordKey" ) }}
                   optional: false
             - name: CATALINA_OPTS
               value: {{ join " " .Values.tomcat.extraCatalinaOpts }}
