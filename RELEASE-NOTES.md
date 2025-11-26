@@ -4,6 +4,47 @@
 > If you are upgrading from a helm chart version earlier than 2.1.0, please see the [Upgrade
 > Notes](#chart-upgrade-notes) below. Failure to do so may result in loss of data!
 
+## Release Notes for Metacat 3.3.0
+
+**Release date: 2025-12-08**
+
+### Version Upgrades and Bug Fixes:
+
+# *** TO-DO ***
+- Upgrade DataONE-Indexer library to 3.2.0 in metacat-index (see [dataone-indexer Release Notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md) for details)
+
+### Other Enhancements:
+
+# *** TO-DO ***
+
+## Release Notes for helm chart 4.0.0
+
+**Release date: 2025-12-08**
+
+> [!NOTE]
+> We are continuing to move away from using Bitnami helm charts for production dependencies. The Metacat chart now assumes you will provide your own instances of PostgreSQL and RabbitMQ, which are no longer included as sub-charts. We recommend using:
+> - CloudNative PG Operator to deploy your PostgreSQL cluster - see [Appendix 5 of the helm/README.md](./helm/README.md#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg)
+> - RabbitMQ Cluster Operator to deploy your RabbitMQ cluster - see [Appendix 6 of the helm/README.md](./helm/README.md#appendix-6-the-rabbitmq-cluster-operator)
+
+### Enhancements:
+- dataone-indexer sub-chart upgraded to version 2.0.0, whihc includes a RabbitMQ major-version upgrade (see [dataone-indexer Release Notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md) for details)
+- Improve the checksum calculation used to determine if the chart deployment includes changes that require a pod restart
+- Note that RabbitMQ now uses credentials provided in its own secret, instead of specifying the username in values.yaml and the password in the Metacat secret.
+- **values.yaml**
+  - added:
+    - `persistence.pvcLabels` - arbitrary Labels for PVC volumeClaimTemplate. Defaults to `velero.io/exclude-from-backup: "true"`, to prevent Velero from trying and failing to back up volumes that were not provisioned dynamically.
+    - `dataone-indexer.idxworker.rabbitmqSecret` (leave blank to auto-populate if using RMQ Operator)
+    - `dataone-indexer.rabbitmq.enabled` - defaults to `true` for use with RMQ Operator; disable to use your own RMQ instance
+    - `dataone-indexer.rabbitmq.replicaCount`
+    - `dataone-indexer.rabbitmq.additionalConfig` (defaults to `consumer_timeout: "144000000"`)
+  - changed:
+    - `database.existingSecret` now defaults to `{{ .Release.Name }}-metacat-cnpg`
+    - `dataone-indexer.rabbitmq.extraConfiguration` has moved to `dataone-indexer.rabbitmq.additionalConfig`
+  - removed:
+    - `metacat.index.rabbitmq.username`
+    - `dataone-indexer.rabbitmq.auth.username`
+    - `dataone-indexer.idxworker.existingPasswordSecret`
+
 
 ## Release Notes for helm chart 3.0.0
 
