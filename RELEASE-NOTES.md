@@ -9,6 +9,8 @@
 **Release date: 2025-12-08**
 
 ### Version Upgrades and Bug Fixes:
+- Update Docker base image from `tomcat:9.0.102-jre17-temurin-noble` to `tomcat:9.0.112-jre17-temurin-noble`
+- Update bundled MetacatUI to version *** TO-DO ***
 
 # *** TO-DO ***
 - Upgrade DataONE-Indexer library to 3.2.0 in metacat-index (see [dataone-indexer Release Notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md) for details)
