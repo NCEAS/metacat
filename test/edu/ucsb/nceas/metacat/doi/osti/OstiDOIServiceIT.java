@@ -6,6 +6,7 @@ import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.osti_elink.OSTIElinkNotFoundException;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.v2.formats.ObjectFormatCache;
@@ -22,8 +23,10 @@ import org.dataone.service.types.v2.SystemMetadata;
 import org.dspace.foresite.ResourceMap;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.MockedStatic;
+import uk.org.webcompere.systemstubs.rules.EnvironmentVariablesRule;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -48,13 +51,19 @@ import static org.junit.Assert.fail;
  *
  */
 public class OstiDOIServiceIT {
-
+    private final static String TOKEN_FILE_PATH_NAME = "ostiService.v2.tokenFilePath";
+    private final static String TOKEN_ENV_NAME = "METACAT_OSTI_TOKEN";
+    private final static String R_STATUS = "SV";
     private OstiDOIService service = null;
     private final static int MAX_ATTEMPTS = 20;
     private D1NodeServiceTest d1NodeTest;
     private MockHttpServletRequest request;
     private MockedStatic<PropertyService> closeableMock;
     private Properties withProperties = new Properties();
+
+    @Rule
+    public EnvironmentVariablesRule environmentVariablesRule =
+        new EnvironmentVariablesRule(TOKEN_ENV_NAME, null);
 
     /**
      * Set up the test fixtures
@@ -76,6 +85,10 @@ public class OstiDOIServiceIT {
         Properties testProperties = LeanTestUtils.getExpectedProperties();
         String ostiName = testProperties.getProperty("guid.doi.username");
         String ostiPass = testProperties.getProperty("guid.doi.password");
+        String tokenPath = testProperties.getProperty(TOKEN_FILE_PATH_NAME);
+        // We need to set up an env variable to pass the token to the osti-elink library
+        String token = FileUtils.readFileToString(new File(tokenPath));
+        environmentVariablesRule.set(TOKEN_ENV_NAME, token);
         assertNotNull(passwdMsg, ostiName);
         assertFalse(passwdMsg, ostiName.isBlank());
         assertNotEquals(passwdMsg, "apitest", ostiName);
@@ -85,7 +98,7 @@ public class OstiDOIServiceIT {
         withProperties.setProperty("guid.doi.enabled", "true");
         withProperties.setProperty("guid.doiservice.plugin.class",
                                                 "edu.ucsb.nceas.metacat.doi.osti.OstiDOIService");
-        withProperties.setProperty("guid.doi.baseurl", "https://www.osti.gov/elinktest/2416api");
+        //withProperties.setProperty("guid.doi.baseurl", "https://www.osti.gov/elinktest/2416api");
         withProperties.setProperty("guid.doi.autoPublish", "false");
         withProperties.setProperty("guid.doi.enforcePublicReadableEntirePackage", "false");
         withProperties.setProperty("guid.doi.doishoulder.1", "doi:10.15485/");
@@ -118,14 +131,24 @@ public class OstiDOIServiceIT {
         String emlFile = "test/eml-ess-dive.xml";
         Identifier doi = service.generateDOI();
         int count = 0;
-        String meta = service.getMetadata(doi);
-        while (count < MAX_ATTEMPTS && meta != null && !meta.contains("<title>unknown</title>")) {
+        String meta = null;
+        while (count < MAX_ATTEMPTS) {
+            try {
+                meta = service.getMetadata(doi);
+                break;
+            } catch (OSTIElinkNotFoundException e) {
+                Thread.sleep(1000);
+                count ++;
+            }
+        }
+        count = 0;
+        while (count < MAX_ATTEMPTS && meta != null && !meta.contains("\"title\":\"unknown\"")) {
             Thread.sleep(1000);
             count++;
             meta = service.getMetadata(doi);
         }
-        assertTrue(meta.contains("status=\"Saved\""));
-        assertTrue(meta.contains("<title>unknown</title>"));
+        assertTrue(meta.contains("\"workflow_status\":\"SA\""));
+        assertTrue(meta.contains("\"title\":\"unknown\""));
 
         //create an object with the doi
         Session session = d1NodeTest.getTestSession();
@@ -139,13 +162,13 @@ public class OstiDOIServiceIT {
         assertEquals(doi.getValue(), pid.getValue());
         count = 0;
         meta = service.getMetadata(doi);
-        while (count < MAX_ATTEMPTS && !meta.contains("<title>Specific conductivity")) {
+        while (count < MAX_ATTEMPTS && !meta.contains("\"title\":\"Specific conductivity")) {
             Thread.sleep(1000);
             count++;
             meta = service.getMetadata(doi);
         }
-        assertTrue(meta.contains("<title>Specific conductivity"));
-        assertTrue(meta.contains("status=\"Saved\""));
+        assertTrue(meta.contains("\"title\":\"Specific conductivity"));
+        assertTrue(meta.contains("\"workflow_status\":\"SA\""));
 
         //publish the object with a different session.
         try {
@@ -159,13 +182,13 @@ public class OstiDOIServiceIT {
         MNodeService.getInstance(request).publishIdentifier(session, doi);
         count = 0;
         meta = service.getMetadata(doi);
-        while (count < MAX_ATTEMPTS && !meta.contains("status=\"Pending\"")) {
+        while (count < MAX_ATTEMPTS && !meta.contains("\"workflow_status\":\"" + R_STATUS+ "\"")) {
             Thread.sleep(1000);
             count++;
             meta = service.getMetadata(doi);
         }
-        assertTrue(meta.contains("<title>Specific conductivity"));
-        assertTrue(meta.contains("status=\"Pending\""));
+        assertTrue(meta.contains("\"title\":\"Specific conductivity"));
+        assertTrue(meta.contains("\"workflow_status\":\"" + R_STATUS+ "\""));
     }
 
     /**
