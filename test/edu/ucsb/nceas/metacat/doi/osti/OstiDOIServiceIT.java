@@ -98,11 +98,8 @@ public class OstiDOIServiceIT {
         withProperties.setProperty("guid.doi.enabled", "true");
         withProperties.setProperty("guid.doiservice.plugin.class",
                                                 "edu.ucsb.nceas.metacat.doi.osti.OstiDOIService");
-        //withProperties.setProperty("guid.doi.baseurl", "https://www.osti.gov/elinktest/2416api");
         withProperties.setProperty("guid.doi.autoPublish", "false");
         withProperties.setProperty("guid.doi.enforcePublicReadableEntirePackage", "false");
-        withProperties.setProperty("guid.doi.doishoulder.1", "doi:10.15485/");
-        withProperties.setProperty("guid.doi.doishoulder.2", "doi:10.5072/");
         withProperties.setProperty("guid.doi.username", ostiName);
         withProperties.setProperty("guid.doi.password", ostiPass);
         closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
