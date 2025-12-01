@@ -153,9 +153,12 @@ public class OstiDOIServiceIT {
         //create an object with the doi
         Session session = d1NodeTest.getTestSession();
         FileInputStream eml = new FileInputStream(emlFile);
-        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(doi, session.getSubject(), eml);
+        SystemMetadata sysmeta =
+            D1NodeServiceTest.createSystemMetadata(doi, session.getSubject(), eml);
         eml.close();
-        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        sysmeta.setFormatId(
+            ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0")
+                .getFormatId());
         eml = new FileInputStream(emlFile);
         Identifier pid = d1NodeTest.mnCreate(session, doi, eml, sysmeta);
         eml.close();
@@ -207,9 +210,12 @@ public class OstiDOIServiceIT {
         Identifier guid =  new Identifier();
         guid.setValue("testPublishProcessForSID." + System.currentTimeMillis());
         FileInputStream eml = new FileInputStream(emlFile);
-        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), eml);
+        SystemMetadata sysmeta =
+            D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), eml);
         eml.close();
-        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        sysmeta.setFormatId(
+            ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0")
+                .getFormatId());
         eml = new FileInputStream(emlFile);
         Identifier pid = d1NodeTest.mnCreate(session, guid, eml, sysmeta);
         SystemMetadata readSys = MNodeService.getInstance(request).getSystemMetadata(session, guid);
@@ -219,45 +225,59 @@ public class OstiDOIServiceIT {
        //Get the doi
         Identifier doi = service.generateDOI();
         int count = 0;
-        String meta = service.getMetadata(doi);
-        while (count < MAX_ATTEMPTS && meta != null && !meta.contains("<title>unknown</title>")) {
+        String meta = null;
+        while (count < MAX_ATTEMPTS) {
+            try {
+                meta = service.getMetadata(doi);
+                break;
+            } catch (OSTIElinkNotFoundException e) {
+                Thread.sleep(1000);
+                count ++;
+            }
+        }
+        count = 0;
+        meta = service.getMetadata(doi);
+        while (count < MAX_ATTEMPTS && meta != null && !meta.contains("\"title\":\"unknown\"")) {
             Thread.sleep(1000);
             count++;
             meta = service.getMetadata(doi);
         }
-        assertTrue(meta.contains("status=\"Saved\""));
-        assertTrue(meta.contains("<title>unknown</title>"));
+        assertTrue(meta.contains("\"workflow_status\":\"SA\""));
+        assertTrue(meta.contains("\"title\":\"unknown\""));
 
         //update system metadata to set a doi as sid
         eml = new FileInputStream(emlFile);
-        SystemMetadata sysmetaNew = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), eml);
+        SystemMetadata sysmetaNew =
+            D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), eml);
         sysmetaNew.setDateSysMetadataModified(readSys.getDateSysMetadataModified());
         sysmetaNew.setDateUploaded(readSys.getDateUploaded());
         eml.close();
         sysmetaNew.setSeriesId(doi);
-        sysmetaNew.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        sysmetaNew.setFormatId(
+            ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0")
+                .getFormatId());
         MNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmetaNew);
         count = 0;
         meta = service.getMetadata(doi);
-        while (count < MAX_ATTEMPTS && !meta.contains("<title>Specific conductivity")) {
+        while (count < MAX_ATTEMPTS && !meta.contains("\"title\":\"Specific conductivity")) {
             Thread.sleep(1000);
             count++;
             meta = service.getMetadata(doi);
         }
-        assertTrue(meta.contains("<title>Specific conductivity"));
-        assertTrue(meta.contains("status=\"Saved\""));
+        assertTrue(meta.contains("\"title\":\"Specific conductivity"));
+        assertTrue(meta.contains("\"workflow_status\":\"SA\""));
 
         //publish the identifier with the doi
         MNodeService.getInstance(request).publishIdentifier(session, doi);
         count = 0;
         meta = service.getMetadata(doi);
-        while (count < MAX_ATTEMPTS && !meta.contains("status=\"Pending\"")) {
+        while (count < MAX_ATTEMPTS && !meta.contains("\"workflow_status\":\"" + R_STATUS+ "\"")) {
             Thread.sleep(1000);
             count++;
             meta = service.getMetadata(doi);
         }
-        assertTrue(meta.contains("<title>Specific conductivity"));
-        assertTrue(meta.contains("status=\"Pending\""));
+        assertTrue(meta.contains("\"title\":\"Specific conductivity"));
+        assertTrue(meta.contains("\"workflow_status\":\"" + R_STATUS+ "\""));
 
         //updated the object whose serial id is a doi. The status of doi is pending.
         //after the update, the status of doi should still be pending
@@ -267,19 +287,21 @@ public class OstiDOIServiceIT {
         sysmeta = D1NodeServiceTest.createSystemMetadata(guid2, session.getSubject(), eml);
         sysmeta.setSeriesId(doi);
         eml.close();
-        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        sysmeta.setFormatId(
+            ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0")
+                .getFormatId());
         eml = new FileInputStream(emlFile);
         Identifier newPid = d1NodeTest.mnUpdate(session, guid, eml, guid2, sysmeta);
         assertEquals(newPid.getValue(), guid2.getValue());
         Thread.sleep(3);
         meta = service.getMetadata(doi);
-        while (count < MAX_ATTEMPTS && !meta.contains("status=\"Pending\"")) {
+        while (count < MAX_ATTEMPTS && !meta.contains("\"workflow_status\":\"" + R_STATUS+ "\"")) {
             Thread.sleep(1000);
             count++;
             meta = service.getMetadata(doi);
         }
-        assertTrue(meta.contains("<title>Specific conductivity"));
-        assertTrue(meta.contains("status=\"Pending\""));
+        assertTrue(meta.contains("\"title\":\"Specific conductivity"));
+        assertTrue(meta.contains("\"workflow_status\":\"" + R_STATUS+ "\""));
     }
 
     /**
@@ -298,34 +320,48 @@ public class OstiDOIServiceIT {
         String emlFile = "test/eml-ess-dive.xml";
         Identifier doi = service.generateDOI();
         int count = 0;
-        String meta = service.getMetadata(doi);
-        while (count < MAX_ATTEMPTS && meta != null && !meta.contains("<title>unknown</title>")) {
+        String meta = null;
+        while (count < MAX_ATTEMPTS) {
+            try {
+                meta = service.getMetadata(doi);
+                break;
+            } catch (OSTIElinkNotFoundException e) {
+                Thread.sleep(1000);
+                count ++;
+            }
+        }
+        count = 0;
+        meta = service.getMetadata(doi);
+        while (count < MAX_ATTEMPTS && meta != null && !meta.contains("\"title\":\"unknown\"")) {
             Thread.sleep(1000);
             count++;
             meta = service.getMetadata(doi);
         }
-        assertTrue(meta.contains("status=\"Saved\""));
-        assertTrue(meta.contains("<title>unknown</title>"));
+        assertTrue(meta.contains("\"workflow_status\":\"SA\""));
+        assertTrue(meta.contains("\"title\":\"unknown\""));
 
         //create an object with the doi
         Session session = d1NodeTest.getTestSession();
         FileInputStream eml = new FileInputStream(emlFile);
-        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(doi, session.getSubject(), eml);
+        SystemMetadata sysmeta =
+            D1NodeServiceTest.createSystemMetadata(doi, session.getSubject(), eml);
         eml.close();
-        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        sysmeta.setFormatId(
+            ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0")
+                .getFormatId());
         eml = new FileInputStream(emlFile);
         Identifier pid = d1NodeTest.mnCreate(session, doi, eml, sysmeta);
         eml.close();
         assertEquals(doi.getValue(), pid.getValue());
         count = 0;
         meta = service.getMetadata(doi);
-        while (count < MAX_ATTEMPTS && !meta.contains("<title>Specific conductivity")) {
+        while (count < MAX_ATTEMPTS && !meta.contains("\"title\":\"Specific conductivity")) {
             Thread.sleep(1000);
             count++;
             meta = service.getMetadata(doi);
         }
-        assertTrue(meta.contains("<title>Specific conductivity"));
-        assertTrue(meta.contains("status=\"Pending\""));
+        assertTrue(meta.contains("\"title\":\"Specific conductivity"));
+        assertTrue(meta.contains("\"workflow_status\":\"" + R_STATUS+ "\""));
 
         //publish the object with a different session.
         try {
@@ -339,13 +375,13 @@ public class OstiDOIServiceIT {
         MNodeService.getInstance(request).publishIdentifier(session, doi);
         count = 0;
         meta = service.getMetadata(doi);
-        while (count < MAX_ATTEMPTS && !meta.contains("status=\"Pending\"")) {
+        while (count < MAX_ATTEMPTS && !meta.contains("\"workflow_status\":\"" + R_STATUS+ "\"")) {
             Thread.sleep(1000);
             count++;
             meta = service.getMetadata(doi);
         }
-        assertTrue(meta.contains("<title>Specific conductivity"));
-        assertTrue(meta.contains("status=\"Pending\""));
+        assertTrue(meta.contains("\"title\":\"Specific conductivity"));
+        assertTrue(meta.contains("\"workflow_status\":\"" + R_STATUS+ "\""));
     }
 
     /**
@@ -366,9 +402,12 @@ public class OstiDOIServiceIT {
         Identifier guid =  new Identifier();
         guid.setValue("testPublishProcessForSID." + System.currentTimeMillis());
         FileInputStream eml = new FileInputStream(emlFile);
-        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), eml);
+        SystemMetadata sysmeta =
+            D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), eml);
         eml.close();
-        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        sysmeta.setFormatId(
+            ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0")
+                .getFormatId());
         eml = new FileInputStream(emlFile);
         Identifier pid = d1NodeTest.mnCreate(session, guid, eml, sysmeta);
         SystemMetadata readSys = MNodeService.getInstance(request).getSystemMetadata(session, guid);
@@ -378,45 +417,59 @@ public class OstiDOIServiceIT {
        //Get the doi
         Identifier doi = service.generateDOI();
         int count = 0;
-        String meta = service.getMetadata(doi);
-        while (count < MAX_ATTEMPTS && meta != null && !meta.contains("<title>unknown</title>")) {
+        String meta = null;
+        while (count < MAX_ATTEMPTS) {
+            try {
+                meta = service.getMetadata(doi);
+                break;
+            } catch (OSTIElinkNotFoundException e) {
+                Thread.sleep(1000);
+                count ++;
+            }
+        }
+        count = 0;
+        meta = service.getMetadata(doi);
+        while (count < MAX_ATTEMPTS && meta != null && !meta.contains("\"title\":\"unknown\"")) {
             Thread.sleep(1000);
             count++;
             meta = service.getMetadata(doi);
         }
-        assertTrue(meta.contains("status=\"Saved\""));
-        assertTrue(meta.contains("<title>unknown</title>"));
+        assertTrue(meta.contains("\"workflow_status\":\"SA\""));
+        assertTrue(meta.contains("\"title\":\"unknown\""));
 
         //update system metadata to set a doi as sid
         eml = new FileInputStream(emlFile);
-        SystemMetadata sysmetaNew = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), eml);
+        SystemMetadata sysmetaNew =
+            D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), eml);
         sysmetaNew.setDateSysMetadataModified(readSys.getDateSysMetadataModified());
         sysmetaNew.setDateUploaded(readSys.getDateUploaded());
         eml.close();
         sysmetaNew.setSeriesId(doi);
-        sysmetaNew.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        sysmetaNew.setFormatId(
+            ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0")
+                .getFormatId());
         MNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmetaNew);
         count = 0;
         meta = service.getMetadata(doi);
-        while (count < MAX_ATTEMPTS && !meta.contains("<title>Specific conductivity")) {
+        while (count < MAX_ATTEMPTS && !meta.contains("\"title\":\"Specific conductivity")) {
             Thread.sleep(1000);
             count++;
             meta = service.getMetadata(doi);
         }
-        assertTrue(meta.contains("<title>Specific conductivity"));
-        assertTrue(meta.contains("status=\"Pending\""));
+        assertTrue(meta.contains("\"title\":\"Specific conductivity"));
+        assertTrue(meta.contains("\"workflow_status\":\"" + R_STATUS+ "\""));
 
         //publish the identifier with the doi
         MNodeService.getInstance(request).publishIdentifier(session, doi);
         count = 0;
         meta = service.getMetadata(doi);
-        while (count < MAX_ATTEMPTS && !meta.contains("status=\"Pending\"")) {
+        while (count < MAX_ATTEMPTS && !meta.contains("\"workflow_status\":\"" + R_STATUS+ "\"")) {
             Thread.sleep(1000);
             count++;
             meta = service.getMetadata(doi);
         }
-        assertTrue(meta.contains("<title>Specific conductivity"));
-        assertTrue(meta.contains("status=\"Pending\""));
+        assertTrue(meta.contains("\"title\":\"Specific conductivity"));
+        assertTrue(meta.contains("\"workflow_status\":\"" + R_STATUS+ "\""));
 
         //updated the object whose serial id is a doi. The status of doi is pending.
         //after the update, the status of doi should still be pending
@@ -426,19 +479,21 @@ public class OstiDOIServiceIT {
         sysmeta = D1NodeServiceTest.createSystemMetadata(guid2, session.getSubject(), eml);
         sysmeta.setSeriesId(doi);
         eml.close();
-        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        sysmeta.setFormatId(
+            ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0")
+                .getFormatId());
         eml = new FileInputStream(emlFile);
         Identifier newPid = d1NodeTest.mnUpdate(session, guid, eml, guid2, sysmeta);
         assertEquals(newPid.getValue(), guid2.getValue());
         Thread.sleep(3);
         meta = service.getMetadata(doi);
-        while (count < MAX_ATTEMPTS && !meta.contains("status=\"Pending\"")) {
+        while (count < MAX_ATTEMPTS && !meta.contains("\"workflow_status\":\"" + R_STATUS+ "\"")) {
             Thread.sleep(1000);
             count++;
             meta = service.getMetadata(doi);
         }
-        assertTrue(meta.contains("<title>Specific conductivity"));
-        assertTrue(meta.contains("status=\"Pending\""));
+        assertTrue(meta.contains("\"title\":\"Specific conductivity"));
+        assertTrue(meta.contains("\"workflow_status\":\"" + R_STATUS+ "\""));
     }
 
     /**
@@ -457,19 +512,26 @@ public class OstiDOIServiceIT {
         String emlFile = "test/eml-ess-dive.xml";
         Session session = d1NodeTest.getTestSession();
         FileInputStream eml = new FileInputStream(emlFile);
-        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), eml);
+        SystemMetadata sysmeta =
+            D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), eml);
         eml.close();
-        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        sysmeta.setFormatId(
+            ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0")
+                .getFormatId());
         eml = new FileInputStream(emlFile);
         Identifier pid = d1NodeTest.mnCreate(session, guid, eml, sysmeta);
         eml.close();
         assertEquals(guid.getValue(), pid.getValue());
-        Thread.sleep(5000);
-        try {
-            String meta = service.getMetadata(guid);
-            fail("we can't get here ");
-        } catch (Exception e) {
-            assertTrue(e instanceof OSTIElinkNotFoundException);
+        int count = 0;
+        String meta = null;
+        while (count < MAX_ATTEMPTS) {
+            try {
+                meta = service.getMetadata(guid);
+                fail("we can't get here ");
+            } catch (OSTIElinkNotFoundException e) {
+                Thread.sleep(300);
+                count ++;
+            }
         }
     }
 
@@ -500,7 +562,8 @@ public class OstiDOIServiceIT {
         guid.setValue("testPublishPrivatePackageToPublic-data." + System.currentTimeMillis());
         System.out.println("the data file id is ==== "+guid.getValue());
         InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
-        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+        SystemMetadata sysmeta =
+            D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
         AccessRule rule = new AccessRule();
         rule.addSubject(subject);
         rule.addPermission(Permission.WRITE);
@@ -521,7 +584,8 @@ public class OstiDOIServiceIT {
         guid2.setValue("testPublishPrivatePackageToPublic-metadata." + System.currentTimeMillis());
         System.out.println("the metadata  file id is ==== "+guid2.getValue());
         InputStream object2 = new FileInputStream(new File(emlFile));
-        SystemMetadata sysmeta2 = D1NodeServiceTest.createSystemMetadata(guid2, session.getSubject(), object2);
+        SystemMetadata sysmeta2 =
+            D1NodeServiceTest.createSystemMetadata(guid2, session.getSubject(), object2);
         object2.close();
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
@@ -570,12 +634,14 @@ public class OstiDOIServiceIT {
         idMap.put(guid2, dataIds);
         Identifier resourceMapId = new Identifier();
         // use the local id, not the guid in case we have DOIs for them already
-        resourceMapId.setValue("testPublishPrivatePackageToPublic-resourcemap." + System.currentTimeMillis());
+        resourceMapId.setValue(
+            "testPublishPrivatePackageToPublic-resourcemap." + System.currentTimeMillis());
         System.out.println("the resource file id is ==== "+resourceMapId.getValue());
         ResourceMap rm = ResourceMapFactory.getInstance().createResourceMap(resourceMapId, idMap);
         String resourceMapXML = ResourceMapFactory.getInstance().serializeResourceMap(rm);
         InputStream object3 = new ByteArrayInputStream(resourceMapXML.getBytes("UTF-8"));
-        SystemMetadata sysmeta3 = D1NodeServiceTest.createSystemMetadata(resourceMapId, session.getSubject(), object3);
+        SystemMetadata sysmeta3 =
+            D1NodeServiceTest.createSystemMetadata(resourceMapId, session.getSubject(), object3);
         ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
         formatId3.setValue("http://www.openarchives.org/ore/terms");
         sysmeta3.setFormatId(formatId3);
@@ -638,13 +704,13 @@ public class OstiDOIServiceIT {
         MNodeService.getInstance(request).publishIdentifier(session, doi);
         int count = 0;
         String meta = service.getMetadata(doi);
-        while (count < MAX_ATTEMPTS && !meta.contains("status=\"Pending\"")) {
+        while (count < MAX_ATTEMPTS && !meta.contains("\"workflow_status\":\"" + R_STATUS+ "\"")) {
             Thread.sleep(1000);
             count++;
             meta = service.getMetadata(doi);
         }
-        assertTrue(meta.contains("<title>Specific conductivity"));
-        assertTrue(meta.contains("status=\"Pending\""));
+        assertTrue(meta.contains("\"title\":\"Specific conductivity"));
+        assertTrue(meta.contains("\"workflow_status\":\"" + R_STATUS+ "\""));
 
         //the metadata identifiers (pid and sid) are public readable
         MNodeService.getInstance(request).getSystemMetadata(publicSession, guid2);
@@ -682,10 +748,12 @@ public class OstiDOIServiceIT {
         Session session = d1NodeTest.getTestSession();
         Identifier guid = new Identifier();
         HashMap<String, String[]> params = null;
-        guid.setValue("testPublishIdentifierPrivatePackageToPartialPublic-data." + System.currentTimeMillis());
+        guid.setValue("testPublishIdentifierPrivatePackageToPartialPublic-data."
+                          + System.currentTimeMillis());
         System.out.println("the data file id is ==== "+guid.getValue());
         InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
-        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+        SystemMetadata sysmeta =
+            D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
         AccessRule rule = new AccessRule();
         rule.addSubject(subject);
         rule.addPermission(Permission.WRITE);
@@ -703,10 +771,12 @@ public class OstiDOIServiceIT {
         //insert metadata
         String emlFile = "test/eml-ess-dive.xml";
         Identifier guid2 = new Identifier();
-        guid2.setValue("testPublishIdentifierPrivatePackageToPartialPublic-metadata." + System.currentTimeMillis());
+        guid2.setValue("testPublishIdentifierPrivatePackageToPartialPublic-metadata."
+                           + System.currentTimeMillis());
         System.out.println("the metadata  file id is ==== "+guid2.getValue());
         InputStream object2 = new FileInputStream(new File(emlFile));
-        SystemMetadata sysmeta2 = D1NodeServiceTest.createSystemMetadata(guid2, session.getSubject(), object2);
+        SystemMetadata sysmeta2 =
+            D1NodeServiceTest.createSystemMetadata(guid2, session.getSubject(), object2);
         object2.close();
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
@@ -755,12 +825,14 @@ public class OstiDOIServiceIT {
         idMap.put(guid2, dataIds);
         Identifier resourceMapId = new Identifier();
         // use the local id, not the guid in case we have DOIs for them already
-        resourceMapId.setValue("testPublishIdentifierPrivatePackageToPartialPublic-resourcemap." + System.currentTimeMillis());
+        resourceMapId.setValue("testPublishIdentifierPrivatePackageToPartialPublic-resourcemap."
+                                   + System.currentTimeMillis());
         System.out.println("the resource file id is ==== "+resourceMapId.getValue());
         ResourceMap rm = ResourceMapFactory.getInstance().createResourceMap(resourceMapId, idMap);
         String resourceMapXML = ResourceMapFactory.getInstance().serializeResourceMap(rm);
         InputStream object3 = new ByteArrayInputStream(resourceMapXML.getBytes("UTF-8"));
-        SystemMetadata sysmeta3 = D1NodeServiceTest.createSystemMetadata(resourceMapId, session.getSubject(), object3);
+        SystemMetadata sysmeta3 =
+            D1NodeServiceTest.createSystemMetadata(resourceMapId, session.getSubject(), object3);
         ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
         formatId3.setValue("http://www.openarchives.org/ore/terms");
         sysmeta3.setFormatId(formatId3);
@@ -823,13 +895,13 @@ public class OstiDOIServiceIT {
         MNodeService.getInstance(request).publishIdentifier(session, doi);
         int count = 0;
         String meta = service.getMetadata(doi);
-        while (count < MAX_ATTEMPTS && !meta.contains("status=\"Pending\"")) {
+        while (count < MAX_ATTEMPTS && !meta.contains("\"title\":\"Specific conductivity")) {
             Thread.sleep(1000);
             count++;
             meta = service.getMetadata(doi);
         }
-        assertTrue(meta.contains("<title>Specific conductivity"));
-        assertTrue(meta.contains("status=\"Pending\""));
+        assertTrue(meta.contains("\"title\":\"Specific conductivity"));
+        assertTrue(meta.contains("\"workflow_status\":\"" + R_STATUS+ "\""));
 
         //the metadata identifiers (pid and sid) are public readable
         MNodeService.getInstance(request).getSystemMetadata(publicSession, guid2);

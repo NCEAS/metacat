@@ -222,8 +222,6 @@ public class OstiDOIService extends DOIService{
     protected String generateJsonWithSiteURL(String siteURL) throws JsonProcessingException {
         Map<String, Object> params = new HashMap<>();
         params.put(PublishIdentifierCommand.SITE_URL, siteURL);
-        params.put(PublishIdentifierCommand.WORKFLOW_STATUS,
-                   PublishIdentifierCommand.RELEASED_STATUS);
         String payload = new ObjectMapper().writeValueAsString(params);
         logMetacat.debug("The publishing metadata is: " + payload);
         return payload;
