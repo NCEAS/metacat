@@ -215,7 +215,7 @@
     This template does the following
     + normalizes spaces with normalize-space
     + translates the invalid characters to spaces
-    + escaptes quote and backslash (&#92;)
+    + escapes quote and backslash (&#92;)
 
     content - the string to transform
     -->
