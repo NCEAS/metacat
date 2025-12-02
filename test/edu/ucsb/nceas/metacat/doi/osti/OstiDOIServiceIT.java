@@ -892,7 +892,7 @@ public class OstiDOIServiceIT {
         MNodeService.getInstance(request).publishIdentifier(session, doi);
         int count = 0;
         String meta = service.getMetadata(doi);
-        while (count < MAX_ATTEMPTS && !meta.contains("\"title\":\"Specific conductivity")) {
+        while (count < MAX_ATTEMPTS && !meta.contains("\"workflow_status\":\"" + R_STATUS+ "\"")) {
             Thread.sleep(1000);
             count++;
             meta = service.getMetadata(doi);
