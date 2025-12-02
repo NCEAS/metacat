@@ -188,7 +188,7 @@ public class OstiDOIService extends DOIService{
     /**
      * Make the status of the identifier to be public 
      * @param session  the subjects call the method
-     * @param identifer  the identifier of the object which will be published. 
+     * @param identifier  the identifier of the object which will be published.
      * @throws InvalidRequest
      * @throws ServiceFailure
      */
@@ -212,8 +212,7 @@ public class OstiDOIService extends DOIService{
     /**
      * Create a json file with the site_url element
      * {
-     *  "site_url": "https://foo.com",
-     *  "workflow_status": "R"
+     *  "site_url": "https://foo.com"
      * }
      * @param siteURL  the value of the site_url element
      * @return  the complete json string
