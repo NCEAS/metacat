@@ -289,10 +289,14 @@ metacat:
   ## when the node changes physical locations over time. After Metacat registers with the DataONE
   ## Coordinating Nodes, the Node Identifier should not be changed. It is CRITICAL that you do NOT
   ## change the Node Identifier after registration, since that would break the connection with the
-  ## DataONE network. Changing this field should only happen in the rare case in which a new
-  ## Metacat instance is being established to act as the provider for an existing DataONE Member
-  ## Node, in which case the field can be edited to set it to the value of a valid, existing Node
-  ## Identifier.
+  ## DataONE network.
+  ##
+  ## Changing this field should only happen in the rare case in which a new Metacat instance is
+  ## being established to act as the provider for an existing DataONE Member Node, in which case the
+  ## field can be edited to set it to the value of a valid, existing Node Identifier. However, in
+  ## that case, YOU MUST ALSO RE-INDEX ALL OBJECTS METACAT, to ensure that the solr index contains
+  ## the correct Node Identifier for each - see:
+  ## https://knb.ecoinformatics.org/knb/docs/query-index.html#regenerating-the-index
   ##
   dataone.nodeId: urn:node:METACAT_TEST
 
