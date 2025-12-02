@@ -31,7 +31,7 @@ if [[ -z "${PVC_NAME}" ]]; then
     echo "$  export PVC_NAME='your-existing-metacat-pvc'"
   exit 1
 fi
-if [[ -z "${RMQ_SECRET_NAME}" ]]; then
+if [[ -z "${RMQ_SECRET_NAME}" ]] && [[ $(echo ${CMD_ARGS} | grep -c "\-\-submit") -gt 0 ]]; then
     echo "ERROR: RMQ_SECRET_NAME not set (name of the Secret containing the RabbitMQ password."
     echo "Set it in the environment, e.g.:"
     echo "$  export RMQ_SECRET_NAME='your-existing-metacat-secret'"
@@ -123,6 +123,20 @@ for f in "${SCRIPT_DIR}/${SUBMIT_SCRIPT}" "${SCRIPT_DIR}/${FINDER_SCRIPT}"; do
   fi
 done
 
+if [[ -n "${RMQ_SECRET_NAME}" ]]; then
+  ENV_SECTION=$(cat <<-YAML
+              env:
+                - name: RMQ_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${RMQ_SECRET_NAME}
+                      key: ${RMQ_SECRET_KEY}
+YAML
+)
+else
+  ENV_SECTION=""
+fi
+
 # write to ./<config>-<cron>.yaml and also pipe to kubectl
 OUTFILE="./index-audit-job.yaml"
 cat <<EOF | tee "$OUTFILE" | kubectl apply -f -
@@ -155,12 +169,7 @@ spec:
           containers:
             - name: runner
               image: python:3.11-slim
-              env:
-                - name: RMQ_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: ${RMQ_SECRET_NAME}
-                      key: ${RMQ_SECRET_KEY}
+${ENV_SECTION}
               command:
                 - bash
                 - -c

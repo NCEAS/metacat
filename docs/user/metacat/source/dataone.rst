@@ -173,6 +173,15 @@ in which a new Metacat instance is being established to act as the provider for 
 existing DataONE Member Node, in which case the field can be edited to set it to
 the value of a valid, existing Node Identifier.
 
+.. Note::
+
+    If you do need to change the Node Identifier in the rare case described above, you will need to
+    RE-INDEX ALL OBJECTS METACAT, to ensure that the solr index contains the correct Node Identifier
+    for each - see  `Regenerating The Index`_.
+
+.. _Regenerating The Index: ./query-index.html#regenerating-the-index
+
+
 The Node Subject and Node Certificate Path are linked fields that are critical for
 proper operation of the node.  To act as a Member Node in DataONE, you must obtain
 an X.509 certificate that can be used to identify this node and allow it to securely
@@ -187,8 +196,8 @@ private key that is used to authenticate this node within DataONE.
 
 .. Note:: 
 
-	For Tier 2 deployments and above, the Metacat Member Node must have Apache configured to request 
-	client certificates. Detailed instructions are included at the end of this chapter.
+    For Tier 2 deployments and above, the Metacat Member Node must have Apache configured to request
+    client certificates. Detailed instructions are included at the end of this chapter.
 
 The ``Enable DataONE Services`` checkbox allows the administrator to decide whether to 
 turn on synchronization with the DataONE network.  When this box is unchecked, the 
