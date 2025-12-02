@@ -54,14 +54,14 @@
 		network for easy discovery, and replicas of data and metadata can be housed on other Member Nodes for 
 		archival safe-keeping. In addition, a Metacat Member Node can optionally provide space to store replicas of data from 
 		other Member Nodes that wish to preserve their data in the federation.
-	<p/>
+	</p>
 	<p> To configure Metacat as a Member Node, you must first obtain a Member Node X.509 certificate that will
 	    be used to authenticate this node, and you must have a registered and verified account with DataONE that can
 	    be used as the point of contact for the candidate Member Node.  Once you have this information, fill out
 	    the form below with the proper configuration information, and then click 'Register', which will send the
 	    registration data to DataONE. A unique Member Node ID will be assigned and should only be used for this 
 	    node and never shared or altered.
-	<p/>
+	</p>
 	<br clear="right"/>
 	
 	<%@ include file="page-message-section.jsp"%>
@@ -103,7 +103,7 @@
 		</div>
 		<div class="clear"></div>
 		<h3>Member Node Configuration</h3>
-		General information identifiying this node, its owner, and contents.  You will need
+		General information identifying this node, its owner, and contents.  You will need
 		   a certificate to identify the node, and a DataONE account to act as a node contact.
 		
 		<div class="form-row">
