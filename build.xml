@@ -1,29 +1,4 @@
 <?xml version="1.0"?>
-<!--
-    *     Authors: Matt Jones, Chad Berkley, Jivka Bojilova
-    *   Copyright: 2000 Regents of the University of California and the
-    *              National Center for Ecological Analysis and Synthesis
-    * For Details: http://www.nceas.ucsb.edu/
-    *
-    * Build file for the Ant cross-platform build system for metacat
-    * See http://jakarta.apache.org for details on Ant
-    *
-    * usage: ant [compile|jar|install|documentation]
-    *
-    * This program is free software; you can redistribute it and/or modify
-    * it under the terms of the GNU General Public License as published by
-    * the Free Software Foundation; either version 2 of the License, or
-    * (at your option) any later version.
-    *
-    * This program is distributed in the hope that it will be useful,
-    * but WITHOUT ANY WARRANTY; without even the implied warranty of
-    * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    * GNU General Public License for more details.
-    *
-    * You should have received a copy of the GNU General Public License
-    * along with this program; if not, write to the Free Software
-    * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
--->
 <project name="metacat" default="jar" basedir=".">
 
     <property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_1_2"/>
@@ -297,23 +272,16 @@
             <arg value="-Dmdep.outputFile=${maven.dependency.file}"/>
             <arg value="-Dmdep.scope=runtime"/>
         </exec>
+        <echo>done with resolving maven dependencies</echo>
 
         <!-- Load the classpath string into an Ant property -->
         <loadfile property="dependency.cp" srcFile="${maven.dependency.file}"/>
-
+        <!-- Delete it since it has been loaded into a property -->
+        <delete file="${maven.dependency.file}"/>
         <!-- Convert it into a newline-separated list -->
         <path id="dependency.classpath">
             <pathelement path="${dependency.cp}"/>
         </path>
-
-        <mkdir dir="${libdir.mvn}"/>
-        <!-- Use the mvn copy-dependencies command to copy files with flattening -->
-        <exec executable="mvn" failonerror="true">
-            <arg value="dependency:copy-dependencies"/>
-            <arg value="-DoutputDirectory=${libdir.mvn}"/>
-            <arg value="-DincludeScope=runtime"/>
-        </exec>
-        <echo>Dependencies copied to ${libdir.mvn}</echo>
 
         <!-- combine base and dependencies for the classpath -->
         <path id="compile.classpath">
@@ -484,13 +452,6 @@
 
         <property name="package.home" value="edu/ucsb/nceas/metacat"/>
 
-        <!-- set up svn -->
-        <property name="svnant.lib" value="lib"/>
-        <property name="svnant.jar" value="${svnant.lib}/svnant.jar"/>
-        <property name="svnClientAdapter.jar"
-                  value="${svnant.lib}/svnClientAdapter.jar"/>
-        <property name="svnjavahl.jar"
-                  value="${svnant.lib}/svnjavahl.jar"/>
 
         <!-- the git repo for metacatUI-->
         <property name="metacatui.git.repository.url"
@@ -503,15 +464,6 @@
                   value="metacatui.war"/>
         <property name="metacatui.war.resources.dir"
                   value="${metacatui.build.dir}/src"/>
-
-        <!-- load the svn task -->
-        <path id="svn.classpath">
-            <pathelement location="${svnjavahl.jar}"/>
-            <pathelement location="${svnant.jar}"/>
-            <pathelement location="${svnClientAdapter.jar}"/>
-        </path>
-        <taskdef resource="svntask.properties"
-                 classpathref="svn.classpath"/>
 
         <condition property="eml.required">
             <or>
@@ -538,24 +490,21 @@
 
     </target>
 
-    <!-- Helper task to copy one jar at a time -->
-    <target name="copy-one-jar">
-        <copy file="${jar}" todir="${libdir.mvn}" overwrite="true"/>
-    </target>
+
 
     <target name="resolveDependencies" depends="init" description="retrieve dependencies with maven">
-        <echo>Moving Maven dependencies (${dependency.fileset}) to ${libdir.mvn}</echo>
-        <!-- Clear out mvn dir -->
-        <delete dir="${libdir.mvn}"/>
-        <!-- Copy all dependencies to the correct location. -->
-        <copy todir="${libdir.mvn}">
-            <fileset refid="dependency.fileset"/>
-            <!-- This mapper strips off all leading directory information -->
-            <mapper type="flatten"/>
-        </copy>
+        <echo>Moving Maven dependencies to ${libdir.mvn}</echo>
+        <mkdir dir="${libdir.mvn}"/>
+        <!-- Use the mvn copy-dependencies command to copy files with flattening -->
+        <exec executable="mvn" failonerror="true">
+            <arg value="dependency:copy-dependencies"/>
+            <arg value="-DoutputDirectory=${libdir.mvn}"/>
+            <arg value="-DincludeScope=runtime"/>
+        </exec>
+        <echo>Dependencies copied to ${libdir.mvn}</echo>
     </target>
 
-    <target name="prepare" depends="init">
+    <target name="prepare" depends="init, resolveDependencies">
         <mkdir dir="${build.src}"/>
         <mkdir dir="${build.dest}"/>
         <mkdir dir="${build.docs}"/>
