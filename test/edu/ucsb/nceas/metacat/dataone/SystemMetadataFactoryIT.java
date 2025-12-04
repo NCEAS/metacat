@@ -14,6 +14,7 @@ import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import org.apache.solr.util.FileUtils;
+import org.dataone.configuration.Settings;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ReplicationPolicy;
@@ -50,6 +51,8 @@ public class SystemMetadataFactoryIT {
         withProperties.setProperty("application.documentfilepath", documentPath);
         closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
         d1NodeServiceTest.setUp();
+        Settings.getConfiguration().setProperty("ObjectFormatCache.overriding.CN_URL",
+                                                "https://cn.dataone.org/cn");
     }
 
     @After
