@@ -6,43 +6,47 @@
 
 ## Release Notes for Metacat 3.3.0
 
-**Release date: 2025-12-08**
+**Release date: 2025-12-12**
 
+### New Features & Enhancements:
+- Support osti-elink v2json (replaces deprecated xml format) to communicate with the osti doi service.
+- Add `trace` logging of system metadata changes in the `updateSystemmetadata` API call ([Issue #2240](https://github.com/NCEAS/metacat/issues/2240))
 ### Version Upgrades and Bug Fixes:
+- Disallow `MN.updateSystemMetadata` clients changes to the replica section of system metadata ([Issue #1867](https://github.com/NCEAS/metacat/issues/1867))
+- Fix access policy and replication policy manipulation ([Issue #2206](https://github.com/NCEAS/metacat/issues/2206))
+- Bump commons-io` from 2.16.1 to 2.20.0
 - Update Docker base image from `tomcat:9.0.102-jre17-temurin-noble` to `tomcat:9.0.112-jre17-temurin-noble`
 - Update bundled MetacatUI to version *** TO-DO ***
-
-# *** TO-DO ***
 - Upgrade DataONE-Indexer library to 3.2.0 in metacat-index (see [dataone-indexer Release Notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md) for details)
-
-### Other Enhancements:
-
-# *** TO-DO ***
 
 ## Release Notes for helm chart 4.0.0
 
-**Release date: 2025-12-08**
+**Release date: 2025-12-12**
 
 > [!NOTE]
 > We are continuing to move away from using Bitnami helm charts for production dependencies. The Metacat chart now assumes you will provide your own instances of PostgreSQL and RabbitMQ, which are no longer included as sub-charts. We recommend using:
 > - CloudNative PG Operator to deploy your PostgreSQL cluster - see [Appendix 5 of the helm/README.md](./helm/README.md#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg)
 > - RabbitMQ Cluster Operator to deploy your RabbitMQ cluster - see [Appendix 6 of the helm/README.md](./helm/README.md#appendix-6-the-rabbitmq-cluster-operator)
+>
+> ...although you are free to choose any other method of deploying these dependencies.
 
 ### Enhancements:
-- dataone-indexer sub-chart upgraded to version 2.0.0, whihc includes a RabbitMQ major-version upgrade (see [dataone-indexer Release Notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md) for details)
+- dataone-indexer sub-chart upgraded to version 2.0.0, which includes a RabbitMQ major-version upgrade (see [dataone-indexer Release Notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md) for details)
 - Improve the checksum calculation used to determine if the chart deployment includes changes that require a pod restart
-- Note that RabbitMQ now uses credentials provided in its own secret, instead of specifying the username in values.yaml and the password in the Metacat secret.
-- **values.yaml**
-  - added:
+
+- **`values.yaml` Changes**
+  - Note that RabbitMQ now uses credentials provided in its own secret, instead of specifying the username in values.yaml and the password in the Metacat secret.
+
+  - **added**:
     - `persistence.pvcLabels` - arbitrary Labels for PVC volumeClaimTemplate. Defaults to `velero.io/exclude-from-backup: "true"`, to prevent Velero from trying and failing to back up volumes that were not provisioned dynamically.
-    - `dataone-indexer.idxworker.rabbitmqSecret` (leave blank to auto-populate if using RMQ Operator)
+    - `dataone-indexer.idxworker.rabbitmqSecret` (leave blank to autopopulate if using RMQ Operator)
     - `dataone-indexer.rabbitmq.enabled` - defaults to `true` for use with RMQ Operator; disable to use your own RMQ instance
     - `dataone-indexer.rabbitmq.replicaCount`
     - `dataone-indexer.rabbitmq.additionalConfig` (defaults to `consumer_timeout: "144000000"`)
-  - changed:
+  - **changed**:
     - `database.existingSecret` now defaults to `{{ .Release.Name }}-metacat-cnpg`
     - `dataone-indexer.rabbitmq.extraConfiguration` has moved to `dataone-indexer.rabbitmq.additionalConfig`
-  - removed:
+  - **removed**:
     - `metacat.index.rabbitmq.username`
     - `dataone-indexer.rabbitmq.auth.username`
     - `dataone-indexer.idxworker.existingPasswordSecret`
