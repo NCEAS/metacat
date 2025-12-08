@@ -1157,13 +1157,8 @@ dataone-indexer:
     replicaCount: 1
 
     ## @skip dataone-indexer.rabbitmq.additionalConfig Additional rabbitmq configuration settings
-    ##
-    additionalConfig:
-      ## @skip dataone-indexer.rabbitmq.additionalConfig.consumer_timeout RabbitMQ consumer timeout
-      ## Default consumer_timeout is 30 mins (i.e. 18000000mS). Increase this to 1hr to avoid
-      ## timeouts with large resource maps
-      ## 144000000 = 4 hours
-      consumer_timeout: "144000000"
+    ## See, for example: https://www.rabbitmq.com/docs/limits
+    additionalConfig: {}
 
   solr:
     ## @param dataone-indexer.solr.javaMem Java memory options to pass to the Solr container
