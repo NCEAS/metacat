@@ -9,13 +9,13 @@
 **Release date: 2025-12-12**
 
 ### New Features & Enhancements:
-- Support osti-elink v2json (replaces deprecated xml format) to communicate with the osti doi service.
+- Support osti-elink v2json (replaces deprecated XML format) to communicate with the OSTI DOI service.
 - Add `trace` logging of system metadata changes in the `updateSystemmetadata` API call ([Issue #2240](https://github.com/NCEAS/metacat/issues/2240))
 - Ant build: remove dependency on obsolete `maven-ant-tasks` library
 ### Version Upgrades and Bug Fixes:
 - Disallow `MN.updateSystemMetadata` clients changes to the replica section of system metadata ([Issue #1867](https://github.com/NCEAS/metacat/issues/1867))
 - Fix access policy and replication policy manipulation ([Issue #2206](https://github.com/NCEAS/metacat/issues/2206))
-- Bump commons-io` from 2.16.1 to 2.20.0
+- Bump `commons-io` from 2.16.1 to 2.20.0
 - Update Docker base image from `tomcat:9.0.102-jre17-temurin-noble` to `tomcat:9.0.112-jre17-temurin-noble`
 - Update bundled MetacatUI to version *** TO-DO ***
 - Upgrade DataONE-Indexer library to 3.2.0 in metacat-index (see [dataone-indexer Release Notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md) for details)
