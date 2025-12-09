@@ -36,7 +36,7 @@ appVersion: "3.3.0"
 dependencies:
   - name: metacatui
     repository: oci://ghcr.io/nceas/charts
-    version: 1.0.12
+    version: 1.0.13
     condition: global.includeMetacatUi
 
   - name: dataone-indexer
