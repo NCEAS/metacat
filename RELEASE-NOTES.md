@@ -9,15 +9,15 @@
 **Release date: 2025-12-12**
 
 ### New Features & Enhancements:
-- Support osti-elink v2json (replaces deprecated xml format) to communicate with the osti doi service.
+- Support osti-elink v2json (replaces deprecated XML format) to communicate with the OSTI DOI service.
 - Add `trace` logging of system metadata changes in the `updateSystemmetadata` API call ([Issue #2240](https://github.com/NCEAS/metacat/issues/2240))
 - Ant build: remove dependency on obsolete `maven-ant-tasks` library
 ### Version Upgrades and Bug Fixes:
 - Disallow `MN.updateSystemMetadata` clients changes to the replica section of system metadata ([Issue #1867](https://github.com/NCEAS/metacat/issues/1867))
 - Fix access policy and replication policy manipulation ([Issue #2206](https://github.com/NCEAS/metacat/issues/2206))
-- Bump commons-io` from 2.16.1 to 2.20.0
+- Bump `commons-io` from 2.16.1 to 2.20.0
 - Update Docker base image from `tomcat:9.0.102-jre17-temurin-noble` to `tomcat:9.0.112-jre17-temurin-noble`
-- Update bundled MetacatUI to version *** TO-DO ***
+- Update bundled MetacatUI to version 2.36.2
 - Upgrade DataONE-Indexer library to 3.2.0 in metacat-index (see [dataone-indexer Release Notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md) for details)
 
 ## Release Notes for helm chart 4.0.0
@@ -34,6 +34,7 @@
 ### Enhancements:
 - dataone-indexer sub-chart upgraded to version 2.0.0, which includes a RabbitMQ major-version upgrade (see [dataone-indexer Release Notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md) for details)
 - Improve the checksum calculation used to determine if the chart deployment includes changes that require a pod restart
+- Update MetacatUI subchart to version 1.0.13 (App version 2.36.2)
 
 - **`values.yaml` Changes**
   - Note that RabbitMQ now uses credentials provided in its own secret, instead of specifying the username in values.yaml and the password in the Metacat secret.
