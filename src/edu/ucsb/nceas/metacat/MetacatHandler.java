@@ -14,6 +14,7 @@ import java.util.Vector;
 
 import javax.servlet.http.HttpServletResponse;
 
+import edu.ucsb.nceas.metacat.systemmetadata.log.SystemMetadataDeltaLogger;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
@@ -56,6 +57,8 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  */
 public class MetacatHandler {
     private static Log logMetacat = LogFactory.getLog(MetacatHandler.class);
+    private static SystemMetadataDeltaLogger systemMetadataDeltaLogger =
+        new SystemMetadataDeltaLogger();
 
     // Constants -- these should be final in a servlet
     private static final String PROLOG = "<?xml version=\"1.0\"?>";
@@ -245,6 +248,9 @@ public class MetacatHandler {
                 // Since this is a new object, we don't need to check system metadata version
                 SystemMetadataManager.getInstance().store(sysmeta, changeModificationDate, conn,
                                                 SystemMetadataManager.SysMetaVersion.UNCHECKED);
+                // Since this is a new generated object, the old version of the system metadata
+                // is null for this object
+                systemMetadataDeltaLogger.log(user, null, sysmeta);
                 if (action == Action.UPDATE) {
                     // add the newPid to the obsoletedBy list for the previous sysmeta
                     preSys.setObsoletedBy(pid);
@@ -257,6 +263,7 @@ public class MetacatHandler {
                     // Set changeModifyTime true
                     SystemMetadataManager.getInstance().store(preSys, true, conn,
                                                       SystemMetadataManager.SysMetaVersion.CHECKED);
+                    systemMetadataDeltaLogger.log(user, backcopyOfPre, preSys);
                 }
                 conn.commit();
             } catch (Exception e) {

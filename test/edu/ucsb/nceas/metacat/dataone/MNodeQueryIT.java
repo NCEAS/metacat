@@ -1373,8 +1373,7 @@ public class MNodeQueryIT {
         // create a collection object resource
         Resource collection = ResourceMapModifier.generateNewComponent(model,
                                                                        seriesId.getValue());// it
-        // only works with a
-        // series id
+        // only works with a series id
         // create a metadata object resource
         Resource metadata = ResourceMapModifier.generateNewComponent(model, guid2.getValue());
         // create the second metadata object resource
@@ -1412,29 +1411,32 @@ public class MNodeQueryIT {
         sysmeta3.setFormatId(formatId3);
         object3 = new ByteArrayInputStream(output.toByteArray());
         d1NodeServiceTest.mnCreate(session, resourceMapId, object3, sysmeta3);
-
-        query = "q=id:" + "\"" + guid.getValue() + "\"";
+        // Make sure the resource map object was indexed
+        query = "q=id:" + "\"" + resourceMapId.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         count = 0;
-        while ((resultStr == null || !resultStr.contains("hasPart"))
+        while ((resultStr == null || !resultStr.contains("checksum"))
             && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
+        assertTrue(resultStr.contains("checksum"));
+
+        // Query the portal document and can't find the hasPart
+        query = "q=id:" + "\"" + guid.getValue() + "\"";
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertNotNull(resultStr);
         assertTrue(resultStr.contains("<str name=\"label\">my-portal</str>"));
         assertTrue(resultStr.contains(
             "<str name=\"logo\">urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708d</str>"));
         assertTrue(resultStr.contains(collectionResult));
         resultStr = resultStr.replaceAll("\\s", "");
-        assertTrue(resultStr.contains(
-            "<arrname=\"hasPart\"><str>" + guid2.getValue() + "</str><str>" + guid3.getValue()
-                + "</str></arr>") || resultStr.contains(
-            "<arrname=\"hasPart\"><str>" + guid3.getValue() + "</str><str>" + guid2.getValue()
-                + "</str></arr>"));
+        // Since hasPart is removed from dataone-indexer, it shouldn't have it.
+        assertFalse(resultStr.contains("<arrname=\"hasPart\"><str>"));
 
         query = "q=id:" + "\"" + guid2.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -1454,8 +1456,9 @@ public class MNodeQueryIT {
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId.getValue()));
         resultStr = resultStr.replaceAll("\\s", "");
+        // Now Dataone-indexer treats the object of isPartOf as a literal, not a sid
         assertTrue(resultStr.contains(
-            "<arrname=\"isPartOf\"><str>" + seriesId.getValue() + "</str></arr>"));
+            "<arrname=\"isPartOf\"><str>" + collection.toString() + "</str></arr>"));
 
         query = "q=id:" + "\"" + guid3.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -1475,8 +1478,9 @@ public class MNodeQueryIT {
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId.getValue()));
         resultStr = resultStr.replaceAll("\\s", "");
+        // Now Dataone-indexer treats the object of isPartOf as a literal, not a sid
         assertTrue(resultStr.contains(
-            "<arrname=\"isPartOf\"><str>" + seriesId.getValue() + "</str></arr>"));
+            "<arrname=\"isPartOf\"><str>" + collection.toString() + "</str></arr>"));
     }
 
     /**

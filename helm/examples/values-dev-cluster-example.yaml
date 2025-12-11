@@ -2,11 +2,12 @@
 ##
 ## examples:
 ## from local helm chart:
-##  helm install myrelease -n mynamespace ./helm -f ./helm/examples/values-dev-cluster-example.yaml
+## $ helm upgrade --install <release> -n <namespace> ./helm
+##          -f ./helm/examples/values-dev-cluster-example.yaml --debug
 ##
 ## or from pre-packaged chart:
-##  helm install myrelease -n mynamespace -f ./helm/examples/values-dev-cluster-example.yaml \
-##       --debug --render-subchart-notes oci://ghcr.io/nceas/charts/metacat --version <myversion#>
+## $ helm upgrade --install <release> -n <namespace> oci://ghcr.io/nceas/charts/metacat \
+##          --version <version> -f ./helm/examples/values-dev-cluster-example.yaml --debug
 ##
 ## see values.yaml for full documentation on the following parameters
 ##
@@ -20,8 +21,6 @@ global:
   d1ClientCnUrl: "https://cn-sandbox.test.dataone.org/cn"
   storageClass: csi-cephfs-sc
   ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
-  ## Use your own release name instead of metacatbrooke
-  passwordsSecret: &passwordSecretName metacatbrooke-metacat-secrets
   ## MetacatUI is deployed as a separate chart, to allow for a different upgrade cycle.
   ## see separate values overrides in ./values-dev-cluster-example-mcui.yaml
   ##
@@ -34,7 +33,7 @@ global:
 metacat:
   auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
 
-#  storage.hashstore.disableConversion: true
+  #  storage.hashstore.disableConversion: true
 
   ## DataONE Member Node (MN) Parameters
   dataone.certificate.fromHttpHeader.enabled: true
@@ -84,9 +83,7 @@ ingress:
     - hosts: [] # defaults to global.metacatExternalBaseUrl
       secretName: ingress-nginx-tls-cert
 
-# Pre-existing secret containing original metacat postgresql credentials
 database:
-  existingSecret: "{{ .Release.Name }}-metacat-cnpg"
   serviceName: mcdb-cnpg-rw
 
 dataone-indexer:
@@ -112,15 +109,13 @@ dataone-indexer:
     debug: false
 
   rabbitmq:
-    auth:
-      existingPasswordSecret: *passwordSecretName
     resources:
       requests:
-        cpu: 1.0
-        memory: 2048Mi
+        cpu: 500m
+        memory: 512Mi
       limits:
-        cpu: 3.0
-        memory: 3072Mi
+        cpu: 1.0
+        memory: 1024Mi
 
   solr:
     javaMem: "-XX:MaxRAMPercentage=75.0"

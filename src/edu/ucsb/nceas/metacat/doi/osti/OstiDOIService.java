@@ -1,26 +1,10 @@
-/**
- *  Copyright: 2021 Regents of the University of California and the
- *              National Center for Ecological Analysis and Synthesis
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 package edu.ucsb.nceas.metacat.doi.osti;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
@@ -30,22 +14,19 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.ucsb.nceas.osti_elink.v2.json.PublishIdentifierCommand;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
-import org.dataone.service.exceptions.IdentifierNotUnique;
-import org.dataone.service.exceptions.InsufficientResources;
 import org.dataone.service.exceptions.InvalidRequest;
-import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.exceptions.InvalidToken;
 import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
-import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v1.ServiceMethodRestriction;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -54,7 +35,6 @@ import org.dataone.service.types.v2.SystemMetadata;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.doi.DOIException;
 import edu.ucsb.nceas.metacat.doi.DOIService;
-import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.osti_elink.OSTIElinkClient;
 import edu.ucsb.nceas.osti_elink.OSTIElinkErrorAgent;
@@ -71,11 +51,12 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  */
 public class OstiDOIService extends DOIService{
     private static Log logMetacat = LogFactory.getLog(OstiDOIService.class);
-    private static Templates eml2osti = null;                                                                      
+    private static Templates eml2osti = null;
     private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();
-    
+
     private OSTIElinkClient ostiClient = null;
     private OSTIElinkErrorAgent errorAgent = null;
+
     /**
      * Constructor
      */
@@ -85,25 +66,26 @@ public class OstiDOIService extends DOIService{
             if (doiEnabled) {
                 errorAgent = new OstiErrorEmailAgent();
                 ostiClient = new OSTIElinkClient(username, password, serviceBaseUrl, errorAgent);
-                String ostiPath = SystemUtil.getContextDir() + FileUtil.getFS() + "style" + FileUtil.getFS() + 
-                                  "common" + FileUtil.getFS() + "osti" + FileUtil.getFS() + "eml2osti.xsl";
-                logMetacat.debug("OstiDOIService.OstiDOIService - the osti xsl file path is " + ostiPath);
+                String ostiPath =
+                    SystemUtil.getContextDir() + FileUtil.getFS() + "style" + FileUtil.getFS()
+                        + "common" + FileUtil.getFS() + "osti" + FileUtil.getFS()
+                        + "eml2ostijson.xsl";
+                logMetacat.debug("The osti xsl file path is " + ostiPath);
                 eml2osti = transformerFactory.newTemplates(new StreamSource(ostiPath));
             }
         } catch (PropertyNotFoundException e) {
-            logMetacat.warn("OstiDOIService.OstiDOIService -DOI support is not configured at this node.", e);
-            return;
+            logMetacat.warn("DOI support is not configured at this node.", e);
         } catch (TransformerConfigurationException e) {
             // TODO Auto-generated catch block
-            logMetacat.error("OstiDOIService.OstiDOIService - Metacat can't generate the style sheet to transform eml objects to OSTI documents: ", e);
-            return;
+            logMetacat.error("Metacat can't generate the style sheet to "
+                    + "transform eml objects to OSTI documents: ", e);
         }
     }
-    
+
     /**
      * Generate a DOI using the DOI service as configured
      * @return  the identifier which was minted by the DOI service
-     * @throws EZIDException
+     * @throws DOIException
      * @throws InvalidRequest
      */
     public Identifier generateDOI() throws DOIException, InvalidRequest {
@@ -120,15 +102,24 @@ public class OstiDOIService extends DOIService{
         }
     }
 
-    
+
     /**
-     * Submit the metadata in the osti service for a specific identifier(DOI). The identifier can be a SID or PID
-     * This implementation will be call by the registerMetadata on the super class.
+     * Submit the metadata in the osti service for a specific identifier (DOI). The identifier can
+     * be a SID or PID
+     * This implementation will be called by the registerMetadata on the super class.
      * @param identifier  the identifier to identify the metadata which will be updated
      * @param  sysMeta  the system metadata associated with the identifier
+     * @throws DOIException
+     * @throws NotImplemented
+     * @throws ServiceFailure
+     * @throws InvalidToken
+     * @throws NotFound
+     * @throws IOException
+     * @throws NotAuthorized
      */
-    protected void submitDOIMetadata(Identifier identifier, SystemMetadata sysMeta) throws InvalidRequest, DOIException, NotImplemented, 
-                                                        ServiceFailure, InterruptedException, InvalidToken, NotFound, IOException, NotAuthorized {
+    protected void submitDOIMetadata(Identifier identifier, SystemMetadata sysMeta)
+        throws DOIException, NotImplemented, ServiceFailure,
+        InvalidToken, NotFound, IOException, NotAuthorized {
         MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
         Session session = new Session();
         Subject subject = MNodeService.getInstance(request).getCapabilities().getSubject(0);
@@ -141,8 +132,10 @@ public class OstiDOIService extends DOIService{
                 String siteUrl = null;
                 if (autoPublishDOI) {
                     siteUrl = getLandingPage(identifier);
-                    logMetacat.debug("OstiDOIService.submitDOIMetadata - The system is configured to auto publish doi. The site url will be used for pid " 
-                                     + identifier.getValue() + " is: " + siteUrl);
+                    logMetacat.debug(
+                        "OstiDOIService.submitDOIMetadata - The system is configured to auto "
+                            + "publish doi. The site url will be used for pid "
+                            + identifier.getValue() + " is: " + siteUrl);
                 } else {
                     //In non-autoPublishDOI, we should preserve the current status in the OSTI server
                     String status = null;
@@ -150,24 +143,35 @@ public class OstiDOIService extends DOIService{
                         status = ostiClient.getStatus(identifier.getValue());
                     } catch (OSTIElinkException ee) {
                         if (errorAgent != null) {
-                            errorAgent.notify("OstiDOIService.submitDOIMetadata - can't get the OSTI status of id " + 
-                                               identifier.getValue() + " since:\n " + ee.getMessage());
+                            errorAgent.notify(
+                                "OstiDOIService.submitDOIMetadata - can't get the OSTI status of "
+                                    + "id "
+                                    + identifier.getValue() + " since:\n " + ee.getMessage());
                         }
                         throw new DOIException(ee.getMessage());
                     }
-                    logMetacat.debug("OstiDOIService.submitDOIMetadata - The system is configured NOT to auto publish doi and the current status is "
-                                     + status + " for the identifier " + identifier.getValue());
+                    logMetacat.debug(
+                        "The system is configured NOT to auto publish doi and the current status "
+                            + "is "
+                            + status + " for the identifier " + identifier.getValue());
                     if (status != null && status.equalsIgnoreCase(OSTIElinkService.SAVED)) {
                         //we need to preserve the saved status, so the site url should be null. 
-                        //The style sheet will use "set_reserved" if both site url parameter is null and osti_id parameter is null.
+                        //The style sheet will use "set_reserved" if both site url parameter is
+                        // null and osti_id parameter is null.
                         siteUrl = null;
-                        logMetacat.debug("OstiDOIService.submitDOIMetadata - The system is configured NOT to auto publish doi. The site url will be used for pid " 
-                                + identifier.getValue() + " should be null since its current status is Saved.");
+                        logMetacat.debug(
+                            "The system is configured NOT to auto publish doi. The site url will "
+                                + "be used for pid "
+                                + identifier.getValue()
+                                + " should be null since its current status is Saved.");
                     } else {
                         //we need to preserve the "pending"/"released" status. So we need a site url
                         siteUrl = getLandingPage(identifier);
-                        logMetacat.debug("OstiDOIService.submitDOIMetadata - The system is configured NOT to auto publish doi. The site url will be used for pid " 
-                                + identifier.getValue() + " is: " + siteUrl + " since the status is " + status);
+                        logMetacat.debug(
+                            "The system is configured NOT to auto publish doi. The site url will "
+                                + "be used for pid "
+                                + identifier.getValue() + " is: " + siteUrl
+                                + " since the status is " + status);
                     }
                     
                 }
@@ -180,25 +184,16 @@ public class OstiDOIService extends DOIService{
             }
         }
     }
-    
+
     /**
      * Make the status of the identifier to be public 
      * @param session  the subjects call the method
-     * @param identifer  the identifier of the object which will be published. 
-     * @throws InvalidRequest 
-     * @throws NotImplemented 
-     * @throws NotAuthorized 
-     * @throws ServiceFailure 
-     * @throws InvalidToken 
-     * @throws NotFound
-     * @throws InvalidSystemMetadata 
-     * @throws InsufficientResources 
-     * @throws UnsupportedType 
-     * @throws IdentifierNotUnique 
+     * @param identifier  the identifier of the object which will be published.
+     * @throws InvalidRequest
+     * @throws ServiceFailure
      */
-    public void publishIdentifier(Session session, Identifier identifier) throws InvalidToken, 
-    ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, 
-    UnsupportedType, InsufficientResources, InvalidSystemMetadata {
+    public void publishIdentifier(Session session, Identifier identifier)
+        throws ServiceFailure, InvalidRequest {
         if (!doiEnabled) {
             throw new InvalidRequest("2193", "DOI scheme is not enabled at this node.");
         }
@@ -206,27 +201,31 @@ public class OstiDOIService extends DOIService{
         logMetacat.debug("OstiDOIService.publishIdentifier - The site url for pid "
                                                      + identifier.getValue() + " is: " + siteUrl);
         try {
-            String ostiMeta = generateXMLWithSiteURL(siteUrl);
+            String ostiMeta = generateJsonWithSiteURL(siteUrl);
             logMetacat.debug("OstiDOIService.publishIdentifier - the metadata is\n" + ostiMeta); 
             ostiClient.setMetadata(identifier.getValue(), ostiMeta);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | JsonProcessingException e) {
             throw new ServiceFailure("1030", e.getMessage());
         }
     }
-    
+
     /**
-     * Create a xml file with the site_url element
+     * Create a json file with the site_url element
+     * {
+     *  "site_url": "https://foo.com"
+     * }
      * @param siteURL  the value of the site_url element
-     * @return  the complete xml string
+     * @return  the complete json string
+     * @throws JsonProcessingException
      */
-    protected String generateXMLWithSiteURL(String siteURL) {
-        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><records><record><site_url>";
-        xml = xml + StringEscapeUtils.escapeXml(siteURL);
-        xml = xml + "</site_url></record></records>";
-        logMetacat.debug("OstiDOIService.generateXMLWithSiteUR - the metadata is: " + xml);
-        return xml;
+    protected String generateJsonWithSiteURL(String siteURL) throws JsonProcessingException {
+        Map<String, Object> params = new HashMap<>();
+        params.put(PublishIdentifierCommand.SITE_URL, siteURL);
+        String payload = new ObjectMapper().writeValueAsString(params);
+        logMetacat.debug("The publishing metadata is: " + payload);
+        return payload;
     }
-    
+
     /**
      * Generate the OSTI document for the given eml
      * @param eml  the source eml 
@@ -245,16 +244,16 @@ public class OstiDOIService extends DOIService{
         }
         transformer.transform(new StreamSource(eml), result);
         meta = writer.toString();
-        logMetacat.debug("OstiDOIService.generateOstiMetadata(after eml tranforming) - "
-                            + "the metadata is\n" + meta);
+        logMetacat.debug("After transforming eml - the metadata is\n" + meta);
         return meta;
     }
-    
+
     /**
      * Get the metadata for the given identifier
      * @param doi  the identifier to identify the OSTI metadata
      * @return  the OSTI metadata associated with the identifier
      * @throws OSTIElinkException
+     * @throws InvalidRequest
      */
     public String getMetadata(Identifier doi) throws OSTIElinkException, InvalidRequest {
         if (!doiEnabled) {

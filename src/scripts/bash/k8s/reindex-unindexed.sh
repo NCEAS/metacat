@@ -53,7 +53,14 @@ echo "Results will be saved to ./${timestamp}/${metacat_pids_file}. Enter to con
 abort..."
 read
 
-kubectl exec ${release_name}-postgresql-0 -- bash -c "psql -U metacat << EOF
+if [ $(kubectl get pods -o name | grep "cnpg-3" | wc -l) -gt 1 ]; then
+    echo $(kubectl get pods -o name | grep "cnpg-3")
+    echo "Multiple pod names found matching 'cnpg-3'. Please enter the correct pod name"
+    read cnpg_pod
+else
+    cnpg_pod=$(kubectl get pods -o name | grep "cnpg-3")
+fi
+kubectl exec ${cnpg_pod} -- bash -c "psql -U metacat << EOF
   SELECT guid FROM systemmetadata;
 EOF" | sed '1,2d;$d' | sed '$d'  >  ./${timestamp}/${metacat_pids_file}
 # sed removes first 2 rows: "guid" and "----", and the last 2 rows: "(n rows)" and <blank>

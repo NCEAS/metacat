@@ -53,6 +53,7 @@ hidden: true    # do NOT show in template picker every time someone creates a ne
   git tag chart-x.x.x <commit-sha>
   git push --tags    ## IMPORTANT - DON'T FORGET THIS!
   ```
+- [ ] Add the metadata for the reserved DOI and publish it with the correct softwareheritage url
 - [ ] Add to GH `Releases` page (**& link to binaries that are on KNB site - don't upload to GH!**)
 - [ ] Send email
 - [ ] announce on Slack
