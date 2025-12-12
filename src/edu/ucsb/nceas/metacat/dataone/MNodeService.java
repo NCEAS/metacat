@@ -3280,6 +3280,9 @@ public class MNodeService extends D1NodeService
             checkAddRestrictiveAccessOnDOI(currentSysmeta, sysmeta);
             boolean needUpdateModificationDate = true;
             boolean fromCN = false;
+            // Ignore the replica update since it is controlled by cn
+            List<Replica> replicas = currentSysmeta.getReplicaList();
+            sysmeta.setReplicaList(replicas);
             success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate,
                                            currentSysmeta, fromCN,
                                            SystemMetadataManager.SysMetaVersion.CHECKED);

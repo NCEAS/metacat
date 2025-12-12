@@ -50,7 +50,9 @@ import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Person;
+import org.dataone.service.types.v1.Replica;
 import org.dataone.service.types.v1.ReplicationPolicy;
+import org.dataone.service.types.v1.ReplicationStatus;
 import org.dataone.service.types.v1.Service;
 import org.dataone.service.types.v1.ServiceMethodRestriction;
 import org.dataone.service.types.v1.Services;
@@ -173,6 +175,280 @@ public class MNodeServiceIT {
                 closeableMock.close();
             }
             d1NodeTest.tearDown();
+        }
+
+        /**
+         * Test the scenarios that the replicas information will be ignored in the MN
+         * .updateSystemMetadata method.
+         * @throws Excpetion
+         */
+        @Test
+        public void testIgnoreReplicasInUpdateSystemMetadata() throws Exception {
+            // A replica instance
+            String testKnb = "node:urn:testKnb";
+            NodeReference reference = new NodeReference();
+            reference.setValue(testKnb);
+            Date now = new Date();
+            Replica replica = new Replica();
+            replica.setReplicationStatus(ReplicationStatus.COMPLETED);
+            replica.setReplicaVerified(now);
+            replica.setReplicaMemberNode(reference);
+
+            //Test that adding replicas will be ignored
+            Session session = d1NodeTest.getTestSession();
+            Identifier pid = new Identifier();
+            pid.setValue("testIgnoreReplicasInUpdateSystemMetadata." + System.currentTimeMillis());
+            InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            SystemMetadata sysmeta =
+                D1NodeServiceTest.createSystemMetadata(pid, session.getSubject(), object);
+            d1NodeTest.mnCreate(session, pid, object, sysmeta);
+            SystemMetadata read = MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertEquals(pid.getValue(), read.getIdentifier().getValue());
+            assertEquals(1, read.getAccessPolicy().getAllowList().size());
+            read.addReplica(replica);
+            assertEquals(1, read.getReplicaList().size());
+            assertEquals(testKnb, read.getReplicaList().get(0).getReplicaMemberNode().getValue());
+            assertEquals(
+                now.getTime(), read.getReplicaList().get(0).getReplicaVerified().getTime());
+            assertEquals(ReplicationStatus.COMPLETED.xmlValue(),
+                         read.getReplicaList().get(0).getReplicationStatus().xmlValue());
+            MNodeService.getInstance(request).updateSystemMetadata(session, pid, read);
+            SystemMetadata read2 = MNodeService.getInstance(request).getSystemMetadata(session,
+                                                                                       pid);
+            assertEquals(pid.getValue(), read2.getIdentifier().getValue());
+            assertEquals(1, read2.getAccessPolicy().getAllowList().size());
+            // The replica wasn't added
+            assertEquals(0, read2.getReplicaList().size());
+
+            // Test scenarios that removing and updating existing replicas will be ignored
+            Session cnSession = d1NodeTest.getCNSession();
+            Identifier guid = new Identifier();
+            guid.setValue(
+                "testIgnoreReplicasInUpdateSystemMetadata2." + System.currentTimeMillis());
+            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            sysmeta = D1NodeServiceTest.createSystemMetadata(guid, cnSession.getSubject(), object);
+            sysmeta.addReplica(replica);
+            CNodeService.getInstance(request).registerSystemMetadata(cnSession, guid, sysmeta);
+            SystemMetadata read3 =
+                MNodeService.getInstance(request).getSystemMetadata(cnSession, guid);
+            assertEquals(guid, read3.getIdentifier());
+            assertEquals(4, read3.getSize().intValue());
+            assertEquals(testKnb, read3.getReplicaList().get(0).getReplicaMemberNode().getValue());
+            assertEquals(
+                now.getTime(), read3.getReplicaList().get(0).getReplicaVerified().getTime());
+            assertEquals(ReplicationStatus.COMPLETED.xmlValue(),
+                         read3.getReplicaList().get(0).getReplicationStatus().xmlValue());
+            // Set replica list to null
+            read3.setReplicaList(null);
+            assertNull(read3.getReplicaList());
+            MNodeService.getInstance(request).updateSystemMetadata(cnSession, guid, read3);
+            SystemMetadata read4 =
+                MNodeService.getInstance(request).getSystemMetadata(cnSession, guid);
+            assertEquals(guid, read4.getIdentifier());
+            assertEquals(4, read4.getSize().intValue());
+            assertEquals(1, read4.getReplicaList().size());
+            assertEquals(testKnb, read4.getReplicaList().get(0).getReplicaMemberNode().getValue());
+            assertEquals(
+                now.getTime(), read4.getReplicaList().get(0).getReplicaVerified().getTime());
+            assertEquals(ReplicationStatus.COMPLETED.xmlValue(),
+                         read4.getReplicaList().get(0).getReplicationStatus().xmlValue());
+            // Set replica list to an empty list
+            List<Replica> list = new ArrayList<>();
+            read4.setReplicaList(list);
+            assertEquals(0, read4.getReplicaList().size());
+            MNodeService.getInstance(request).updateSystemMetadata(cnSession, guid, read4);
+            SystemMetadata read5 =
+                MNodeService.getInstance(request).getSystemMetadata(cnSession, guid);
+            assertEquals(guid, read5.getIdentifier());
+            assertEquals(4, read5.getSize().intValue());
+            assertEquals(1, read5.getReplicaList().size());
+            assertEquals(testKnb, read5.getReplicaList().get(0).getReplicaMemberNode().getValue());
+            assertEquals(
+                now.getTime(), read5.getReplicaList().get(0).getReplicaVerified().getTime());
+            assertEquals(ReplicationStatus.COMPLETED.xmlValue(),
+                         read5.getReplicaList().get(0).getReplicationStatus().xmlValue());
+            // Use another replica list
+            String anotherKnb = "node:urn:testKnb2";
+            NodeReference reference2 = new NodeReference();
+            reference2.setValue(anotherKnb);
+            Date now2 = new Date();
+            Replica replica2 = new Replica();
+            replica2.setReplicationStatus(ReplicationStatus.QUEUED);
+            replica2.setReplicaVerified(now2);
+            replica2.setReplicaMemberNode(reference2);
+            List<Replica> list2 = new ArrayList<>();
+            list2.add(replica2);
+            read5.setReplicaList(list2);
+            assertEquals(1, read5.getReplicaList().size());
+            assertEquals(4, read5.getSize().intValue());
+            assertEquals(anotherKnb,
+                         read5.getReplicaList().get(0).getReplicaMemberNode().getValue());
+            assertEquals(
+                now2.getTime(), read5.getReplicaList().get(0).getReplicaVerified().getTime());
+            assertEquals(ReplicationStatus.QUEUED.xmlValue(),
+                         read5.getReplicaList().get(0).getReplicationStatus().xmlValue());
+            MNodeService.getInstance(request).updateSystemMetadata(cnSession, guid, read5);
+            SystemMetadata read6 =
+                MNodeService.getInstance(request).getSystemMetadata(cnSession, guid);
+            assertEquals(guid, read6.getIdentifier());
+            assertEquals(4, read6.getSize().intValue());
+            assertEquals(testKnb, read6.getReplicaList().get(0).getReplicaMemberNode().getValue());
+            assertEquals(
+                now.getTime(), read6.getReplicaList().get(0).getReplicaVerified().getTime());
+            assertEquals(ReplicationStatus.COMPLETED.xmlValue(),
+                         read6.getReplicaList().get(0).getReplicationStatus().xmlValue());
+        }
+
+        /**
+         * Test to update access policies
+         * 1. Add a new allowing rule
+         * 2. Set the access policies to null
+         * 3. Test to create an object without access policies
+         * @throws Exception
+         */
+        @Test
+        public void testUpdateAccessPolicies() throws Exception {
+            Session session = d1NodeTest.getTestSession();
+            Identifier pid = new Identifier();
+            pid.setValue("testUpdateAccessPolicies." + System.currentTimeMillis());
+            InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            SystemMetadata sysmeta =
+                D1NodeServiceTest.createSystemMetadata(pid, session.getSubject(), object);
+            d1NodeTest.mnCreate(session, pid, object, sysmeta);
+            SystemMetadata read = MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertEquals(pid.getValue(), read.getIdentifier().getValue());
+            assertEquals(1, read.getAccessPolicy().getAllowList().size());
+            // Add a new allowing rule
+            AccessRule allow = new AccessRule();
+            allow.addSubject(session.getSubject());
+            allow.addPermission(Permission.WRITE);
+            read.getAccessPolicy().addAllow(allow);
+            MNodeService.getInstance(request).updateSystemMetadata(session, pid, read);
+            SystemMetadata read2 =
+                            MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertEquals(pid.getValue(), read2.getIdentifier().getValue());
+            assertEquals(2, read2.getAccessPolicy().getAllowList().size());
+            if(read2.getAccessPolicy().getAllow(0).getSubject(0).getValue().equals("public")) {
+                assertEquals(
+                    session.getSubject().getValue(),
+                    read2.getAccessPolicy().getAllow(1).getSubject(0).getValue());
+            } else {
+                assertEquals(session.getSubject().getValue(),
+                             read2.getAccessPolicy().getAllow(0).getSubject(0).getValue());
+                assertEquals(
+                    "public", read2.getAccessPolicy().getAllow(1).getSubject(0).getValue());
+            }
+            // Test the access policy to be null
+            read2.setAccessPolicy(null);
+            MNodeService.getInstance(request).updateSystemMetadata(session, pid, read2);
+            SystemMetadata read3 =
+                MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertEquals(0, read3.getAccessPolicy().getAllowList().size());
+            assertEquals(pid.getValue(), read3.getIdentifier().getValue());
+            // Add a new object without access policies
+            Identifier pid2 = new Identifier();
+            pid2.setValue("testUpdateAccessPolicies2." + System.currentTimeMillis());
+            object = new ByteArrayInputStream("test2".getBytes(StandardCharsets.UTF_8));
+            SystemMetadata sysmeta2 =
+                D1NodeServiceTest.createSystemMetadata(pid2, session.getSubject(), object);
+            sysmeta2.setAccessPolicy(null);
+            d1NodeTest.mnCreate(session, pid2, object, sysmeta2);
+            SystemMetadata read4 =
+                MNodeService.getInstance(request).getSystemMetadata(session, pid2);
+            assertEquals(pid2.getValue(), read4.getIdentifier().getValue());
+            assertEquals(0, read4.getAccessPolicy().getAllowList().size());
+        }
+
+        /**
+         * Test to update replication policies
+         * 1. Add a new preferred replication rule
+         * 2. Add a new blocked replication rule
+         * 3. Set the replication policies to null
+         * 4. Test to create an object with replication policies
+         * @throws Exception
+         */
+        @Test
+        public void testUpdateReplicationPolicies() throws Exception {
+            String knb = "node:urn:knb";
+            String adc = "node:urn:adc";
+            Session session = d1NodeTest.getTestSession();
+            Identifier pid = new Identifier();
+            pid.setValue("testUpdateReplicationPolicies." + System.currentTimeMillis());
+            InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            // No replication policy
+            SystemMetadata sysmeta =
+                D1NodeServiceTest.createSystemMetadata(pid, session.getSubject(), object);
+            d1NodeTest.mnCreate(session, pid, object, sysmeta);
+            SystemMetadata read = MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertEquals(pid.getValue(), read.getIdentifier().getValue());
+            assertEquals(0, read.getReplicationPolicy().sizePreferredMemberNodeList());
+            assertEquals(0, read.getReplicationPolicy().sizeBlockedMemberNodeList());
+            assertFalse(read.getReplicationPolicy().getReplicationAllowed());
+            assertNull(read.getReplicationPolicy().getNumberReplicas());
+            // Add a preferred node
+            NodeReference prefer = new NodeReference();
+            prefer.setValue(knb);
+            read.getReplicationPolicy().setReplicationAllowed(true);
+            read.getReplicationPolicy().setNumberReplicas(2);
+            read.getReplicationPolicy().getPreferredMemberNodeList().add(prefer);
+            MNodeService.getInstance(request).updateSystemMetadata(session, pid, read);
+            SystemMetadata read2 =
+                MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertEquals(pid.getValue(), read2.getIdentifier().getValue());
+            assertEquals(1, read2.getReplicationPolicy().getPreferredMemberNodeList().size());
+            assertEquals(0, read2.getReplicationPolicy().getBlockedMemberNodeList().size());
+            assertTrue(read2.getReplicationPolicy().getReplicationAllowed());
+            assertEquals(2, read2.getReplicationPolicy().getNumberReplicas().intValue());
+            assertEquals(knb, read2.getReplicationPolicy().getPreferredMemberNodeList().get(0)
+                .getValue());
+            // Test to add a block node
+            NodeReference block = new NodeReference();
+            block.setValue(adc);
+            read2.getReplicationPolicy().getBlockedMemberNodeList().add(block);
+            read2.getReplicationPolicy().setNumberReplicas(3);
+            MNodeService.getInstance(request).updateSystemMetadata(session, pid, read2);
+            SystemMetadata read3 =
+                MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertEquals(pid.getValue(), read3.getIdentifier().getValue());
+            assertEquals(1, read3.getReplicationPolicy().getPreferredMemberNodeList().size());
+            assertEquals(1, read3.getReplicationPolicy().getBlockedMemberNodeList().size());
+            assertTrue(read3.getReplicationPolicy().getReplicationAllowed());
+            assertEquals(3, read3.getReplicationPolicy().getNumberReplicas().intValue());
+            assertEquals(knb, read3.getReplicationPolicy().getPreferredMemberNodeList().get(0)
+                .getValue());
+            assertEquals(adc, read3.getReplicationPolicy().getBlockedMemberNodeList().get(0)
+                .getValue());
+            // Test the replication policy to be null
+            read3.setReplicationPolicy(null);
+            MNodeService.getInstance(request).updateSystemMetadata(session, pid, read3);
+            SystemMetadata read4 =
+                MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertFalse(read4.getReplicationPolicy().getReplicationAllowed());
+            assertNull(read4.getReplicationPolicy().getNumberReplicas());
+            assertEquals(0, read4.getReplicationPolicy().getPreferredMemberNodeList().size());
+            assertEquals(0, read4.getReplicationPolicy().getBlockedMemberNodeList().size());
+            assertEquals(pid.getValue(), read4.getIdentifier().getValue());
+            // Add a new object with replication policies
+            Identifier pid2 = new Identifier();
+            pid2.setValue("testUpdateReplicationPolicies2." + System.currentTimeMillis());
+            object = new ByteArrayInputStream("test2".getBytes(StandardCharsets.UTF_8));
+            SystemMetadata sysmeta2 =
+                D1NodeServiceTest.createSystemMetadata(pid2, session.getSubject(), object);
+            ReplicationPolicy replicationPolicy = new ReplicationPolicy();
+            replicationPolicy.setReplicationAllowed(true);
+            replicationPolicy.setNumberReplicas(1);
+            replicationPolicy.getPreferredMemberNodeList().add(prefer);
+            sysmeta2.setReplicationPolicy(replicationPolicy);
+            d1NodeTest.mnCreate(session, pid2, object, sysmeta2);
+            SystemMetadata read5 =
+                MNodeService.getInstance(request).getSystemMetadata(session, pid2);
+            assertEquals(pid2.getValue(), read5.getIdentifier().getValue());
+            assertEquals(1, read5.getReplicationPolicy().getPreferredMemberNodeList().size());
+            assertEquals(knb, read5.getReplicationPolicy().getPreferredMemberNodeList().get(0)
+                .getValue());
+            assertEquals(0, read5.getReplicationPolicy().getBlockedMemberNodeList().size());
+            assertTrue(read5.getReplicationPolicy().getReplicationAllowed());
+            assertEquals(1, read5.getReplicationPolicy().getNumberReplicas().intValue());
         }
 
         /**
