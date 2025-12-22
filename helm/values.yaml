@@ -2,25 +2,24 @@
 ## This is a YAML-formatted file.
 ##
 ##     * * *  NOTE: SOME VALUES INCLUDE THE PLACEHOLDER "${RELEASE_NAME}", WHICH  * * *
-##     * * *        MUST BE REPLACED BY THE ACTUAL RELEASE NAME, AS FOLLOWS...    * * *
+##     * * *        MUST BE REPLACED BY THE ACTUAL RELEASE NAME                   * * *
 ##
-## EASY OPTION: use the 'helm-upstall.sh' (helm upgrade --install) shell script.
-##     e.g. (from the metacat repo root directory):
+## 1. Create a values-override file that overrides only the values you need to change (including
+##    those containing the release name). This allows you to keep a versioned copy of your overrides
+##    for each release. See examples in the metacat/helm/examples directory.
 ##
-##     $  ./helm-upstall.sh  myrelease   mynamespace  [other optional helm command flags]
+## 2. Install or upgrade using:
+##      $ helm install --upgrade myrelease -n mynamespace-f myValues.yaml \
+##                 oci://ghcr.io/nceas/charts/metacat --version [version]
 ##
-##     # NOTE: If you see: "command not found: envsubst", you'll need to install Gnu 'gettext'
-##             (https://www.gnu.org/software/gettext/).  For example, on macOS:
+##    ...assuming release name is "myrelease"; values-override filename is "myValues.yaml" and
+##    namespace is "mynamespace". Charts and their version numbers can be found at:
+##            https://github.com/NCEAS/metacat/pkgs/container/charts%2Fmetacat
 ##
-##             $  brew install gettext && brew link --force gettext
+## If you wish to deploy using a local copy of the helm chart (e.g. for development), then get a
+## copy of the code from GitHub (https://github.com/NCEAS/metacat), and install or upgrade using:
 ##
-## PERMANENT OPTION: either manually search and replace "${RELEASE_NAME}" with your release name, or
-##     use a command-line tool to do so - e.g. `sed`:
-##
-##     $ cp values.yaml values.yaml_ORIG
-##     $ sed -i -e "s/\${RELEASE_NAME}/myrelease/g" values.yaml
-##
-##     ...then `helm install` as usual
+## $ helm install --upgrade myrelease -n mynamespace-f myValues.yaml ./helm
 ##
 
 ## @section Global Properties Shared Across Sub-Charts Within This Deployment
@@ -28,9 +27,6 @@
 global:
   ## @param global.metacatExternalBaseUrl Metacat base url accessible from outside cluster.
   ## Include protocol and trailing slash, but not the context; e.g.: "https://test.arcticdata.io/"
-  ## NOTE: Must match metacat.server.name setting.
-  ##
-  ## TODO: auto-assign metacat.server.name and ingress settings from global.metacatExternalBaseUrl?
   ##
   metacatExternalBaseUrl: "https://localhost/"
 
@@ -39,19 +35,6 @@ global:
   ## (Also parsed by the MetacatUI sub-chart to retrieve the CN base URL)
   ##
   d1ClientCnUrl: "https://cn.dataone.org/cn"
-
-  ## @param global.passwordsSecret The name of the Secret containing application passwords
-  ## This is the secret deployed using your own private, edited version of `../admin/secrets.yaml`.
-  ##
-  ## (Note the actual key passwordsSecret is not used anywhere; only the yaml anchor/alias
-  ##  &passwordSecretName. IF YOU OVERRIDE THIS VALUE IN ANOTHER VALUES-OVERLAY FILE, YOU ALSO
-  ## NEED TO OVERRIDE THE VALUES THAT USE THIS ANCHOR - search this file for 'passwordSecretName')
-  ##
-  ## IMPORTANT NOTE: make sure you edit this, since IT INCLUDES THE RELEASE NAME! For
-  ## example, if the release name is 'myrelease', the value of name: would be
-  ## 'myrelease-metacat-secrets'.
-  ##
-  passwordsSecret: &passwordSecretName ${RELEASE_NAME}-metacat-secrets
 
   ## @param global.metacatAppContext The application context to use
   ## - for example, if your application is hosted at https://mydomain.org, and you define the
@@ -68,25 +51,12 @@ global:
 
   ## @param global.storageClass default name of the storageClass to use for PVs
   ##
-  ## If <storageClass> is defined,  storageClassName: <storageClass>
-  ##
-  ## If <storageClass> set to "-",  storageClassName: ""  -- which disables dynamic PV provisioning
-  ##   (meaning claim can only be bound to an existing PV, not a dynamically-provisioned one) with
-  ##   no class (no annotation, or one set equal to "")
-  ##
-  ## NOTE when using StatefulSet with a defaultClaimTemplate - leaving storageClass unset/null does
-  ## NOT choose the default provisioner for dynamic provisioning of the underlying PV, as expected!
-  ## Instead, inspect your cluster to see what storageClass is set as default:
+  ## Inspect your cluster to see what storageClass is set as default:
   ##    $  kubectl get storageclass
   ## ...and then explicitly set storageClass to match the name of the default storageclass
   ## (e.g. for Rancher Desktop, use:   storageclass: local-path)
   ##
-  ## (Note the actual key storageClass is used by the postgres bitnami sub-chart, and the anchor
-  ##  &storageClassName is used elsewhere in this file. IF YOU OVERRIDE THIS VALUE IN ANOTHER
-  ## VALUES-OVERLAY FILE, YOU ALSO NEED TO OVERRIDE THE VALUES THAT USE THIS ANCHOR - search this
-  ## file for 'storageClassName')
-  ##
-  storageClass: &storageClassName local-path
+  storageClass: local-path
 
   ## @param global.ephemeralVolumeStorageClass Optional global storageClass override
   ## Can be used to assign a storageClass that has a 'Delete' Reclaim Policy, thus allowing
@@ -138,10 +108,10 @@ global:
     ##
     enabled: false
     service:
-      ## @param global.metacatUiIngressBackend.service.name MetacatUI service name (used only if 'global.includeMetacatUi: false')
+      ## @param global.metacatUiIngressBackend.service.name MetacatUI service name (ignored if 'global.includeMetacatUi: true')
       ## This should be overridden with the name of the service created by the MetacatUI chart.
       ##
-      name: metacatui${RELEASE_NAME}
+      name: ${METACATUI_RELEASE_NAME}-metacatui
       port:
         ## @param global.metacatUiIngressBackend.service.port.number Port for MetacatUI service (used only if 'global.includeMetacatUi: false')
         ##
@@ -166,7 +136,7 @@ global:
 ## values needed to run the app and the test suite on a development machine.
 ##
 ## NOTE that certain credentials must also be provided, via Kubernetes Secrets, in order for
-## metacat to function correctly. These credentials are listed in ./admin/secrets.yaml, in the
+## metacat to function correctly. These credentials are listed in ./admin/secret--metacat.yaml, in the
 ## form of environment variables expected by metacat at runtime. Also see the mappings in the
 ## `application.envSecretKeys` property in `metacat.properties`, to determine which metacat
 ## property corresponds to each of these environment variables
@@ -183,34 +153,24 @@ metacat:
   ##
   auth.administrators: ""
 
-  ## @param metacat.database.connectionURI postgres database URI, or lave blank to use sub-chart
+  ## @param metacat.database.connectionURI postgres database URI (or blank if using CloudNative PG)
+  ## NOTE: If using a CloudNative PostgreSQL cluster, leave 'database.connectionURI' blank, and
+  ## ensure that 'database.serviceName' is set instead (i.e. this value overrides
+  ## 'database.serviceName')
   ##
   ## Format:    jdbc:postgresql://<postgres-hostname>/<database-name>
   ##
-  ## NOTES:
-  ## 1. If you are NOT using the included postgresql sub-chart (i.e. `postgresql.enabled: false`),
-  ##    then ensure `<database-name>` is set correctly, and use the following values for
-  ##    `<postgres-hostname>`:
-  ##    *  The fully qualified domain name, for an existing postgresql instance hosted outside the
-  ##       current k8s cluster
-  ##    *  `<servicename>.<namespace>.svc.cluster.local` for an existing postgresql instance within
-  ##       the same k8s cluster
-  ##    *  `host.docker.internal` for connecting to a dev instance running on localhost
-  ##
-  ## 2. If you ARE using the included postgresql sub-chart (i.e. `postgresql.enabled: true`),
-  ##    leave this value unset (`database.connectionURI: ""`). It will then be automatically
-  ##    populated as follows:
-  ##    `<postgres-hostname>` will be set to the current value of `.Release.Name`, prepended to
-  ##                         `-postgresql-hl` (the name of the k8s headless service for the
-  ##                         postgresql statefulset)
-  ##    `<database-name>` will be set to the value of `postgresql.auth.database`
-  ##    (Note: If you are using the postgresql sub-chart but have changed the default name for the
-  ##    headless service, then specify the full database.connectionURI as outlined in (1), above)
+  ## ensure <database-name> is set correctly, and use the following values for <postgres-hostname>:
+  ##  *  The fully qualified domain name, for an existing postgresql instance hosted outside the
+  ##     current k8s cluster
+  ##  *  `<servicename>.<namespace>.svc.cluster.local` for an existing postgresql instance within
+  ##     the same k8s cluster
+  ##  *  `host.docker.internal` for connecting to a dev instance running on localhost
   ##
   database.connectionURI: ""
 
   ## @param metacat.guid.doi.enabled Allow users to publish Digital Object Identifiers at doi.org?
-  ## If true, you will also need to define guid.doi.username $ guid.doi.password (see secrets.yaml)
+  ## If true, you will also need to define guid.doi.username $ guid.doi.password (see secret--metacat.yaml)
   ## and either override or use the defaults in metacat.properties for all the entries that begin
   ## with: "guid.doi."
   ##
@@ -226,10 +186,6 @@ metacat:
   ## whether you have TLS set up for the ingress
   ##
   server.port: ""
-
-  ## @param metacat.server.name The hostname for the server, as exposed by the ingress
-  ## and seen by end users outside the cluster
-  server.name: localhost
 
   ## @param metacat.solr.baseURL The url to access solr, or leave blank to use sub-chart
   ##
@@ -254,29 +210,27 @@ metacat:
   ##                      by the dataone-indexer sub-chart)
   ##    `<solr-port>` will be set to 8983, the default value used by the dataone-indexer sub-chart
   ##
-  solr.baseURL: ""
+  solr.baseURL: ""    # leave blank to use sub-chart
 
   ## @param metacat.solr.coreName The solr core (solr standalone) or collection name (solr cloud)
   ## If you are using the included dataone-indexer sub-chart (i.e.
   ## `global.dataone-indexer.enabled: true`), leave this value unset (`solr.coreName: ""`). It will
   ## then be automatically populated from the subchart settings
   ##
-  solr.coreName: ""
+  solr.coreName: ""    # leave blank to autopopulate from subchart settings
 
   ## @param metacat.replication.logdir Location for the replication logs
   ##
   replication.logdir: /var/metacat/logs
 
-  ## @param metacat.index.rabbitmq.hostname the hostname of the rabbitmq instance that will be used
+  ## @param metacat.index.rabbitmq.hostname rabbitmq instance hostname. Leave blank to autopopulate
+  ## from the RabbitMQ Cluster Operator instance that is bundled with the indexer sub-chart.
   ##
-  ## Leave blank to autopopulate for use with indexer sub-chart
+  index.rabbitmq.hostname: "" # Leave blank to autopopulate from rmq bundled with indexer sub-chart
   ##
-  index.rabbitmq.hostname: ""
+  ## Note that index.rabbitmq.username and index.rabbitmq.password should not be defined here; they
+  ## are retrieved automatically from the secret named in 'dataone-indexer.idxworker.rabbitmqSecret'
 
-  ## @param metacat.index.rabbitmq.username the username for connecting to the RabbitMQ instance
-  ## at `index.rabbitmq.hostname`.
-  ##
-  index.rabbitmq.username: &rmqUsername metacat-rmq-guest
 
   ## @section OPTIONAL DataONE Member Node (MN) Parameters
   ##
@@ -307,7 +261,7 @@ metacat:
   ## Please do NOT enable it unless you understand what you are doing.
   ##
   ## 2. You will also need to set a shared secret between you trusted upstream ingress and Metacat -
-  ##    see METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY in `./admin/secrets.yaml`.
+  ##    see METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY in `./admin/secret--metacat.yaml`.
   ##    The ingress must be configured to send HTTP requests to Metacat with an "X-Proxy-Key" HTTP
   ##    header, with this shared secret as a value. See the `ingress` part of the `Networking &
   ##    Monitoring` section below.
@@ -335,10 +289,14 @@ metacat:
   ## when the node changes physical locations over time. After Metacat registers with the DataONE
   ## Coordinating Nodes, the Node Identifier should not be changed. It is CRITICAL that you do NOT
   ## change the Node Identifier after registration, since that would break the connection with the
-  ## DataONE network. Changing this field should only happen in the rare case in which a new
-  ## Metacat instance is being established to act as the provider for an existing DataONE Member
-  ## Node, in which case the field can be edited to set it to the value of a valid, existing Node
-  ## Identifier.
+  ## DataONE network.
+  ##
+  ## Changing this field should only happen in the rare case in which a new Metacat instance is
+  ## being established to act as the provider for an existing DataONE Member Node, in which case the
+  ## field can be edited to set it to the value of a valid, existing Node Identifier. However, in
+  ## that case, YOU MUST ALSO RE-INDEX ALL OBJECTS METACAT, to ensure that the solr index contains
+  ## the correct Node Identifier for each - see:
+  ## https://knb.ecoinformatics.org/knb/docs/query-index.html#regenerating-the-index
   ##
   dataone.nodeId: urn:node:METACAT_TEST
 
@@ -450,11 +408,11 @@ metacat:
   ## for crawling (recommended - see https://knb.ecoinformatics.org/knb/docs/sitemaps.html)
   ##
   ## NOTE: If you are creating a non-production deployment, leave 'sitemap.enabled: false', and
-  ## the chart will automatically create a robotx.txt file that prevents any search engine indexing
+  ## the chart will automatically create a robots.txt file that prevents any search engine indexing
   ##
   ## When 'sitemap.enabled: true', Metacat automatically generates a sitemap index file, at:
   ##
-  ##   https://<server.name>/<application.context>/sitemaps/sitemap_index.xml
+  ##   <global.metacatExternalBaseUrl>/<application.context>/sitemaps/sitemap_index.xml
   ##
   ## ...and creates a robots.txt file that points to it (see .Values.robots).
   ##
@@ -468,7 +426,7 @@ metacat:
   ## ...for 1 or more sitemap files, named sitemap1.xml, sitemap2.xml, etc. These sitemap files
   ## are also located at:
   ##
-  ##   https://<server.name>/<application.context>/sitemaps/sitemap1.xml ...etc.
+  ##   <global.metacatExternalBaseUrl>/<application.context>/sitemaps/sitemap1.xml ...etc.
   ##
   ## Each sitemap file contains up to 50,000 entries, each pointing to a dataset that is publicly
   ## readable metadata, is the newest version in a version chain, and has not been archived.
@@ -628,9 +586,8 @@ podSecurityContext:
 securityContext: {}
 
 ## @param resources Resource limits for the deployment
-##  We usually recommend not to specify default resources and to leave this as a conscious
-## choice for the user. This also increases chances charts run on environments with limited
-## resources, such as Minikube.
+## Resource requests and limits are left as a conscious choice for the user. This increases chances
+## charts run on environments with limited resources, such as Minikube.
 resources: {}
 
 ## @param tolerations Tolerations for pod assignment
@@ -648,22 +605,9 @@ persistence:
   ##
   enabled: true
 
-  ## @param persistence.storageClass Storage class of backing PV
+  ## @param persistence.storageClass Override here or leave blank to use 'global.storageClass'
   ##
-  ## If <storageClass> is defined,  storageClassName: <storageClass>
-  ##
-  ## If <storageClass> set to "-",  storageClassName: ""  -- which disables dynamic PV provisioning
-  ##   (meaning claim can only be bound to an existing PV, not a dynamically-provisioned one) with
-  ##   no class (no annotation, or one set equal to "")
-  ##
-  ## NOTE when using StatefulSet with a defaultClaimTemplate - leaving storageClass unset/null does
-  ## NOT choose the default provisioner for dynamic provisioning of the underlying PV, as expected!
-  ## Instead, inspect your cluster to see what storageClass is set as default:
-  ##    $  kubectl get storageclass
-  ## ...and then explicitly set storageClass to match the name of the default storageclass
-  ## (e.g. for Rancher Desktop, use:   storageclass: local-path)
-  ##
-  storageClass: *storageClassName
+  storageClass: ""    # leave blank to use 'global.storageClass'
 
   ## @param persistence.existingClaim Name of an existing Persistent Volume Claim to re-use
   ## Set a value for 'existingClaim' only if you want to re-use a Persistent Volume Claim that has
@@ -672,12 +616,21 @@ persistence:
   ##
   existingClaim: ""
 
-  ## @param persistence.volumeName Name of an existing Volume to use for volumeClaimTemplate
+  ## @param persistence.volumeName Name of an existing Persistent Volume for volumeClaimTemplate
+  ## Ignored if using an existingClaim (see above).
   ## Set a value for 'volumeName' only if you want to re-use a Volume that has already been set up
-  ## by a k8s admin ahead of time.
-  ## Leaving it blank will cause a pvc to be created dynamically using volumeClaimTemplates.
+  ## by a k8s admin ahead of time. In this case, a PVC will be created dynamically, bound to the
+  ## specified PV.
+  ## Leaving volumeName blank will cause both a PV and a PVC to be created dynamically
   ##
   volumeName: ""
+
+  ## @param persistence.pvcLabels [object,default: velero.io/exclude-from-backup: "true"] Labels for PVC volumeClaimTemplate
+  ## Ignored if using an existingClaim (see above).
+  ##
+  pvcLabels:
+    ## Exclude this PVC from Velero backups?
+    velero.io/exclude-from-backup: "true"
 
   ## @param persistence.subPath The subdirectory of the volume (see persistence.volumeName) to mount
   ## Useful where one PV is used for multiple services, so each has its own subtree.
@@ -733,7 +686,9 @@ ingress:
   ##
   className: "nginx"
 
-  ## Annotations for the ingress
+  ## @param ingress.annotations [default: see values.yaml] `nginx.ingress.kubernetes.io` annotations
+  ## These are mostly for enabling upload and download of large files and data packages, without
+  ## timeouts or disconnects.
   ##
   ## NOTE: You do NOT need to do anything here for DataONE mutual authentication with x509
   ## client-side certs, provided:
@@ -752,16 +707,57 @@ ingress:
     ## https://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size
     ##
     nginx.ingress.kubernetes.io/client-body-buffer-size: "1m"
+
     ## @skip ingress.annotations.nginx.ingress.kubernetes.io/client_max_body_size See docs:
     ## https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
-    ## Setting size to 0 disables checking of client request body size
+    ## Sets the maximum allowed size of the client request body. Setting to 0 disables checking of
+    ## client request body size
     ##
     nginx.ingress.kubernetes.io/client_max_body_size: "0"
+
+    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/send-timeout See docs:
+    ## https://nginx.org/en/docs/http/ngx_http_core_module.html#send_timeout
+    ## Sets a timeout for transmitting a response to the client. The timeout is set only between
+    ## two successive write operations, not for the transmission of the whole response. If the
+    ## client does not receive anything within this time, the connection is closed. Default is 60s,
+    ## but we set it to 3600 seconds to prevent 504 Gateway Time-out when downloading zip files of
+    ## huge datasets using bagit
+    ##
+    nginx.ingress.kubernetes.io/send-timeout: "3600"
+
     ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-body-size See docs:
     ## https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/configmap.md#proxy-body-size
-    ## Setting size to 0 disables checking of client request body size
+    ## Sets the maximum allowed size of the client request body - similar to the nginx
+    ## client_max_body_size directive. Setting to 0 disables checking of client request body size
     ##
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
+
+    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-read-timeout See docs:
+    ## https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout
+    ## default is 60 seconds, but we set it to 3600 seconds to prevent 504 Gateway Time-out when
+    ## downloading zip files of huge datasets using bagit
+    ##
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+
+    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-send-timeout See docs:
+    ## https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_send_timeout
+    ## The timeout is set only between two successive write operations, not for the transmission of
+    ## the whole request. We set it to 3600 seconds to prevent 504 Gateway Time-out when
+    ## downloading zip files of huge datasets using bagit
+    ##
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+
+    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-request-buffering See docs:
+    ## https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_request_buffering
+    ##
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+
+    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-buffering See docs:
+    ## https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering
+    ## According to ingress-nginx docs, default is "off", but according to nginx docs, default is
+    ## "on", so we set it explicitly to "off", be sure
+    ##
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
 
   ## @param ingress.defaultBackend.enabled enable the optional defaultBackend
   ## ingress.defaultBackend (optional) default for any requests not matching defined paths
@@ -802,7 +798,7 @@ ingress:
   ##
   rewriteRules: ""
 
-  ## @skip ingress.configurationSnippet text code block to add to the nginx ingress config
+  ## @param ingress.configurationSnippet [default: see values.yaml] added to nginx ingress config...
   ## This block will be added to the ingress definition section, in addition to the rewrite rules:
   ## metadata:
   ##   annotations:
@@ -855,7 +851,7 @@ ingress:
   ## To disable TLS altogether (i.e. use http only), set:
   ##    tls: []
   ##
-  ## To have tls.hosts auto-populated with the external hostname (from metacat.server.name),
+  ## To have tls.hosts auto-populated with external hostname (from global.metacatExternalBaseUrl),
   ## set only the secretName (always required), and leave hosts as an empty list - i.e:
   ##
   ##    tls:
@@ -865,9 +861,9 @@ ingress:
   tls: []
 
   ## @param ingress.rules The Ingress rules can be defined here or left blank to be auto-populated
-  ## based on the metacat.server.name value. If defining rules here, they will be copied verbatim
-  ## to the ingress definition, overriding any automatic configuration in the template. For schema
-  ## guidance, see:
+  ## based on the global.metacatExternalBaseUrl value. If defining rules here, they will be copied
+  ## verbatim to the ingress definition, overriding any automatic configuration in the template.
+  ## For schema guidance, see:
   ## https://kubernetes.io/docs/concepts/services-networking/ingress/
   ## Example:
   ##    - host: knb.ecoinformatics.org
@@ -920,31 +916,39 @@ service:
       port: 8080
       targetPort: metacat-web
 
-## LivenessProbe
-## Periodic probe of container liveness. Container will be restarted if the probe fails.
-## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
-##
-## @param livenessProbe.enabled Enable livenessProbe for Metacat container
-## @param livenessProbe.httpGet.path The url path to probe.
+## Startup Probe
+## Liveness and readiness probes are disabled until the startupProbe passes.
+## If the startupProbe fails more than 'failureThreshold' times, the container is restarted.
+## @param startupProbe.enabled Enable startupProbe for the Metacat container
+## @param startupProbe.httpGet.path The url path to probe during startup
 ##                Note that the context (first path element) must match the
 ##                value of metacat.application.context
-## @param livenessProbe.httpGet.port The named containerPort to probe
-##                as defined in ./templates/statefulset.yaml
-## Optional values:
-## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
-## @param livenessProbe.periodSeconds Period seconds for livenessProbe
-## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+## @param startupProbe.httpGet.port The named containerPort to probe
 ##
-livenessProbe:    ## TODO - refine and/or create new lightweight healthcheck route
+startupProbe:
   enabled: true
-  initialDelaySeconds: 45
-  periodSeconds: 15
-  timeoutSeconds: 10
   httpGet:
-    path: /metacat/
+    path: /metacat/d1/mn/v2/monitor/ping
     port: metacat-web
+  ## Optional values:
+  ## @param startupProbe.successThreshold Min consecutive successes for probe to be successful
+  ## @param startupProbe.failureThreshold No. of consecutive failures before the container restarted
+  ## @param startupProbe.periodSeconds Interval (in seconds) between startup checks
+  ## @param startupProbe.timeoutSeconds Timeout (in seconds) for each startup check
+  successThreshold: 1
+  failureThreshold: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
 
-## ReadinessProbe
+## @param livenessProbe.enabled Enable livenessProbe for Metacat container
+## We do not use a livenessProbe for Metacat, since it typically can have a lot of latency when
+## overloaded, but recovers elegantly. (Setting a livenessProbe would mean the container would be
+## restarted when the probe fails.)
+##
+livenessProbe:
+  enabled: false
+
+## Readiness Probe
 ## Periodic probe of container service readiness. If the probe fails, container will be removed
 ## from service endpoints (but will not be restarted unless livenessProbe fails)
 ##
@@ -953,165 +957,143 @@ livenessProbe:    ## TODO - refine and/or create new lightweight healthcheck rou
 ##                Note that the context (first path element) must match the
 ##                value of metacat.application.context
 ## @param readinessProbe.httpGet.port The named containerPort to probe
-##                as defined in ./templates/statefulset.yaml
 ## Optional values:
-## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
 ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
 ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+## @param readinessProbe.successThreshold Min consecutive successes for probe to be successful
+## @param readinessProbe.failureThreshold No. consecutive failures before container marked unhealthy
 ##
-readinessProbe:    ## TODO - refine and/or create new lightweight healthcheck route
+readinessProbe:
   enabled: true
-  initialDelaySeconds: 45
-  periodSeconds: 5
-  timeoutSeconds: 5
+  periodSeconds: 15
+  timeoutSeconds: 10
+  successThreshold: 1
+  failureThreshold: 6
   httpGet:
-    path: /metacat/admin
+    path: /metacat/d1/mn/v2/monitor/ping
     port: metacat-web
 
-## @section Postgresql Sub-Chart
-postgresql:
-  ## @param postgresql.enabled enable the postgresql sub-chart
-  ## set to false if you want to connect to your own existing postgresql deployment (and ensure
-  ## metacat.database.connectionURI is set accordingly).
-  ## Once the postgres container is running, test using:
-  ##   $  kubectl exec -it <postgresql-pod-name> -- psql  -U <username>  -d <databasename>
-  ## (or from a shell in metacat container: psql  -U <username>  -h <pghostname> <databasename>)
+## @section PostgreSQL Database Connection Parameters
+##
+## Metacat requires a pre-existing PostgreSQL database, that has already been provisioned outside
+## the Metacat Helm Chart's lifecycle.
+## We recommend using the CloudNative PG Operator (https://cloudnative-pg.io/), although any
+## suitable PostgreSQL database may be used (deployed either within or outside your Kubernetes
+## cluster).
+##
+database:
+  ## @param database.existingSecret REQUIRED Name of Secret holding the database username & password
+  ## IMPORTANT:
+  ##    - the secret must be of type 'kubernetes.io/basic-auth'
+  ##    - the Secret must contain the exact key names: 'username' and 'password'
+  ##    - the username must match the 'database.dbUser' value below
   ##
-  enabled: true
-
-  auth:
-    ## @param postgresql.auth.username Username for accessing the database used by metacat
-    ## For the corresponding password, see POSTGRES_PASSWORD in secrets.yaml
-    ## (These values are also used by metacat to authenticate)
-    ## NOTE: config in postgresql.primary.pgHbaConfiguration must allow the username defined here!
-    ##
-    username: metacat
-
-    ## @param postgresql.auth.database The name of the database used by metacat.
-    ## Make sure metacat.database.connectionURI is using this value
-    ##
-    database: metacat
-
-    ## @param postgresql.auth.existingSecret Secrets location for postgres password
-    ## Typically the existing secrets also used by metacat - see ./admin/secrets.yaml
-    ##
-    existingSecret: *passwordSecretName
-
-    ## @param postgresql.auth.secretKeys.userPasswordKey Identifies metacat db's account password
-    ## within metacat's existing secrets
-    ##
-    secretKeys:
-      userPasswordKey: POSTGRES_PASSWORD
-
-      ## @param postgresql.auth.secretKeys.adminPasswordKey Dummy value - not used (see notes):
-      ## Bitnami expects to find it in our 'existingSecret' secrets location, and fails otherwise
-      ##
-      adminPasswordKey: POSTGRES_PASSWORD
-
-  primary:
-    containerSecurityContext:
-      ## @param postgresql.primary.containerSecurityContext.enabled enable containerSecurityContext
-      ##
-      enabled: true
-      ## @param postgresql.primary.containerSecurityContext.runAsUser uid for container to run as
-      ##
-      runAsUser: &mcpguid 59996
-      ## @param postgresql.primary.containerSecurityContext.runAsGroup gid for container to run as
-      ##
-      runAsGroup: &mcpggid 59996
-
-    ## postgresql.primary.PodSecurityContext - common securityContext settings at pod level
-    ## for all containers
-    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-    ##
-    podSecurityContext:
-      ## @param postgresql.primary.podSecurityContext.runAsNonRoot pod defaults to run as non-root?
-      ##
-      runAsNonRoot: true
-
-      ## @param postgresql.primary.podSecurityContext.fsGroup Group ID for the pod file system
-      fsGroup: *mcpggid
-
-      ## @param postgresql.primary.podSecurityContext.fsGroupChangePolicy ownership & perms mgmt
-      ##                        IMPORTANT: use "OnRootMismatch" for large volumes! Using "Always"
-      ##                        means K8s will always chown the volume to the fsGroup, even if the
-      ##                        volume is already owned by the fsGroup, which is VERY slow!
-      fsGroupChangePolicy: *defaultFsGroupChangePolicy
-
-    ## @skip postgresql.primary.pgHbaConfiguration PostgreSQL Primary client authentication
-    ## configuration; ref: https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
-    ## We override the default pg_hba.conf with our own, to allow password auth, since this is the
-    ## only method metacat currently supports (as of June 2023)
-    ## TYPE       DATABASE      USER          ADDRESS         METHOD
-    pgHbaConfiguration: |
-      host        metacat       metacat       0.0.0.0/0       password
-      host        metacat       metacat       ::0/0           password
-      host        all           postgres      0.0.0.0/0       password
-      host        all           postgres      ::0/0           password
-      local       all           all                           trust
-
-    ## @param postgresql.primary.extendedConfiguration Extended configuration, appended to defaults
-    ## ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#allow-settings-to-be-loaded-from-files-other-than-the-default-postgresqlconf
-    ## Must exceed metacat.database.maximumConnections, since some connections will be reserved for
-    ## superuser
-    ##
-    extendedConfiguration: |-
-      max_connections = 250
-
-    ## Postgresql persistence
-    ## For explanatory notes, see top-level `persistence` section for metacat, and the bitnami
-    ## postgresql README at https://github.com/bitnami/charts/blob/main/bitnami/postgresql/README.md
-    ## @param postgresql.primary.persistence.enabled Enable data persistence using PVC
-    ## @param postgresql.primary.persistence.existingClaim Existing PVC to re-use
-    ## @param postgresql.primary.persistence.storageClass Storage class of backing PV
-    ## @param postgresql.primary.persistence.size PVC Storage Request for postgres volume
-    ##
-    persistence:
-      enabled: true
-      storageClass: ""
-      existingClaim: ""
-      size: 1Gi
-
-  ## @param postgresql.postgresqlDataDir PostgreSQL data dir folder. Must be versioned
-  ## to avoid overwriting during postgresql major version upgrades
-  ## e.g. like "/bitnami/postgresql/17/main" (bitnami default is "/bitnami/postgresql/data")
+  ## Examples:
+  ## 1. If using a secret created with the SAME release name as metacat:
+  ##      database:
+  ##        existingSecret: "{{ .Release.Name }}-cnpg-app"
   ##
-  postgresqlDataDir: /bitnami/postgresql/17/main
+  ##    (NOTE that the value may include Go templating to represent the release name, provided the
+  ##    entire string is in quotes)
+  ##
+  ## 2. If using a secret auto-created by cnpg, with a release name DIFFERENT from metacat's:
+  ##      database:
+  ##        existingSecret: "mycnpgreleasename-cnpg-app"
+  ##
+  existingSecret: "{{ .Release.Name }}-metacat-cnpg"
 
-  ## postgresql.upgrader initContainer to auto-upgrade across PostgreSQL major versions
-  upgrader:
-    ## @param postgresql.upgrader.enabled Enable initContainer for postgresql major version upgrades
-    ##
-    enabled: true
-    persistence:
-      ## @param postgresql.upgrader.persistence.existingClaim PVC containing postgresql data files
-      ##
-      existingClaim: ""
-    ## @param postgresql.upgrader.securityContext.runAsUser numerical User ID for the pod.
-    ##                                                      Must match PostgreSQL metacat user's uid
-    ## @param postgresql.upgrader.securityContext.runAsGroup numerical Group ID for the pod.
-    ##                                                      Must match PostgreSQL metacat user's gid
-    securityContext:
-      runAsUser: *mcpguid
-      runAsGroup: *mcpguid
+  ## @param database.dbName The name of the PostgreSQL database to connect to
+  ##
+  dbName: metacat
+
+  ## @param database.serviceName (REQUIRED if DB on k8s) name of the Service exposing the database
+  ## Ignored if using an external database (i.e. outside the k8s cluster), in which case the value
+  ## 'metacat.database.connectionURI' must be set.
+  ##
+  ## Example:
+  ##   serviceName: mycnpgreleasename-cnpg-rw
+  ##
+  serviceName: ""
+
+  ## @param database.port Override default database port (5432) - only if not using CNPG
+  ## Otherwise leave as 5432, since this is the default for CNPG
+  ##
+  port: 5432
 
 ## @section Tomcat Configuration
-
-## @param tomcat.heapMemory.min minimum memory heap size for Tomcat (-Xms JVM parameter)
-## @param tomcat.heapMemory.max maximum memory heap size for Tomcat (-Xmx JVM parameter)
-## Typical values: Prod - min 8G, max 16G; Test - min 2G, max 4G; dev - can leave unset
-## setting memory limits using Kubernetes will have no effect on a Java application, unless you
-## specifically set a maximum heap size (using Java’s -Xmx setting).
-##
-## IMPORTANT NOTE
-## ALWAYS configure Java’s maximum heap size (-Xmx, set by tomcat.heapMemory.max) to be LOWER THAN
-## the memory limit set in Kubernetes. If you set a memory limit in Kubernetes, and Java exceeds
-## that, your container will be killed.
-##
 tomcat:
+  ## @param tomcat.jmxEnabled Enable JMX for Tomcat, to inspect JVM usage of CPU, memory, etc.
+  ## When JMX is enabled by setting this to 'true', you can view the JMX metrics using a JMX client
+  ## such as VisualVM or JConsole, connected via port-forwarding to the port set in tomcat.jmxPort
+  ##
+  jmxEnabled: false
+
+  ## @param tomcat.jmxPort The port to use for JMX connections. IMPORTANT: If you change this...
+  ## 1. you must also change the port in the tomcat.jmxCatalinaOpts section, in the following two
+  ##    entries:
+  ##     -Dcom.sun.management.jmxremote.port=9010
+  ##     -Dcom.sun.management.jmxremote.rmi.port=9010
+  ##
+  ## 2. If you plan on using a different port # on localhost, it's easiest to use that same port on
+  ##    the pod, so you're using a single port for both JMX and RMI.(e.g. instead of port
+  ##    forwarding from pod:9010 to localhost:9011, expose jmx on pod:9011 and forward from pod:9011
+  ##    to localhost:9011)
+  ##
+  ## Note that the JMX port is not (and should not be) exposed outside the cluster. It is therefore
+  ## necessary to use port-forwarding in order to connect.
+  ##
+  jmxPort: 9010
+
+  ## @param tomcat.jmxCatalinaOpts [default: see values.yaml] Tomcat JVM options for enabling JMX
+  ## Use these to change the port, for example, or to enable authentication.
+  ##
+  ## IMPORTANT NOTES:
+  ## 1. If you change the port numbers here, you must also change the value of tomcat.jmxPort to
+  ##    match!
+  ## 2. If you plan on using a different port # on localhost, it's easiest to use that same port on
+  ##    the pod, so you're using a single port for both JMX and RMI.(e.g. instead of port
+  ##    forwarding from pod:9010 to localhost:9011, expose jmx on pod:9011 and forward from pod:9011
+  ##    to localhost:9011)
+  ##
+  ## (jmxCatalinaOpts is a yaml list, so each entry must be preceded by a dash (-) and a space. It
+  ## looks strange when the options also contain dashes, but is correct YAML syntax.)
+  ##
+  jmxCatalinaOpts:
+    - -Dcom.sun.management.jmxremote
+    - -Dcom.sun.management.jmxremote.port=9010
+    - -Dcom.sun.management.jmxremote.rmi.port=9010
+    - -Dcom.sun.management.jmxremote.local.only=false
+    - -Dcom.sun.management.jmxremote.authenticate=false
+    - -Dcom.sun.management.jmxremote.ssl=false
+    - -Djava.rmi.server.hostname=127.0.0.1
+
+  ## @param tomcat.heapMemory.min minimum memory heap size for Tomcat (-Xms JVM parameter)
+  ## @param tomcat.heapMemory.max maximum memory heap size for Tomcat (-Xmx JVM parameter)
+  ## Typical values: Prod - min 8G, max 16G; Test - min 2G, max 4G; dev - can leave unset
+  ##
+  ## IMPORTANT NOTE
+  ## ALWAYS configure Java’s maximum heap size (-Xmx, set by tomcat.heapMemory.max) to be LOWER THAN
+  ## the memory limit set in Kubernetes. If you set a memory limit in Kubernetes, and Java exceeds
+  ## that, your container will be killed. A safer method is to NOT set -Xmx, and instead rely upon
+  ## setting -XX:MaxRAMPercentage in extraCatalinaOpts, below.
+  ##
   heapMemory:
     min: ""
     max: ""
+
+  ## @param tomcat.extraCatalinaOpts Extra JVM options to pass to Tomcat. SEE IMPORTANT NOTES BELOW:
+  ## 1. Do not pass -Xms or -Xmx here. Those values should be passed separately, using the values:
+  ##    tomcat.heapMemory.min and tomcat.heapMemory.max
+  ## 2. Do not set JMX-related values here, without first checking they're not already defined in
+  ##    tomcat.jmxCatalinaOpts (assuming tomcat.jmxEnabled is true)
+  ## 3. -XX:MaxRAMPercentage may be set here, but note that it will be ignored by the JVM if you
+  ##    also set a value for -Xmx (i.e. -Xmx takes precedence over MaxRAMPercentage)
+  ##
+  ## (extraCatalinaOpts is a yaml list, so each entry must be preceded by a dash (-) and a space. It
+  ## looks strange when the options also contain dashes, but is correct YAML syntax.)
+  ##
+  extraCatalinaOpts:
+    - -XX:MaxRAMPercentage=75
 
 ## @section dataone-indexer Sub-Chart
 ##
@@ -1142,25 +1124,41 @@ dataone-indexer:
     ##
     subPath: *sharedVolumeSubPath
 
+  idxworker:
+    ## @skip dataone-indexer.idxworker.resourcemapMaxTries resource map indexing max attempts
+    ## temp fix for resourcemaps not getting indexed
+    ## keep default for: resourcemapWaitMs: 800
+    ## increase number of tries from 25 to:
+    resourcemapMaxTries: 200
+
+    ## @param dataone-indexer.idxworker.rabbitmqSecret (OPTIONAL) location of rmq username+password
+    ## Leave blank to use the Secret created at deploy-time by the RabbitMQ Cluster Operator that
+    ## is bundled with the indexer subchart.
+    ##
+    ## IMPORTANT - IF NOT USING THE AUTO-CREATED SECRET:
+    ## - Set 'existingPasswordSecret' to the name of an existing Secret containing the RabbitMQ
+    ##   username and password
+    ## - Your Secret must contain the keys defined in: 'dataone-indexer.idxworker.UserKey' and
+    ##   'dataone-indexer.idxworker.passwordKey'
+    ##
+    rabbitmqSecret: ""
+
   rabbitmq:
-    ## @param dataone-indexer.rabbitmq.extraConfiguration extra config, to be appended to rmq config
-    ## Default consumer_timeout is 30 mins (i.e. 18000000mS). Increase this to 1hr to avoid timeouts
-    ## with large resource maps
+    ## @param dataone-indexer.rabbitmq.enabled Enable rabbitmq provisioning in the indexer sub-chart
+    ## Requires the RabbitMQ Cluster Operator to be pre-installed. Set to false if you want to
+    ## connect to your own existing RabbitMQ deployment (and set 'metacat.index.rabbitmq.hostname',
+    ## and 'dataone-indexer.idxworker.rabbitmqSecret'
     ##
-    ## 144000000 = 4 hours
+    enabled: true
+
+    ## @param dataone-indexer.rabbitmq.replicaCount Total rabbitmq pods (always use an odd number)
+    ## see: https://www.rabbitmq.com/docs/clustering#node-count
     ##
-    extraConfiguration: |-
-      consumer_timeout = 144000000
+    replicaCount: 1
 
-    auth:
-      ## @param dataone-indexer.rabbitmq.auth.username set the username that rabbitmq will use
-      ##
-      username: *rmqUsername
-
-      ## @param dataone-indexer.rabbitmq.auth.existingPasswordSecret location of rabbitmq password
-      ## (must contain a value for `rabbitmq-password` key)
-      ##
-      existingPasswordSecret: *passwordSecretName
+    ## @skip dataone-indexer.rabbitmq.additionalConfig Additional rabbitmq configuration settings
+    ## See, for example: https://www.rabbitmq.com/docs/limits
+    additionalConfig: {}
 
   solr:
     ## @param dataone-indexer.solr.javaMem Java memory options to pass to the Solr container
@@ -1168,7 +1166,7 @@ dataone-indexer:
     javaMem: "-Xms512m -Xmx2g"
 
     ## @param dataone-indexer.solr.customCollection name of the solr collection to use
-    ## (optional override of indexer-assigned name). Do not leave blank
+    ## (optional override of indexer-assigned name). Do not leave blank!
     ## NOTE: if you change this value after having run metacat for the first time, you may need
     ## to delete and re-create the PVCs and PVs used by solr, in order for the new settings to
     ## become effective
@@ -1198,9 +1196,12 @@ dataone-indexer:
           ## This is the name of the configMap created by the dataone-indexer. It has to be here
           ## because it is passed directly to the dataone-indexer subchart's own solr subchart via
           ## .Values, so cannot be set automatically. Unfortunate but true.
-          ## IMPORTANT NOTE: make sure you edit this, since IT INCLUDES THE RELEASE NAME! For
-          ## example, if the release name is 'myrelease', the value of name: would be
-          ## 'myrelease-indexer-configfiles'.
+          ##
+          ## IMPORTANT:
+          ## - Make sure you edit this, to replace ${RELEASE_NAME} with yours! For example, if
+          ##   the release name is 'myrelease':
+          ##     name: myrelease-indexer-configfiles
+          ##
           name: ${RELEASE_NAME}-indexer-configfiles
           ## @param dataone-indexer.solr.extraVolumes[0].configMap.defaultMode DO NOT EDIT
           defaultMode: 0777

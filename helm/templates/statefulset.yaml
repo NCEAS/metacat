@@ -13,7 +13,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include "metacat.config.checksum" . }}
           {{- with .Values.podAnnotations }}
             {{- toYaml . | nindent 8 }}
           {{- end }}
@@ -30,7 +30,7 @@ spec:
               ## wait for PostgreSQL to be ready...
               ##
               PGHOST={{ include "metacat.postgresql.hostname" . }};
-              PGPORT={{ .Values.postgresql.primary.service.ports.postgresql -}};
+              PGPORT={{ .Values.database.port }};
               echo "* * * Checking if PostgreSQL is ready, at $PGHOST:$PGPORT * * *";
               until nc -z $PGHOST $PGPORT > /dev/null; do
               echo waiting for PostgreSQL at $PGHOST:$PGPORT; sleep 1; done;
@@ -38,7 +38,7 @@ spec:
               ## wait for RabbitMQ to be ready...
               ##
               RMQHOST={{ include "metacat.rabbitmq.hostname" . }};
-              {{- $amqp := index .Values "dataone-indexer" "rabbitmq" "service" "ports" "amqp" }}
+              {{- $amqp := index .Values "dataone-indexer" "idxworker" "rabbitmqHostPort" }}
               RMQPORT={{ index .Values "dataone-indexer" "rabbitmq" "hostport" | default $amqp -}};
               echo "* * * Checking if RabbitMQ is ready at $RMQHOST:$RMQPORT * * *";
               until nc -z $RMQHOST $RMQPORT > /dev/null; do
@@ -55,75 +55,6 @@ spec:
                 | nc $SOLRHOST $SOLRPORT | grep -c "<schema name=\"dataone") == 1 ]]; do
                 echo waiting for Solr Schema to be accessible at http://$SOLRHOST:$SOLRPORT$SOLRURI;
               sleep 2; done;
-        {{- if and .Values.postgresql.upgrader .Values.postgresql.upgrader.enabled }}
-        - name: pgupgrade
-          image: postgres:latest
-          securityContext:
-            {{- toYaml .Values.postgresql.upgrader.securityContext | nindent 12 }}
-          envFrom:
-            - secretRef:
-                name: {{ .Release.Name }}-metacat-secrets
-          command:
-            - sh
-            - -c
-            - |
-              ##
-              ## Upgrade PostgreSQL if necessary
-              ##
-              echo "Checking if a PostgreSQL upgrade is necessary...";
-              PGDATA={{ .Values.postgresql.postgresqlDataDir }};
-              #
-              # * * * Exit if latest PostgreSQL version already initialized * * *
-              #
-              if [ ! -f "$PGDATA/PG_VERSION" ]; then
-                echo "No file found at $PGDATA/PG_VERSION. NEEDS INVESTIGATION!";
-                echo "This should never happen, since previous initContainer checked that postgres";
-                echo "was running, and postgres chart will initialize a new DB if none found in";
-                echo "$PGDATA. Maybe a permissions issue? Exiting initContainer...";
-                exit 1;
-              fi
-              #
-              # * * * Check if metacat has already created tables * * *
-              #
-              echo "Found version $(cat $PGDATA/PG_VERSION); checking if pg_restore needed...";
-              USER={{ .Values.postgresql.auth.username }};
-              HOST={{ include "metacat.postgresql.hostname" . }};
-              DB={{ .Values.postgresql.auth.database }};
-              # $POSTGRES_PASSWORD should already have been set in 'envFrom:', above
-              MCTABLES=$(PGPASSWORD=$POSTGRES_PASSWORD psql -h $HOST -U $USER -d $DB -c "\dt" 2>&1);
-              echo "Result of psql -h $HOST -U $USER -d $DB -c \"\\dt\":"
-              echo "$MCTABLES";
-              if [ "$MCTABLES" != "Did not find any relations." ]; then
-                echo "Metacat tables found in $PGDATA; will NOT do a pg_restore. Exiting initContainer...";
-                exit 0;
-              fi;
-              #
-              # * * * Check if there are existing pg_dump files that can be restored * * *
-              #
-              echo "No Metacat tables found in $PGDATA";
-              echo "Looking for directories named {version}-pg_dump to restore from...";
-              MNT={{ regexReplaceAll "(.*?)/(\\d{2,3})/(?:.*)$" .Values.postgresql.postgresqlDataDir "$1" }};
-              MAJOR_VER=$(PGPASSWORD=$POSTGRES_PASSWORD psql -h $HOST -U $USER -d $DB -c "SHOW server_version" -t -A | cut -d. -f1);
-              echo "Current PostgreSQL Major Version: $MAJOR_VER";
-              DUMP=$(ls $MNT/ | grep "[0-9]\+-pg_dump$" | sort -rn | awk -F'-' -v limit=$MAJOR_VER '$1 < limit {print $0}' | head -n 1 2>&1);
-              echo "All dump files:";
-              ls $MNT/ | grep "[0-9]\+-pg_dump$" | sort -rn;
-              if [ -z "$DUMP" ]; then
-                echo "No suitable dump files found in $MNT; exiting initContainer...";
-                exit 0;
-              fi;
-              echo "Choosing newest dump file before current version ($MAJOR_VER): $DUMP";
-              #
-              # * * * pg_restore existing pg_dump files * * *
-              #
-              echo "Restoring from dump file $DUMP as 'postgres' admin user, using command:";
-              echo "pg_restore -U postgres -h $HOST -d $DB --format=directory --jobs=20 --verbose $MNT/$DUMP";
-              PGPASSWORD=$POSTGRES_PASSWORD pg_restore -U postgres -h $HOST -d $DB --format=directory --jobs=20 --verbose $MNT/$DUMP;
-              echo "FINISHED restoring from dump file $DUMP; exiting initContainer...";
-          volumeMounts:
-            - name: {{ .Release.Name }}-postgres-pgupgrade
-              mountPath: {{ regexReplaceAll "(.*?)/(\\d{2,3})/(?:.*)$" .Values.postgresql.postgresqlDataDir "$1" }}
-        {{- end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -158,9 +89,13 @@ spec:
           ports:
             - containerPort: 8080
               name: metacat-web
-                {{- if .Values.container.ports }}
-                  {{- toYaml .Values.container.ports | nindent 12 }}
-                {{ end }}
+              {{- if .Values.container.ports }}
+                {{- toYaml .Values.container.ports | nindent 12 }}
+              {{ end }}
+            {{- if .Values.tomcat.jmxEnabled }}
+            - containerPort: {{ .Values.tomcat.jmxPort }}
+              name: jmx
+            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
@@ -193,24 +128,50 @@ spec:
             - name: TOMCAT_MEM_MAX
               value: {{ .Values.tomcat.heapMemory.max }}
             - name: POSTGRES_USER
-              value: {{ .Values.postgresql.auth.username }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ tpl .Values.database.existingSecret . }}
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ tpl .Values.database.existingSecret . }}
+                  key: password
+            - name: METACAT_RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{  include "rmq.secret.name" . }}
+                  key: {{ (index .Values "dataone-indexer" "idxworker" "rabbitmqUserKey") }}
+                  optional: false
             - name: METACAT_RABBITMQ_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-metacat-secrets
-                  key: rabbitmq-password
+                  name: {{  include "rmq.secret.name" . }}
+                  key: {{ ( index .Values "dataone-indexer" "idxworker" "rabbitmqPasswordKey" ) }}
                   optional: false
+            - name: CATALINA_OPTS
+              value: {{ join " " .Values.tomcat.extraCatalinaOpts }}
+                      {{- if .Values.tomcat.jmxEnabled }}
+                        {{- if .Values.tomcat.extraCatalinaOpts }}
+                          {{- printf " " }}
+                        {{- end }}
+                        {{- join " " .Values.tomcat.jmxCatalinaOpts }}
+                      {{- end }}
           envFrom:
             - secretRef:
                 name: {{ .Release.Name }}-metacat-secrets
-                  {{- if .Values.livenessProbe.enabled }}
+          {{- if .Values.startupProbe.enabled }}
+          startupProbe:
+            {{- omit .Values.startupProbe "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
-                    {{- omit .Values.livenessProbe "enabled" | toYaml | nindent 12 }}
-                  {{- end }}
-              {{- if .Values.readinessProbe.enabled }}
+            {{- omit .Values.livenessProbe "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
           readinessProbe:
-                {{- omit .Values.readinessProbe "enabled" | toYaml | nindent 12 }}
-              {{- end }}
+            {{- omit .Values.readinessProbe "enabled" | toYaml | nindent 12 }}
+          {{- end }}
       volumes:
       - name: {{ .Release.Name }}-config-volume
         configMap:
@@ -224,11 +185,6 @@ spec:
         secret:
           secretName: {{ .Release.Name }}-d1-client-cert
           optional: true
-      {{- if and .Values.postgresql.upgrader .Values.postgresql.upgrader.enabled }}
-      - name: {{ .Release.Name }}-postgres-pgupgrade
-        persistentVolumeClaim:
-          claimName: {{ required ".Values.postgresql.upgrader.persistence.existingClaim is REQUIRED" .Values.postgresql.upgrader.persistence.existingClaim }}
-      {{- end }}
 {{- if not (.Values.persistence.enabled) }}
       - name: {{ .Release.Name }}-metacat
         emptyDir: {}
@@ -240,19 +196,21 @@ spec:
   {{ else }}
   volumeClaimTemplates:
   - metadata:
-      # can't do {release}-{function}-{instance} for statefulset, since k8s auto appends
-      # {podname}-{instance} (e.g. metacatknb-metacat-metacatknb-0)
+      {{- with .Values.persistence.pvcLabels }}
+      labels:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       name: {{ .Release.Name }}-metacat
     spec:
       {{- if .Values.persistence.volumeName }}
       volumeName: {{ .Values.persistence.volumeName }}
-      {{ end }}
+      {{- end }}
       accessModes:
         {{- range .Values.persistence.accessModes }}
         - {{ . | quote }}
         {{- end }}
       volumeMode: Filesystem
-        {{- $storageClass := .Values.persistence.storageClass -}}
+        {{- $storageClass := ( default .Values.persistence.storageClass .Values.global.storageClass ) -}}
         {{- if $storageClass }}
       storageClassName: {{ ternary "\"\"" $storageClass (eq "-" $storageClass) }}
         {{- end }}

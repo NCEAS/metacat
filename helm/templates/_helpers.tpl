@@ -113,18 +113,32 @@ nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
 {{- end }}
 
 {{/*
+Create a default fully qualified app name for the embedded RabbitMQ Cluster Operator Deployment.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+{{- define "rmq.fullname" -}}
+{{- $name := default "rmq" ( index .Values "dataone-indexer" "rabbitmq" "nameOverride" ) }}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+If RabbitMQ Secret Name not defined, infer from bundled RMQ Cluster Operator, or error out.
+*/}}
+{{- define "rmq.secret.name" }}
+{{- $rmqSecret := index .Values "dataone-indexer" "idxworker" "rabbitmqSecret" }}
+{{- if and (index .Values "dataone-indexer" "rabbitmq" "enabled") (not $rmqSecret) }}
+{{- $rmqSecret = printf "%s-default-user" (include "rmq.fullname" .) }}
+{{- end }}
+{{- $rmqSecret }}
+{{- end }}
+
+{{/*
 set RabbitMQ HostName
 */}}
 {{- define "metacat.rabbitmq.hostname" -}}
-{{- $rmqHost := (index .Values.metacat "index.rabbitmq.hostname") }}
-{{- if and (index .Values.global "dataone-indexer.enabled") (not $rmqHost) -}}
-{{- if (index .Values "dataone-indexer" "rabbitmq" "fullnameOverride") }}
-{{- $rmqFullName := (index .Values "dataone-indexer" "rabbitmq" "fullnameOverride") }}
-{{- $rmqHost = printf "%s-headless" ($rmqFullName | trunc 63 | trimSuffix "-") }}
-{{- else }}
-{{- $rmqName := (index .Values "dataone-indexer" "rabbitmq" "nameOverride") }}
-{{- $rmqHost = printf "%s-%s-headless" .Release.Name ($rmqName | trunc 63 | trimSuffix "-") }}
-{{- end }}
+{{- $rmqHost := (index .Values "metacat" "index.rabbitmq.hostname") }}
+{{- if and (index .Values.global "dataone-indexer.enabled") (not $rmqHost) }}
+{{- $rmqHost = (include "rmq.fullname" .) }}
 {{- end }}
 {{- $rmqHost }}
 {{- end }}
@@ -146,7 +160,7 @@ set postgresql HostName
 {{- define "metacat.postgresql.hostname" -}}
 {{- $dbUri := (index .Values.metacat "database.connectionURI") }}
 {{- if not $dbUri }}
-  {{- .Release.Name }}-postgresql-hl
+  {{- tpl .Values.database.serviceName . }}
 {{- else }}
   {{- regexFind "://[^/]+" $dbUri | trimPrefix "://" }}
 {{- end }}
@@ -163,4 +177,37 @@ Usage:
     {{- else }}
         {{- tpl (.value | toYaml) .context }}
     {{- end }}
+{{- end -}}
+
+{{/*
+Parse hostname from .Values.global.metacatExternalBaseUrl
+*/}}
+{{- define "metacat.server.name" -}}
+{{- $url := .Values.global.metacatExternalBaseUrl -}}
+{{- if $url -}}
+    {{- $parsed := regexFind "://([^/:]+)" $url -}}
+    {{- if $parsed -}}
+      {{- regexReplaceAll "/$" ( trimPrefix "://" $parsed ) "" }}
+    {{- else -}}
+      {{- "ERROR_.Values.global.metacatExternalBaseUrl_WRONG_FORMAT" }}
+    {{- end -}}
+{{- else -}}
+    {{- "ERROR_.Values.global.metacatExternalBaseUrl_NOT_FOUND" }}
+{{- end -}}
+{{- end }}
+
+{{/*
+Create a checksum that reflects changes in the config files.
+Do it here, instead of in deployment.yaml, because helm's ordering of operations means that the
+checksum is performed before the values overrides are inserted into the config files, so the
+checksum doesn't change when those values do.
+*/}}
+{{- define "metacat.config.checksum" }}
+{{- $out := "" }}
+{{- range $path, $file := .Files.Glob "config/*" }}
+  {{- $content := toString $file }}
+  {{- $rendered := tpl $content $ }}
+  {{- $out = printf "%s\n%s" $out $rendered }}
+{{- end }}
+{{- $out | trim | sha256sum -}}
 {{- end -}}

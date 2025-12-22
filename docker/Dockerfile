@@ -2,10 +2,10 @@
 ARG ENVIRONMENT="prod"
 
 # The first stage is used to select the base image for production, based on the JRE
-FROM tomcat:9.0.102-jre17-temurin-noble AS prod-base
+FROM tomcat:9.0.112-jre17-temurin-noble AS prod-base
 
 # The second stage is used for testing, if needed, based on the JDK
-FROM tomcat:9.0.102-jdk17-temurin-noble AS test-base
+FROM tomcat:9.0.112-jdk17-temurin-noble AS test-base
 
 RUN    printf '\n* * * * * * * * * TEST BUILD * * * * * * * * *'      \
     && printf '\n* * * * * * * * * TEST BUILD * * * * * * * * *'      \
@@ -49,7 +49,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         figlet             \
         unzip              \
         netcat-traditional \
-        # non-critical tools:
+        # non-critical tools: \
         iputils-ping       \
         lsof               \
         postgresql-client  \
@@ -85,6 +85,7 @@ USER 59997:59997
 WORKDIR "$TC_HOME"/bin
 
 EXPOSE 8080
+EXPOSE 9010
 EXPOSE 5005
 
 # metadata

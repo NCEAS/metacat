@@ -2,12 +2,12 @@
 ##
 ## examples:
 ## from local helm chart:
-##  helm install myrelease -n mynamespace ./helm -f ./helm/examples/values-dev-cluster-example.yaml
+## $ helm upgrade --install <release> -n <namespace> ./helm
+##          -f ./helm/examples/values-dev-cluster-example.yaml --debug
 ##
 ## or from pre-packaged chart:
-##  helm install myrelease -n mynamespace oci://ghcr.io/nceas/charts/metacat --version 1.2.0 \
-##       -f ./helm/examples/values-dev-cluster-example.yaml \
-##       --debug --render-subchart-notes
+## $ helm upgrade --install <release> -n <namespace> oci://ghcr.io/nceas/charts/metacat \
+##          --version <version> -f ./helm/examples/values-dev-cluster-example.yaml --debug
 ##
 ## see values.yaml for full documentation on the following parameters
 ##
@@ -17,34 +17,23 @@
 debug: &debug true
 
 global:
-  metacatUiThemeName: "default"
-  metacatUiWebRoot: "/"
   metacatExternalBaseUrl: "https://metacat-dev.test.dataone.org/"
   d1ClientCnUrl: "https://cn-sandbox.test.dataone.org/cn"
-  storageClass: &storageClassName csi-cephfs-sc
+  storageClass: csi-cephfs-sc
   ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
-  ## Use your own release name instead of metacatbrooke
-  passwordsSecret: &passwordSecretName metacatbrooke-metacat-secrets
-
-
-## example for a custom theme (also need to set global.metacatUiThemeName: "cerp", above)
-##
-#metacatui:
-#  customTheme:
-#    enabled: true
-#    ## Use your own release name instead of metacatbrooke
-#    claimName: metacatbrooke-metacatui-customtheme
-#    subPath: metacatui-themes/src/cerp/js/themes/cerp
-#  appConfig:
-#    enabled: false
-    ## disabled because SFWMD uses cerp theme, overlaid with
-    ## SFWMD config.js at /config/config.js (created as configMap)
+  ## MetacatUI is deployed as a separate chart, to allow for a different upgrade cycle.
+  ## see separate values overrides in ./values-dev-cluster-example-mcui.yaml
+  ##
+  includeMetacatUi: false           # don't include the MetacatUI sub-chart
+  metacatUiIngressBackend:
+    enabled: true                   # configure the Ingress to point to the MetacatUI service
+    service:
+      name: mcuibrooke-metacatui    # Use your own service name
 
 metacat:
-  server.name: metacat-dev.test.dataone.org
   auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
 
-#  storage.hashstore.disableConversion: true
+  #  storage.hashstore.disableConversion: true
 
   ## DataONE Member Node (MN) Parameters
   dataone.certificate.fromHttpHeader.enabled: true
@@ -54,13 +43,13 @@ metacat:
   dataone.nodeName: TestBROOKELT Metacat Node
   dataone.nodeDescription: |
     Dev cluster Test BROOKE LT Metacat Node. Last registered with CN on 1/23/2025
+  ## FOR TESTING: NON-VERIFIED:  CN=Christopher Jones A2108,O=Google,C=US,DC=cilogon,DC=org
   dataone.contactSubject: http://orcid.org/0000-0002-1472-913X
   dataone.nodeSynchronize: true
   dataone.nodeReplicate: true
   dataone.replicationpolicy.default.numreplicas: "1"
 
 persistence:
-  storageClass: *storageClassName
   size: 100Gi
   accessModes:
     - ReadWriteMany
@@ -72,60 +61,71 @@ image:
   pullPolicy: Always
   debug: *debug
 
+resources:
+  requests:
+    cpu: 1
+    memory: 1Gi
+  limits:
+    cpu: 2
+    memory: 4Gi
+
+tomcat:
+  ## @param tomcat.jmxEnabled Enable JMX for Tomcat, to inspect JVM usage of CPU, memory, etc.
+  ## When JMX is enabled by setting this to 'true', you can view the JMX metrics using a JMX client
+  ## such as VisualVM or JConsole, connected via port-forwarding to the port set in tomcat.jmxPort
+  ##
+  jmxEnabled: true
+
 ingress:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
   tls:
-    - hosts: [] # defaults to metacat.server.name
+    - hosts: [] # defaults to global.metacatExternalBaseUrl
       secretName: ingress-nginx-tls-cert
 
-postgresql:
-  upgrader:
-    persistence:
-     existingClaim: data-metacatbrooke-postgresql-0
-
-  primary:
-    resources:
-      requests:
-        cpu: 1
-        memory: 2Gi
-      limits:
-        cpu: 2
-        memory: 4Gi
-    extendedConfiguration: |
-      max_connections = 250
-      max_wal_size=16384
-      min_wal_size=4096
-      shared_buffers = 1280MB
-
-    persistence:
-      size: 10Gi
-      selector:
-        matchLabels:
-          ## Use your own release name instead of metacatbrooke
-          metacatVolumeName: cephfs-metacatbrooke-metacat-postgresdata
-
-  auth:
-    existingSecret: *passwordSecretName
+database:
+  serviceName: mcdb-cnpg-rw
 
 dataone-indexer:
   autoscaling:
     minReplicas: 1
     targetCPUUtilizationPercentage: 80
 
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1.0
+      memory: 4Gi
+
   image:
     pullPolicy: Always
     debug: *debug
 
   idxworker:
+    jmxEnabled: true
     # this actually puts container in debug loop mode - no indexer running
     debug: false
 
   rabbitmq:
-    auth:
-      existingPasswordSecret: *passwordSecretName
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1.0
+        memory: 1024Mi
 
   solr:
+    javaMem: "-XX:MaxRAMPercentage=75.0"
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 1.5
+        memory: 4Gi
     extraVolumes:
       - name: solr-config
         configMap:

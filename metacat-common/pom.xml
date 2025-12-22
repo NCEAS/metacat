@@ -4,7 +4,7 @@
     <groupId>edu.ucsb.nceas.metacat.common</groupId>
     <artifactId>metacat-common</artifactId>
     <packaging>jar</packaging>
-    <version>3.2.1</version>
+    <version>3.3.0</version>
     <name>metacat-common</name>
     <url>http://maven.apache.org</url>
     <properties>
@@ -15,7 +15,7 @@
     <repositories>
         <repository>
             <id>dataone.org</id>
-            <url>http://maven.dataone.org</url>
+            <url>https://maven.dataone.org</url>
             <releases>
                 <enabled>true</enabled>
             </releases>

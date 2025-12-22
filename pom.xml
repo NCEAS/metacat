@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.ecoinformatics</groupId>
     <artifactId>metacat</artifactId>
-    <version>3.2.1</version>
+    <version>3.3.0</version>
     <name>metacat</name>
     <packaging>war</packaging>
     <url>http://maven.apache.org</url>
@@ -12,7 +12,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <d1_libclient_version>2.3.1</d1_libclient_version>
         <d1_portal_version>2.3.3</d1_portal_version>
-        <metacat_common_version>3.2.1</metacat_common_version>
+        <metacat_common_version>3.3.0</metacat_common_version>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.source>17</maven.compiler.source>
     </properties>
@@ -44,21 +44,34 @@
             <name>central maven repo1 https</name>
             <url>https://repo1.maven.org/maven2</url>
         </repository>
-        <repository>
-            <id>github</id>
-            <url>https://maven.pkg.github.com/nceas/osti-elink</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
     </repositories>
+    <!-- Import multiple JUnit BOMs. -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>5.9.2</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>5.11.4</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>5.13.1</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
-        <dependency>
-            <groupId>org.junit</groupId>
-            <artifactId>junit-bom</artifactId>
-            <version>5.11.4</version>
-            <type>pom</type>
-        </dependency>
         <dependency>
             <groupId>edu.ucsb.nceas</groupId>
             <artifactId>utilities</artifactId>
@@ -86,6 +99,10 @@
             <type>jar</type>
             <!-- exclude extraneous artifacts (jars) -->
             <exclusions>
+                <exclusion>
+                  <groupId>edu.uiuc.ncsa.myproxy</groupId>
+                  <artifactId>oa4mp-client-loader-oauth1</artifactId>
+                </exclusion>
                 <exclusion>
                   <groupId>org.jibx</groupId>
                   <artifactId>jibx-tools</artifactId>
@@ -295,7 +312,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.4</version>
+            <version>42.7.7</version>
         </dependency>
         <dependency>
             <groupId>org.apache.solr</groupId>
@@ -315,7 +332,7 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.16.1</version>
+            <version>2.20.0</version>
         </dependency>
         <dependency>
               <groupId>org.dspace</groupId>
@@ -478,7 +495,7 @@
         <dependency>
             <groupId>edu.ucsb.nceas</groupId>
             <artifactId>osti-elink</artifactId>
-            <version>2.0.0</version>
+            <version>2.1.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml -->
         <dependency>
@@ -512,6 +529,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
             <version>2.12.1</version>
+        </dependency>
+        <dependency>
+            <groupId>uk.org.webcompere</groupId>
+            <artifactId>system-stubs-junit4</artifactId>
+            <version>1.2.1</version>
         </dependency>
     </dependencies>
 </project>

@@ -11,6 +11,7 @@ import org.apache.commons.logging.LogFactory;
 import org.dataone.client.auth.CertificateManager;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.BaseException;
+import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v2.Node;
 
@@ -173,13 +174,27 @@ public class D1Admin extends MetacatAdmin {
                 RequestUtil.forwardRequest(
                     request, response, "/admin/dataone-configuration.jsp", null);
             } catch (GeneralPropertyException gpe) {
-                throw new AdminException("D1Admin.configureDataONE - Problem getting or "
+                final String msg = "D1Admin.configureDataONE - Problem getting or "
                                              + "setting property while initializing system "
-                                             + "properties page: " + gpe.getMessage());
+                                             + "properties page: " + gpe.getMessage();
+                AdminException ae = new AdminException(msg);
+                ae.initCause(gpe);
+                ae.fillInStackTrace();
+                throw ae;
             } catch (MetacatUtilException mue) {
-                throw new AdminException(
-                    "D1Admin.configureDataONE - utility problem while initializing "
-                        + "system properties page:" + mue.getMessage());
+                final String msg = "D1Admin.configureDataONE - utility problem while initializing "
+                        + "system properties page:" + mue.getMessage();
+                AdminException ae = new AdminException(msg);
+                ae.initCause(mue);
+                ae.fillInStackTrace();
+                throw ae;
+            } catch (ServiceFailure | NotImplemented e) {
+                final String msg = "D1Admin.configureDataONE - problem determining whether node "
+                    + "already registered:" + e.getMessage();
+                AdminException ae = new AdminException(msg);
+                ae.initCause(e);
+                ae.fillInStackTrace();
+                throw ae;
             }
         } else if (bypass != null && bypass.equals("true")) {
             Vector<String> processingErrors = new Vector<String>();
@@ -213,9 +228,12 @@ public class D1Admin extends MetacatAdmin {
                                                null);
                 }
             } catch (MetacatUtilException mue) {
-                throw new AdminException(
-                    "D1Admin.configureDataONE - utility problem while processing dataone page: "
-                        + mue.getMessage());
+                final String msg = "D1Admin.configureDataONE - utility problem while redirecting "
+                    + "to another page:" + mue.getMessage();
+                AdminException ae = new AdminException(msg);
+                ae.initCause(mue);
+                ae.fillInStackTrace();
+                throw ae;
             }
 
         } else {
@@ -428,7 +446,19 @@ public class D1Admin extends MetacatAdmin {
         logMetacat.debug("DataONE MN Client certificate set: " + mnCertificatePath);
 
         // check if this is new or an update
-        if (d1AdminCNUpdater.isNodeRegistered(node.getIdentifier().getValue())) {
+        boolean isNodeRegistered;
+        try {
+            isNodeRegistered = d1AdminCNUpdater.isNodeRegistered(node.getIdentifier().getValue());
+        } catch (BaseException e) {
+            String msg = "upRegD1MemberNode(): Exception checking if node is registered: "
+                + e.getMessage();
+            logMetacat.error(msg, e);
+            AdminException ae = new AdminException(msg);
+            ae.initCause(e);
+            ae.fillInStackTrace();
+            throw ae;
+        }
+        if (isNodeRegistered) {
             logMetacat.info("* * * Handling config changes: PREREGISTERED D1 MEMBER NODE...");
             d1AdminCNUpdater.configPreregisteredMN(node);
         } else {

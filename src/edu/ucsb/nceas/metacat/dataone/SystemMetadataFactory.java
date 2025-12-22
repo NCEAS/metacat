@@ -11,7 +11,6 @@ import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
@@ -76,6 +75,7 @@ public class SystemMetadataFactory {
     private static boolean updateExisting = true;
     private static String legacyDataDir = null;
     private static String legacyDocDir = null;
+    private static String accNumSeparator = ".";
     static {
         try {
             legacyDataDir = PropertyService.getProperty("application.datafilepath");
@@ -93,16 +93,21 @@ public class SystemMetadataFactory {
         } catch (PropertyNotFoundException e) {
             logMetacat.error("Metacat can't find the property value of application.documentfilepath");
         }
+        try {
+            accNumSeparator = PropertyService.getProperty("document.accNumSeparator");
+            logMetacat.debug("Metacat will use " + accNumSeparator + "as the docid separator.");
+        } catch (PropertyNotFoundException e) {
+            accNumSeparator = ".";
+            logMetacat.debug("Metacat can't find the property value of document.accNumSeparator."
+                                + "It will use the default docid separator: . (dot).");
+        }
     }
 
 
     /**
      * Creates a system metadata object for insertion into metacat
-     * @param indexDataFile
-     *            Indicate if we need to index data file.
-     *
      * @param localId
-     *            The local document identifier
+     *            The local document identifier, which is doicd + "." + rev.
      * @return sysMeta The system metadata object created
      * @throws McdbException
      * @throws McdbDocNotFoundException
@@ -154,7 +159,6 @@ public class SystemMetadataFactory {
         try {
             logMetacat.debug("Getting system metadata");
             sysMeta = SystemMetadataManager.getInstance().get(identifier);
-            // TODO: if this is the case, we could return here -- what else do we gain?
             if (!updateExisting) {
                 return sysMeta;
             }
@@ -193,7 +197,8 @@ public class SystemMetadataFactory {
             }
         }
         sysMeta.setFormatId(fmtid);
-        logMetacat.debug("The ObjectFormat for " + localId + " is " + fmtid.getValue());
+        logMetacat.debug(
+            "The ObjectFormat for " + identifier.getValue() + " is " + fmtid.getValue());
 
 
         // for retrieving the actual object
@@ -201,11 +206,14 @@ public class SystemMetadataFactory {
             // create the checksum
             String algorithm = PropertyService.getProperty("dataone.checksumAlgorithm.default");
             Checksum checksum = ChecksumUtil.checksum(inputStream, algorithm);
-            logMetacat.debug("The checksum for " + localId + " is " + checksum.getValue());
+            logMetacat.debug(
+                "The checksum for " + identifier.getValue() + " is " + checksum.getValue());
             sysMeta.setChecksum(checksum);
         } catch (McdbDocNotFoundException e) {
             // try to read it from the legacy store
-            try (InputStream inputStream = readInputStreamFromLegacyStore(identifier)) {
+            Identifier useLocalIdAsPid = new Identifier();
+            useLocalIdAsPid.setValue(localId);
+            try (InputStream inputStream = readInputStreamFromLegacyStore(useLocalIdAsPid)) {
                 // create the checksum
                 String algorithm = PropertyService.getProperty("dataone.checksumAlgorithm.default");
                 Checksum checksum = ChecksumUtil.checksum(inputStream, algorithm);
@@ -220,7 +228,9 @@ public class SystemMetadataFactory {
             fileSize = length(inputStream);
         } catch (McdbDocNotFoundException e) {
             // Try to read from the legacy store
-            try (InputStream inputStream = readInputStreamFromLegacyStore(identifier)) {
+            Identifier useLocalIdAsPid = new Identifier();
+            useLocalIdAsPid.setValue(localId);
+            try (InputStream inputStream = readInputStreamFromLegacyStore(useLocalIdAsPid)) {
                 fileSize = length(inputStream);
             }
         }
@@ -238,11 +248,8 @@ public class SystemMetadataFactory {
 
         // dates
         String createdDateString = docInfo.get("date_created");
-        String updatedDateString = docInfo.get("date_updated");
         Date createdDate = DateTimeMarshaller.deserializeDateToUTC(createdDateString);
-        Date updatedDate = DateTimeMarshaller.deserializeDateToUTC(updatedDateString);
         sysMeta.setDateUploaded(createdDate);
-        //sysMeta.setDateSysMetadataModified(updatedDate);
         // use current datetime
         sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
 
@@ -251,31 +258,50 @@ public class SystemMetadataFactory {
         Identifier obsoletedBy = null;
         Identifier obsoletes = null;
         Vector<Integer> revisions = DBUtil.getRevListFromRevisionTable(docidWithoutRev);
-        // ensure this ordering since processing depends on it
-        Collections.sort(revisions);
-        for (int existingRev : revisions) {
-            // use the docid+rev as the guid
-            String existingPid = docidWithoutRev + "." + existingRev;
-            try {
-                existingPid = IdentifierManager.getInstance().getGUID(docidWithoutRev, existingRev);
-            } catch (McdbDocNotFoundException mdfe) {
-                // we'll be defaulting to the local id
-                logMetacat.warn(
-                    "could not locate guid when processing revision history for localId: "
-                        + localId);
+        int latestVersion = DBUtil.getLatestRevisionInDocumentTable(docidWithoutRev);
+        if (latestVersion != -1) {
+            revisions.add(latestVersion);
+        }
+        logMetacat.debug("The version history of " + docidWithoutRev + " is " + revisions);
+        String obsoletedByStr = null;
+        // The obsoletedBy docid always is one bigger than the current version.
+        int obsoletedByRev = rev + 1;
+        try {
+            // We first look at the identifier table to figure out the pid
+            obsoletedByStr = IdentifierManager.getInstance().getGUID(docidWithoutRev, obsoletedByRev);
+            logMetacat.debug("Use pid from the identifier table as the obsoletedBy pid "
+                                 + obsoletedByStr);
+        } catch (McdbDocNotFoundException mdfe) {
+            // Metacat can't find the pid on the identifier table for the given doicd.
+            // It will use docid + rev as the pid
+            if (revisions.contains(obsoletedByRev) && !docidWithoutRev.startsWith("autogen.")) {
+                obsoletedByStr = docidWithoutRev + accNumSeparator + obsoletedByRev;
+                logMetacat.debug("Use docid + rev as the obsoletedBy pid " + obsoletedByStr);
             }
-            if (existingRev < rev) {
-                // it's the old docid, until it's not
-                obsoletes = new Identifier();
-                obsoletes.setValue(existingPid);
+        }
+        if (obsoletedByStr != null) {
+            obsoletedBy = new Identifier();
+            obsoletedBy.setValue(obsoletedByStr);
+        }
+        String obsoletesStr = null;
+        // Obsoletes docid always is one lesser than the current version.
+        int obsoletesRev = rev - 1;
+        try {
+             // We first look at the identifier table to figure out the pid
+            obsoletesStr = IdentifierManager.getInstance().getGUID(docidWithoutRev, obsoletesRev);
+            logMetacat.debug("Use pid from the identifier table as the obsoletes pid "
+                                 + obsoletesStr);
+        } catch (McdbDocNotFoundException mdfe) {
+            // Metacat can't find the pid on the identifier table for the given docid.
+            // It will use docid + rev as the pid
+            if (revisions.contains(obsoletesRev) && !docidWithoutRev.startsWith("autogen.")) {
+                obsoletesStr = docidWithoutRev + accNumSeparator + (obsoletesRev);
+                logMetacat.debug("Use docid + rev as the obsoletes pid " + obsoletesStr);
             }
-            if (existingRev > rev) {
-                // it's the newer docid
-                obsoletedBy = new Identifier();
-                obsoletedBy.setValue(existingPid);
-                // only want the version just after it
-                break;
-            }
+        }
+        if (obsoletesStr != null) {
+            obsoletes = new Identifier();
+            obsoletes.setValue(obsoletesStr);
         }
         // set them on our object
         sysMeta.setObsoletedBy(obsoletedBy);

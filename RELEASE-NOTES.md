@@ -1,8 +1,163 @@
 # Metacat Release Notes
 
+> [!CAUTION]
+> If you are upgrading from a helm chart version earlier than 2.1.0, please see the [Upgrade
+> Notes](#chart-upgrade-notes) below. Failure to do so may result in loss of data!
+
+## Release Notes for Metacat 3.3.0
+
+**Release date: 2025-12-12**
+
+### New Features & Enhancements:
+- Support osti-elink v2json (replaces deprecated XML format) to communicate with the OSTI DOI service.
+- Add `trace` logging of system metadata changes in the `updateSystemmetadata` API call ([Issue #2240](https://github.com/NCEAS/metacat/issues/2240))
+- Ant build: remove dependency on obsolete `maven-ant-tasks` library
+### Version Upgrades and Bug Fixes:
+- Disallow `MN.updateSystemMetadata` clients changes to the replica section of system metadata ([Issue #1867](https://github.com/NCEAS/metacat/issues/1867))
+- Fix access policy and replication policy manipulation ([Issue #2206](https://github.com/NCEAS/metacat/issues/2206))
+- Bump `commons-io` from 2.16.1 to 2.20.0
+- Update Docker base image from `tomcat:9.0.102-jre17-temurin-noble` to `tomcat:9.0.112-jre17-temurin-noble`
+- Update bundled MetacatUI to version 2.36.2
+- Upgrade DataONE-Indexer library to 3.2.0 in metacat-index (see [dataone-indexer Release Notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md) for details)
+
+## Release Notes for helm chart 4.0.0
+
+**Release date: 2025-12-12**
+
+> [!NOTE]
+> We are continuing to move away from using Bitnami helm charts for production dependencies. The Metacat chart now assumes you will provide your own instances of PostgreSQL and RabbitMQ, which are no longer included as sub-charts. We recommend using:
+> - CloudNative PG Operator to deploy your PostgreSQL cluster - see [Appendix 5 of the helm/README.md](./helm/README.md#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg)
+> - RabbitMQ Cluster Operator to deploy your RabbitMQ cluster - see [Appendix 6 of the helm/README.md](./helm/README.md#appendix-6-the-rabbitmq-cluster-operator)
+>
+> ...although you are free to choose any other method of deploying these dependencies.
+
+### Enhancements:
+- dataone-indexer sub-chart upgraded to version 2.0.0, which includes a RabbitMQ major-version upgrade (see [dataone-indexer Release Notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md) for details)
+- Improve the checksum calculation used to determine if the chart deployment includes changes that require a pod restart
+- Update MetacatUI subchart to version 1.0.13 (App version 2.36.2)
+
+- **`values.yaml` Changes**
+  - Note that RabbitMQ now uses credentials provided in its own secret, instead of specifying the username in values.yaml and the password in the Metacat secret.
+
+  - **added**:
+    - `persistence.pvcLabels` - arbitrary Labels for PVC volumeClaimTemplate. Defaults to `velero.io/exclude-from-backup: "true"`, to prevent Velero from trying and failing to back up volumes that were not provisioned dynamically.
+    - `dataone-indexer.idxworker.rabbitmqSecret` (leave blank to autopopulate if using RMQ Operator)
+    - `dataone-indexer.rabbitmq.enabled` - defaults to `true` for use with RMQ Operator; disable to use your own RMQ instance
+    - `dataone-indexer.rabbitmq.replicaCount`
+    - `dataone-indexer.rabbitmq.additionalConfig` (defaults to `consumer_timeout: "144000000"`)
+  - **changed**:
+    - `database.existingSecret` now defaults to `{{ .Release.Name }}-metacat-cnpg`
+    - `dataone-indexer.rabbitmq.extraConfiguration` has moved to `dataone-indexer.rabbitmq.additionalConfig`
+  - **removed**:
+    - `metacat.index.rabbitmq.username`
+    - `dataone-indexer.rabbitmq.auth.username`
+    - `dataone-indexer.idxworker.existingPasswordSecret`
+
+
+## Release Notes for helm chart 3.0.0
+
+**Release date: 2025-10-02**
+
+> [!NOTE]
+> The Metacat chart now assumes you will provide your own PostgreSQL instance. It no longer includes a PostgreSQL sub-chart
+
+We are moving away from using Bitnami helm charts, since Bitnami has stopped offering free, versioned container images, thus making it impractical to continue using their charts for production dependencies.
+
+If you wish to use the CloudNative PG Operator to deploy your PostgreSQL cluster, follow the instructions in [Appendix 5 of the helm/README.md](./helm/README.md#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg)
+
+(The dataone-indexer sub-chart version (1.3.3) is unchanged from the previous Metacat Helm chart release)
+
+### Other Enhancements:
+- changed default:
+  - `livenessProbe.enabled` changed to false, since Metacat typically can have a lot of latency when overloaded, but recovers elegantly (livenessProbe was causing needless container restarts)
+- added:
+  - `startupProbe`
+  - `database` section for PostgreSQL connection details
+  - Several JMX-related settings, to enable JMX monitoring of Metacat. See the `tomcat` section of `values.yaml` for details.
+  - `extraCatalinaOpts` - to allow additional Tomcat options to be set. Default: `-XX:MaxRAMPercentage=75` (to limit memory usage to 75% of container memory limit)
+- removed:
+  - `global.passwordsSecret`- now used only in one place - set it in `dataone-indexer.idxworker.existingPasswordSecret`
+  - `metacat.server.name` - now automatically populated
+  - `postgresql` section - no longer using PostgreSQL sub-chart
+
+
+## Release Notes for helm chart 2.1.3
+
+**Release date: 2025-07-29**
+
+> [!CAUTION]
+> We strongly recommend that you upgrade to this version of the helm chart before August 28th, 2025,
+> since previous versions will stop working after Bitnami introduces restrictions to container image
+> availability!
+
+This is a patch release to account for upcoming changes to Bitnami container image availability; see
+Bitnami's announcements:
+
+- [Upcoming changes to the Bitnami catalog (effective August 28th, 2025)](https://github.com/bitnami/containers/issues/83267)
+- [Clarification on bitnami/charts after August 28th](https://github.com/bitnami/charts/issues/35256)
+
+This latest chart pulls any Bitnami image versions used by Metacat from the `bitnamilegacy`
+repository, which will remain functional after the August cutoff. Changes in this release:
+- Bump PostgreSQL sub-chart to Helm chart version 16.7.21 (PostgreSQL app version 17.5.0), and
+  override repository source to `bitnamilegacy` for the PostgreSQL image.
+- Bump dataone-indexer sub-chart to version 1.3.3, which is a patch release to override repository
+  sources to `bitnamilegacy` for the indexer sub-charts ([see indexer release notes for
+  details](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md))
+
+
+## Release Notes for Metacat 3.2.2
+
+**Release date: 2025-07-02**
+
+### Version Upgrades and Bug Fixes:
+
+- Fixed: Bug: Bagit setting incorrect Content-Type ([Issue #1953](https://github.com/NCEAS/metacat/issues/1953))
+- Fixed: Metacat DataONE admin page doesn't show the error message from CN ([Issue #2040](https://github.com/NCEAS/metacat/issues/2040))
+- Fixed: Hashstore convertor may miss some objects which need to be converted ([Issue #2182](https://github.com/NCEAS/metacat/issues/2182))
+- Update `eml2osti.xsl` for OSTI Service ([Issue #2185](https://github.com/NCEAS/metacat/issues/2185)), to incorporate bug fix for [OSTI XML Sponsor List starting with semicolon causes error in OSTI submission](https://github.com/ess-dive/essdive-toolset/issues/368)
+- Upgrade Postgres from 42.7.4 to 42.7.7 ([issue #2191](https://github.com/NCEAS/metacat/issues/2191))
+- Upgrade DataONE-Indexer library to 3.1.5 in metacat-index (see [dataone-indexer Release Notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md#dataone-indexer-version-315--helm-chart-version-132) for details)
+
+### Other Enhancements:
+
+- Ensure Metacat Startup Doesn't Fail if CN Registration Unsuccessful ([Issue #2181](https://github.com/NCEAS/metacat/issues/2181))
+- Increase `index.resourcemap.waitingComponent.max.attempts` to 200 as a temporary fix for resourcemaps not being successfully indexed
+- Utility Scripts for Metacat Administrators:
+  - (Python) submit index tasks as low priority in the background, given a list of object IDs (PIDs) ([Issue #2176](https://github.com/NCEAS/metacat/issues/2176))
+  - (Python) Synchronize the system metadata of a list of object IDs (PIDs) from Metacat database to the corresponding files in HashStore ([Issue #2166](https://github.com/NCEAS/metacat/issues/2166))
+  - (Bash) Determine the subset of objects that have not been indexed, and submit them for indexing ([Issue #2165](https://github.com/NCEAS/metacat/issues/2165))
+
+## Release Notes for helm chart 2.1.2
+
+**Release date: 2025-07-02**
+
+- Bump dataone-indexer sub-chart to version 1.3.2 ([see indexer release notes for
+  details](https://github.com/DataONEorg/dataone-indexer/blob/3.1.5/RELEASE-NOTES.md))
+- Set [additional Ingress annotations](https://github.com/NCEAS/metacat/commit/80aa42ad) for enabling upload and download of large files and data packages, without timeouts/disconnects.
+- Increase `.Values.dataone-indexer.idxworker.resourcemapMaxTries` to 200 as a temporary fix for resourcemaps not being successfully indexed.
+
+
+## Release Notes for helm chart 2.1.1
+
+**Release date: 2025-05-20**
+
+This is a patch release to upgrade the indexer sub-chart from 1.3.0 to 1.3.1. It does not include
+any other changes to the metacat codebase or the metacat helm chart, beyond the documentation edits
+listed below.
+
+- Bump dataone-indexer sub-chart to version 1.3.1 ([see indexer release notes for
+  details](https://github.com/DataONEorg/dataone-indexer/blob/3.1.4/RELEASE-NOTES.md))
+- Documentation-only updates to `MetacatQuickRef.md` and `Installation-Upgrade-Tips.md`
+- Updates to the example values-override files in `helm/examples`
+
+> [!CAUTION]
+> If you are upgrading from a helm chart version earlier than 2.1.0, please see the [Upgrade
+> Notes](#chart-upgrade-notes) below. Failure to do so may result in loss of data!
+
+
 ## Release Notes for Metacat 3.2.1
 
-**Release date: 2024-05-01**
+**Release date: 2025-05-01**
 
 ### Version Upgrades and Bug Fixes:
 - Fixed [Auto-restart Hashstore Conversion if Interrupted](https://github.com/NCEAS/metacat/issues/2123)
@@ -1226,6 +1381,7 @@ Enhancements:
      3a) Use xml_index and xml_nodes table to generate the string describing the document including the returnfields requested in the search
   4. Add all the strings from step 3a to send back the resultant
      document. Here a decent amount of time was being taken by step 3a.
+
   The algorithm is now modified by addition of two tables xml_queryresult and
   xml_returnfields and a user defined parameter xml_returnfield_count. The
   new algorithm works as follows:

@@ -212,6 +212,7 @@ CREATE TABLE smReplicationPolicy (
   CONSTRAINT smReplicationPolicy_fk
     FOREIGN KEY (guid) REFERENCES systemMetadata DEFERRABLE
 );
+CREATE INDEX smReplicationPolicy_guid on smReplicationPolicy(guid);
 
 CREATE TABLE smReplicationStatus (
   guid text,  -- the globally unique string identifier of the object that the system metadata describes
