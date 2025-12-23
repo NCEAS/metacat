@@ -44,6 +44,8 @@ DOCUMENTS_DIR = "/var/metacat/documents"
 DATA_DIR = "/var/metacat/data"
 CHECK_FILE_WAIT_MILLISECONDS = 50
 CHECK_FILE_MAX_ATTEMPTS = 200
+DOCID_WAIT_SEC = 0.1   # 100 milliseconds
+DOCID_MAX_RETRIES = 5
 # RabbitMQ queue configuration. They shouldn't be changed
 QUEUE_NAME = "index"
 ROUTING_KEY = "index"
@@ -258,7 +260,7 @@ def save_last_timestamp(ts: datetime):
     except Exception as e:
         print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] Failed to write last_timestamp file: {e}")
 
-def poll_and_submit(formatIds):
+def poll_and_submit(non_data_formats):
     global pg_pool
     last_timestamp = load_last_timestamp()
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] The last_timestamp from the previous process is {last_timestamp}")
@@ -289,6 +291,27 @@ def poll_and_submit(formatIds):
                         rows = cur.fetchall()
 
                         for guid, object_format, doc_id, modified_time in rows:
+                            # Retry if format is non-DATA and doc_id is missing
+                            if object_format in non_data_formats and not doc_id:
+                                for attempt in range(1, DOCID_MAX_RETRIES + 1):
+                                    time.sleep(DOCID_WAIT_SEC)
+                                    cur.execute("""
+                                        SELECT docid || '.' || rev
+                                        FROM identifier
+                                        WHERE guid = %s
+                                    """, (guid,))
+                                    res = cur.fetchone()
+                                    if res and res[0]:
+                                        doc_id = res[0]
+                                        break
+                                    else:
+                                        print(f"Retry {attempt}/{DOCID_MAX_RETRIES}: doc_id still missing for guid {guid}")
+
+                            # Skip if still missing after retries
+                            if object_format in non_data_formats and not doc_id:
+                                print(f"Skipping guid {guid}: doc_id not found after {DOCID_MAX_RETRIES} retries")
+                                continue
+
                             futures.append(executor.submit(process_pid_wrapper, channel_pool,
                             guid, object_format, doc_id))
                             print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] The modified_time from database is {modified_time}")
@@ -320,10 +343,10 @@ def poll_and_submit(formatIds):
                 pg_pool.closeall()
 
 if __name__ == "__main__":
-    formatIds = load_non_data_format_ids()
+    non_data_formats = load_non_data_format_ids()
     pg_pool = pool.ThreadedConnectionPool(
             minconn = 1,
             maxconn = DB_CONNECTION_POOL_SIZE,
             **DB_CONFIG
     )
-    poll_and_submit(fomratIds)
+    poll_and_submit(non_data_formats)
