@@ -258,7 +258,7 @@ def save_last_timestamp(ts: datetime):
     except Exception as e:
         print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] Failed to write last_timestamp file: {e}")
 
-def poll_and_submit():
+def poll_and_submit(formatIds):
     global pg_pool
     last_timestamp = load_last_timestamp()
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] The last_timestamp from the previous process is {last_timestamp}")
@@ -320,9 +320,10 @@ def poll_and_submit():
                 pg_pool.closeall()
 
 if __name__ == "__main__":
+    formatIds = load_non_data_format_ids()
     pg_pool = pool.ThreadedConnectionPool(
             minconn = 1,
             maxconn = DB_CONNECTION_POOL_SIZE,
             **DB_CONFIG
     )
-    poll_and_submit()
+    poll_and_submit(fomratIds)
