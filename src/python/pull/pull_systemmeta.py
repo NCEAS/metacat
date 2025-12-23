@@ -12,6 +12,8 @@ import threading
 import concurrent.futures
 import queue
 import time
+import requests
+import xml.etree.ElementTree as ET
 from psycopg2 import pool
 from amqpstorm import Connection
 from amqpstorm.exception import AMQPError
@@ -48,6 +50,41 @@ ROUTING_KEY = "index"
 EXCHANGE_NAME = "dataone-index"
 resourcemap_format_list = ["http://www.openarchives.org/ore/terms", "http://www.w3.org/TR/rdf-syntax-grammar"]
 pg_pool = None
+FORMATS_URL = "https://cn.dataone.org/cn/v2/formats"
+
+"""
+    Fetch DataONE format XML and return a list of formatId values
+    whose type is not 'DATA'.
+"""
+def load_non_data_format_ids():
+    non_data_format_ids = []
+
+    resp = requests.get(FORMATS_URL, timeout=30)
+    resp.raise_for_status()
+
+    root = ET.fromstring(resp.text)
+
+    # Detect namespace if present
+    ns = {}
+    if root.tag.startswith("{"):
+        ns_uri = root.tag.split("}")[0].strip("{")
+        ns = {"d": ns_uri}
+
+    # Find all format entries
+    formats = root.findall(".//d:format", ns) if ns else root.findall(".//format")
+
+    for fmt in formats:
+        if ns:
+            fmt_id = fmt.findtext("d:formatId", default="", namespaces=ns)
+            fmt_type = fmt.findtext("d:type", default="", namespaces=ns)
+        else:
+            fmt_id = fmt.findtext("formatId", default="")
+            fmt_type = fmt.findtext("type", default="")
+
+        if fmt_id and fmt_type.upper() != "DATA":
+            non_data_format_ids.append(fmt_id)
+
+    return non_data_format_ids
 
 # A class represents a RabbitMQ channel pool
 class AMQPStormChannelPool:
