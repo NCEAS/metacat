@@ -19,6 +19,7 @@ from amqpstorm import Connection
 from amqpstorm.exception import AMQPError
 from datetime import datetime
 from concurrent.futures import wait, ALL_COMPLETED
+from urllib.parse import urljoin
 
 # --- Configuration ---
 # Replace with your RabbitMQ and database credentials
@@ -30,6 +31,8 @@ DB_PASSWORD = "your_db_password"
 # The pool_size of the rabbitmq channel pool is using it as well.
 # The number must be less than those settings:
 # the max number of channels connection to rabbitmq (2047) and the number of the processor core number.
+
+CN_URL = "https://cn.dataone.org/cn/v2"
 MAX_WORKERS = 5
 RABBITMQ_URL = "localhost"
 RABBITMQ_PORT_NUMBER = 5672
@@ -52,7 +55,7 @@ ROUTING_KEY = "index"
 EXCHANGE_NAME = "dataone-index"
 resourcemap_format_list = ["http://www.openarchives.org/ore/terms", "http://www.w3.org/TR/rdf-syntax-grammar"]
 pg_pool = None
-FORMATS_URL = "https://cn.dataone.org/cn/v2/formats"
+FORMATS_URL = urljoin(CN_URL + "/", "formats")
 
 """
     Fetch DataONE format XML and return a list of formatId values
