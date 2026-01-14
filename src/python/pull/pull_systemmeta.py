@@ -56,6 +56,7 @@ EXCHANGE_NAME = "dataone-index"
 resourcemap_format_list = ["http://www.openarchives.org/ore/terms", "http://www.w3.org/TR/rdf-syntax-grammar"]
 pg_pool = None
 FORMATS_URL = urljoin(CN_URL + "/", "formats")
+QUERY_URL = "http://localhost:8983/solr/search_core/select?"
 
 """
     Fetch DataONE format XML and return a list of formatId values
