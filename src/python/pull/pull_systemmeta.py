@@ -145,26 +145,22 @@ def load_non_data_format_ids():
 
     root = ET.fromstring(resp.text)
 
-    # Detect namespace if present
-    ns = {}
-    if root.tag.startswith("{"):
-        ns_uri = root.tag.split("}")[0].strip("{")
-        ns = {"d": ns_uri}
+    # Iterate all objectFormat elements regardless of namespace
+    for fmt in root.iter():
+        if fmt.tag.endswith("objectFormat"):
+            # Find formatId and formatType ignoring namespace
+            fmt_id = None
+            fmt_type = None
+            for child in fmt:
+                if child.tag.endswith("formatId"):
+                    fmt_id = child.text.strip() if child.text else ""
+                elif child.tag.endswith("formatType"):
+                    fmt_type = child.text.strip() if child.text else ""
 
-    # Find all format entries
-    formats = root.findall(".//d:format", ns) if ns else root.findall(".//format")
+            if fmt_id and fmt_type and fmt_type.upper() != "DATA":
+                non_data_format_ids.append(fmt_id)
 
-    for fmt in formats:
-        if ns:
-            fmt_id = fmt.findtext("d:formatId", default="", namespaces=ns)
-            fmt_type = fmt.findtext("d:type", default="", namespaces=ns)
-        else:
-            fmt_id = fmt.findtext("formatId", default="")
-            fmt_type = fmt.findtext("type", default="")
-
-        if fmt_id and fmt_type.upper() != "DATA":
-            non_data_format_ids.append(fmt_id)
-
+    print(non_data_format_ids)
     return non_data_format_ids
 
 # A class represents a RabbitMQ channel pool
