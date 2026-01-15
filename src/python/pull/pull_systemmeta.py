@@ -9,6 +9,7 @@
 import asyncio
 import aiohttp
 import psycopg2
+import json
 import os
 import threading
 import concurrent.futures
@@ -27,7 +28,7 @@ from urllib.parse import urljoin
 # Replace with your RabbitMQ and database credentials
 RABBITMQ_USERNAME = "guest"
 RABBITMQ_PASSWORD = "guest"
-DB_USERNAME = "tao"
+DB_USERNAME = "metacat"
 DB_PASSWORD = "your_db_password"
 # Number of worker threads to submit index tasks to RabbitMQ
 # The pool_size of the rabbitmq channel pool is using it as well.
@@ -343,14 +344,14 @@ def poll_and_submit(non_data_formats):
                 cycle_start = time.time()
 
                 # Get latest timestamps from Solr
-                amn_latest_time = get_latest_date_by_mn_solr5_async()
+                amn_latest_time = asyncio.run(get_latest_date_by_mn_solr5_async())
                 print("Latest Solr timestamps by node:")
                 for k, v in amn_latest_time.items():
                     print(f"   {k} -> {v}")
 
                 # Build JSON payload for all nodes
                 payload = json.dumps([
-                    {"amn": k, "last_time": v.isoformat()}
+                    {"amn": k, "last_time": v}  # use string directly
                     for k, v in amn_latest_time.items()
                 ])
 
@@ -365,7 +366,7 @@ def poll_and_submit(non_data_formats):
                                 sm.object_format,
                                 i.docid || '.' || i.rev AS doc_id,
                                 sm.date_modified,
-                                sm.authoritative_member_node
+                                sm.authoritive_member_node
                             FROM systemmetadata sm
                             LEFT JOIN identifier i
                                 ON sm.guid = i.guid
@@ -374,7 +375,7 @@ def poll_and_submit(non_data_formats):
                                 FROM json_to_recordset(%s::json)
                                 AS t(amn text, last_time timestamptz)
                             ) AS latest
-                              ON sm.authoritative_member_node = latest.amn
+                              ON sm.authoritive_member_node = latest.amn
                              AND sm.date_modified > latest.last_time
                             LIMIT {MAX_ROWS};
                         """, (payload,))
