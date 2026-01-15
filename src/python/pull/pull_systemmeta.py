@@ -340,44 +340,73 @@ def save_last_timestamp(ts: datetime):
 
 def poll_and_submit(non_data_formats):
     global pg_pool
+
     channel_pool = AMQPStormChannelPool(
-        RABBITMQ_URL, RABBITMQ_PORT_NUMBER, RABBITMQ_USERNAME, RABBITMQ_PASSWORD, MAX_WORKERS
+        RABBITMQ_URL, RABBITMQ_PORT_NUMBER,
+        RABBITMQ_USERNAME, RABBITMQ_PASSWORD,
+        MAX_WORKERS
     )
-    # Improve performance after changing the list to set
+
     non_data_formats = set(non_data_formats)
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS, thread_name_prefix='PullProcessor') as executor:
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=MAX_WORKERS,
+        thread_name_prefix="PullProcessor"
+    ) as executor:
+
         try:
             while True:
-                print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Start to pull new records from the systemmetadata table.")
+                print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Start new polling cycle.")
                 cycle_start = time.time()
-                # Pull timestamps from Solr each cycle
+
+                # Get latest timestamps from Solr
                 amn_latest_time = get_latest_date_by_mn_solr5_async()
                 print("Latest Solr timestamps by node:")
                 for k, v in amn_latest_time.items():
                     print(f"   {k} -> {v}")
+
+                # Build JSON payload for all nodes
+                payload = json.dumps([
+                    {"amn": k, "last_time": v.isoformat()}
+                    for k, v in amn_latest_time.items()
+                ])
+
+                # Single Postgres query
                 futures = []
                 try:
                     conn = pg_pool.getconn()
                     with conn.cursor() as cur:
-                        # Convert map to JSON table for SQL
-                        payload = json.dumps([
-                            {"amn": k, "last_time": v.isoformat()}
-                            for k, v in amn_latest_time.items()
-                        ])
                         cur.execute(f"""
-                            SELECT sm.guid, sm.object_format, i.docid || '.' || i.rev AS doc_id,
-                            sm.date_modified
+                            SELECT
+                                sm.guid,
+                                sm.object_format,
+                                i.docid || '.' || i.rev AS doc_id,
+                                sm.date_modified,
+                                sm.authoritative_member_node
                             FROM systemmetadata sm
-                            LEFT JOIN identifier i ON sm.guid = i.guid
-                            WHERE sm.date_modified > %s
-                            ORDER BY sm.date_modified ASC
-                            LIMIT {MAX_ROWS}
+                            LEFT JOIN identifier i
+                                ON sm.guid = i.guid
+                            JOIN (
+                                SELECT *
+                                FROM json_to_recordset(%s::json)
+                                AS t(amn text, last_time timestamptz)
+                            ) AS latest
+                              ON sm.authoritative_member_node = latest.amn
+                             AND sm.date_modified > latest.last_time
+                            LIMIT {MAX_ROWS};
                         """, (payload,))
+
                         rows = cur.fetchall()
 
-                        for guid, object_format, doc_id, modified_time in rows:
-                            # Retry if format is non-DATA and doc_id is missing
+                        if not rows:
+                            print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] No new records. Sleeping.")
+                            time.sleep(POLL_INTERVAL)
+                            continue
+
+                        # Process rows
+                        for guid, object_format, doc_id, modified_time, amn in rows:
+
+                            # docId retry logic
                             if object_format in non_data_formats and not doc_id:
                                 for attempt in range(1, DOCID_MAX_RETRIES + 1):
                                     time.sleep(DOCID_WAIT_SEC)
@@ -393,32 +422,42 @@ def poll_and_submit(non_data_formats):
                                     else:
                                         print(f"Retry {attempt}/{DOCID_MAX_RETRIES}: doc_id still missing for guid {guid}")
 
-                            # Skip if still missing after retries
                             if object_format in non_data_formats and not doc_id:
                                 print(f"Skipping guid {guid}: doc_id not found after {DOCID_MAX_RETRIES} retries")
                                 continue
 
-                            futures.append(executor.submit(process_pid_wrapper, channel_pool,
-                            guid, object_format, doc_id))
+                            # Submit task to thread pool
+                            futures.append(
+                                executor.submit(
+                                    process_pid_wrapper,
+                                    channel_pool,
+                                    guid,
+                                    object_format,
+                                    doc_id
+                                )
+                            )
+                            print(f"Submit guid {guid} into RabbitMQ")
+
                 except Exception as poll_error:
-                    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] Polling failed: {poll_error}")
+                    print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] [ERROR] Polling failed: {poll_error}")
                 finally:
                     if conn:
                         pg_pool.putconn(conn)
 
+                # Wait for all workers
                 if futures:
                     wait(futures, return_when=ALL_COMPLETED)
-                    last_timestamp = max_timestamp_in_batch
-                    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Save the last_timestamp {last_timestamp} to file")
-                    save_last_timestamp(last_timestamp)
+                    print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Batch completed.")
 
+                # --- Sleep to maintain poll interval ---
                 elapsed = time.time() - cycle_start
                 sleep_time = max(0, POLL_INTERVAL - elapsed)
                 if sleep_time > 0:
                     time.sleep(sleep_time)
 
         except KeyboardInterrupt:
-            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Polling interrupted. Exiting.")
+            print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Polling interrupted. Exiting.")
+
         finally:
             channel_pool.close()
             if pg_pool:
