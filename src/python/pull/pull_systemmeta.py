@@ -321,23 +321,6 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
         print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] [{thread_name}] Unexpected error while processing PID {guid}: {e}")
     return None
 
-def load_last_timestamp():
-    if os.path.exists(LAST_TIMESTAMP_FILE):
-        try:
-            with open(LAST_TIMESTAMP_FILE, "r") as f:
-                content = f.read().strip()
-                return datetime.fromisoformat(content)
-        except Exception as e:
-            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [WARN] Could not read or parse timestamp file: {e}")
-    return datetime.now()  # fallback
-
-def save_last_timestamp(ts: datetime):
-    try:
-        with open(LAST_TIMESTAMP_FILE, "w") as f:
-            f.write(ts.strftime('%Y-%m-%d %H:%M:%S.%f'))
-    except Exception as e:
-        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] Failed to write last_timestamp file: {e}")
-
 def poll_and_submit(non_data_formats):
     global pg_pool
 
