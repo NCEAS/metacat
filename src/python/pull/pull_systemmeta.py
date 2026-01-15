@@ -6,6 +6,8 @@
 # You may run this script on the background by this command:
 # nohup python3 pull_systemmeta.py > pull_systemmeta.log 2>&1 &
 
+import asyncio
+import aiohttp
 import psycopg2
 import os
 import threading
@@ -56,7 +58,79 @@ EXCHANGE_NAME = "dataone-index"
 resourcemap_format_list = ["http://www.openarchives.org/ore/terms", "http://www.w3.org/TR/rdf-syntax-grammar"]
 pg_pool = None
 FORMATS_URL = urljoin(CN_URL + "/", "formats")
-QUERY_URL = "http://localhost:8983/solr/search_core/select?"
+SOLR_URL = "http://localhost:8983/solr/search_core/select"
+
+
+async def fetch_max_date(session, mn):
+    params = {
+        "q": f'authoritativeMN:"{mn}"',
+        "rows": 0,
+        "wt": "json",
+        "stats": "true",
+        "stats.field": "dateModified"
+    }
+    for attempt in range(3):
+        try:
+            async with session.get(SOLR_URL, params=params, timeout=60) as resp:
+                resp.raise_for_status()
+                data = await resp.json()
+                max_date = data.get("stats", {}).get("stats_fields", {}).get("dateModified", {}).get("max")
+                if max_date:
+                    clean = max_date.replace("T", " ").replace("Z", "").split("+")[0]
+                    return mn, clean
+                return mn, None
+        except Exception as e:
+            if attempt < 2:
+                await asyncio.sleep(2)
+            else:
+                print(f"Failed to fetch {mn}: {e}")
+                return mn, None
+
+async def get_latest_date_by_mn_solr5_async(batch_size=100):
+    result = {}
+    start = 0
+
+    async with aiohttp.ClientSession() as session:  # <- Session is open for all batches
+        while True:
+            params = {
+                "q": "id:*",
+                "rows": 0,
+                "wt": "json",
+                "facet": "true",
+                "facet.field": "authoritativeMN",
+                "facet.limit": batch_size,
+                "facet.offset": start
+            }
+
+            for attempt in range(3):
+                try:
+                    async with session.get(SOLR_URL, params=params, timeout=60) as resp:
+                        resp.raise_for_status()
+                        data = await resp.json()
+                        break
+                except Exception as e:
+                    if attempt < 2:
+                        await asyncio.sleep(2)
+                    else:
+                        raise
+
+            buckets = data.get("facet_counts", {}).get("facet_fields", {}).get("authoritativeMN", [])
+            if not buckets:
+                break
+
+            mns = [buckets[i] for i in range(0, len(buckets), 2)]
+            print(f"Fetched {len(mns)} MNs from offset {start}")
+
+            # fetch max(dateModified) for this batch in parallel
+            tasks = [fetch_max_date(session, mn) for mn in mns]
+            batch_results = await asyncio.gather(*tasks)
+            result.update({mn: date for mn, date in batch_results if date is not None})
+
+            if len(buckets) < batch_size * 2:
+                break
+            start += batch_size
+
+    return result
 
 """
     Fetch DataONE format XML and return a list of formatId values
