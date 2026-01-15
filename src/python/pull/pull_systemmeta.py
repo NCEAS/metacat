@@ -340,23 +340,31 @@ def save_last_timestamp(ts: datetime):
 
 def poll_and_submit(non_data_formats):
     global pg_pool
-    last_timestamp = load_last_timestamp()
-    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] The last_timestamp from the previous process is {last_timestamp}")
     channel_pool = AMQPStormChannelPool(
         RABBITMQ_URL, RABBITMQ_PORT_NUMBER, RABBITMQ_USERNAME, RABBITMQ_PASSWORD, MAX_WORKERS
     )
+    # Improve performance after changing the list to set
+    non_data_formats = set(non_data_formats)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS, thread_name_prefix='PullProcessor') as executor:
         try:
             while True:
                 print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Start to pull new records from the systemmetadata table.")
                 cycle_start = time.time()
+                # Pull timestamps from Solr each cycle
+                amn_latest_time = get_latest_date_by_mn_solr5_async()
+                print("Latest Solr timestamps by node:")
+                for k, v in amn_latest_time.items():
+                    print(f"   {k} -> {v}")
                 futures = []
-                max_timestamp_in_batch = last_timestamp
-
                 try:
                     conn = pg_pool.getconn()
                     with conn.cursor() as cur:
+                        # Convert map to JSON table for SQL
+                        payload = json.dumps([
+                            {"amn": k, "last_time": v.isoformat()}
+                            for k, v in amn_latest_time.items()
+                        ])
                         cur.execute(f"""
                             SELECT sm.guid, sm.object_format, i.docid || '.' || i.rev AS doc_id,
                             sm.date_modified
@@ -365,7 +373,7 @@ def poll_and_submit(non_data_formats):
                             WHERE sm.date_modified > %s
                             ORDER BY sm.date_modified ASC
                             LIMIT {MAX_ROWS}
-                        """, (last_timestamp,))
+                        """, (payload,))
                         rows = cur.fetchall()
 
                         for guid, object_format, doc_id, modified_time in rows:
@@ -392,10 +400,6 @@ def poll_and_submit(non_data_formats):
 
                             futures.append(executor.submit(process_pid_wrapper, channel_pool,
                             guid, object_format, doc_id))
-                            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] The modified_time from database is {modified_time}")
-                            max_timestamp_in_batch = max(max_timestamp_in_batch, modified_time)
-                            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] The max time in batch is {max_timestamp_in_batch}")
-
                 except Exception as poll_error:
                     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] Polling failed: {poll_error}")
                 finally:
