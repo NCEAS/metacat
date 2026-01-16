@@ -447,6 +447,7 @@ def poll_and_submit(non_data_formats):
                             ) AS latest
                               ON sm.authoritive_member_node = latest.amn
                              AND sm.date_modified > latest.last_time
+                            ORDER BY sm.date_modified ASC
                             LIMIT {MAX_ROWS};
                         """, (payload,))
 
