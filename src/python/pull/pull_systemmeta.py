@@ -30,12 +30,11 @@ RABBITMQ_USERNAME = "guest"
 RABBITMQ_PASSWORD = "guest"
 DB_USERNAME = "metacat"
 DB_PASSWORD = "your_db_password"
+CN_URL = "https://cn.dataone.org/cn/v2"
 # Number of worker threads to submit index tasks to RabbitMQ
 # The pool_size of the rabbitmq channel pool is using it as well.
 # The number must be less than those settings:
 # the max number of channels connection to rabbitmq (2047) and the number of the processor core number.
-
-CN_URL = "https://cn.dataone.org/cn/v2"
 MAX_WORKERS = 5
 RABBITMQ_URL = "localhost"
 RABBITMQ_PORT_NUMBER = 5672
@@ -58,9 +57,64 @@ ROUTING_KEY = "index"
 EXCHANGE_NAME = "dataone-index"
 resourcemap_format_list = ["http://www.openarchives.org/ore/terms", "http://www.w3.org/TR/rdf-syntax-grammar"]
 pg_pool = None
+DEFAULT_DATE = "2000-01-01 00:00:00.000"
 FORMATS_URL = urljoin(CN_URL + "/", "formats")
+NODE_URL = urljoin(CN_URL + "/", "node")
 SOLR_URL = "http://localhost:8983/solr/search_core/select"
 
+# --- memory cache for the node list---
+_last_node_cache = None
+_last_node_fetch = 0
+NODE_TTL = 5 * 60  # two minutes
+# -------------------
+
+def get_up_node_identifiers_memory_cached():
+    global _last_node_cache, _last_node_fetch
+    now = time.time()
+
+    # ---- use cache if fresh ----
+    if _last_node_cache is not None and (now - _last_node_fetch) < NODE_TTL:
+        print("Using cached node list")
+        return _last_node_cache
+
+    print("Refreshing node list from CN...")
+
+    r = requests.get(NODE_URL, timeout=60)
+    r.raise_for_status()
+
+    root = ET.fromstring(r.text)
+
+    up_nodes = []
+
+    # ----- KEY TRICK: ignore namespaces entirely -----
+    for node in root.findall(".//{*}node"):
+
+        state = node.get("state")
+
+        ident_el = node.find("{*}identifier")
+
+        if state == "up" and ident_el is not None:
+            up_nodes.append(ident_el.text.strip())
+
+    print(f"Found {len(up_nodes)} 'up' nodes")
+
+    _last_node_cache = up_nodes
+    _last_node_fetch = now
+
+    return up_nodes
+
+
+
+def get_full_latest_map():
+    mn_map = asyncio.run(get_latest_date_by_mn_solr5_async())
+    up_nodes = get_up_node_identifiers_memory_cached()
+
+    for node_id in up_nodes:
+        if node_id not in mn_map:
+            print(f"Adding missing node: {node_id}")
+            mn_map[node_id] = DEFAULT_DATE
+
+    return mn_map
 
 async def fetch_max_date(session, mn):
     params = {
@@ -340,7 +394,7 @@ def poll_and_submit(non_data_formats):
                 cycle_start = time.time()
 
                 # Get latest timestamps from Solr
-                amn_latest_time = asyncio.run(get_latest_date_by_mn_solr5_async())
+                amn_latest_time = get_full_latest_map()
                 print("Latest Solr timestamps by node:")
                 for k, v in amn_latest_time.items():
                     print(f"   {k} -> {v}")
