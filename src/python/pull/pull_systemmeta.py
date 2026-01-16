@@ -62,160 +62,6 @@ FORMATS_URL = urljoin(CN_URL + "/", "formats")
 NODE_URL = urljoin(CN_URL + "/", "node")
 SOLR_URL = "http://localhost:8983/solr/search_core/select"
 
-# --- memory cache for the node list---
-_last_node_cache = None
-_last_node_fetch = 0
-NODE_TTL = 5 * 60  # two minutes
-# -------------------
-
-def get_up_node_identifiers_memory_cached():
-    global _last_node_cache, _last_node_fetch
-    now = time.time()
-
-    # ---- use cache if fresh ----
-    if _last_node_cache is not None and (now - _last_node_fetch) < NODE_TTL:
-        print("Using cached node list")
-        return _last_node_cache
-
-    print("Refreshing node list from CN...")
-
-    r = requests.get(NODE_URL, timeout=60)
-    r.raise_for_status()
-
-    root = ET.fromstring(r.text)
-
-    up_nodes = []
-
-    # ----- KEY TRICK: ignore namespaces entirely -----
-    for node in root.findall(".//{*}node"):
-
-        state = node.get("state")
-
-        ident_el = node.find("{*}identifier")
-
-        if state == "up" and ident_el is not None:
-            up_nodes.append(ident_el.text.strip())
-
-    print(f"Found {len(up_nodes)} 'up' nodes")
-
-    _last_node_cache = up_nodes
-    _last_node_fetch = now
-
-    return up_nodes
-
-
-
-def get_full_latest_map():
-    mn_map = asyncio.run(get_latest_date_by_mn_solr5_async())
-    up_nodes = get_up_node_identifiers_memory_cached()
-
-    for node_id in up_nodes:
-        if node_id not in mn_map:
-            print(f"Adding missing node: {node_id}")
-            mn_map[node_id] = DEFAULT_DATE
-
-    return mn_map
-
-async def fetch_max_date(session, mn):
-    params = {
-        "q": f'authoritativeMN:"{mn}"',
-        "rows": 0,
-        "wt": "json",
-        "stats": "true",
-        "stats.field": "dateModified"
-    }
-    for attempt in range(3):
-        try:
-            async with session.get(SOLR_URL, params=params, timeout=60) as resp:
-                resp.raise_for_status()
-                data = await resp.json()
-                max_date = data.get("stats", {}).get("stats_fields", {}).get("dateModified", {}).get("max")
-                if max_date:
-                    clean = max_date.replace("T", " ").replace("Z", "").split("+")[0]
-                    return mn, clean
-                return mn, None
-        except Exception as e:
-            if attempt < 2:
-                await asyncio.sleep(2)
-            else:
-                print(f"Failed to fetch {mn}: {e}")
-                return mn, None
-
-async def get_latest_date_by_mn_solr5_async(batch_size=100):
-    result = {}
-    start = 0
-
-    async with aiohttp.ClientSession() as session:  # <- Session is open for all batches
-        while True:
-            params = {
-                "q": "id:*",
-                "rows": 0,
-                "wt": "json",
-                "facet": "true",
-                "facet.field": "authoritativeMN",
-                "facet.limit": batch_size,
-                "facet.offset": start
-            }
-
-            for attempt in range(3):
-                try:
-                    async with session.get(SOLR_URL, params=params, timeout=60) as resp:
-                        resp.raise_for_status()
-                        data = await resp.json()
-                        break
-                except Exception as e:
-                    if attempt < 2:
-                        await asyncio.sleep(2)
-                    else:
-                        raise
-
-            buckets = data.get("facet_counts", {}).get("facet_fields", {}).get("authoritativeMN", [])
-            if not buckets:
-                break
-
-            mns = [buckets[i] for i in range(0, len(buckets), 2)]
-            print(f"Fetched {len(mns)} MNs from offset {start}")
-
-            # fetch max(dateModified) for this batch in parallel
-            tasks = [fetch_max_date(session, mn) for mn in mns]
-            batch_results = await asyncio.gather(*tasks)
-            result.update({mn: date for mn, date in batch_results if date is not None})
-
-            if len(buckets) < batch_size * 2:
-                break
-            start += batch_size
-
-    return result
-
-"""
-    Fetch DataONE format XML and return a list of formatId values
-    whose type is not 'DATA'.
-"""
-def load_non_data_format_ids():
-    non_data_format_ids = []
-
-    resp = requests.get(FORMATS_URL, timeout=30)
-    resp.raise_for_status()
-
-    root = ET.fromstring(resp.text)
-
-    # Iterate all objectFormat elements regardless of namespace
-    for fmt in root.iter():
-        if fmt.tag.endswith("objectFormat"):
-            # Find formatId and formatType ignoring namespace
-            fmt_id = None
-            fmt_type = None
-            for child in fmt:
-                if child.tag.endswith("formatId"):
-                    fmt_id = child.text.strip() if child.text else ""
-                elif child.tag.endswith("formatType"):
-                    fmt_type = child.text.strip() if child.text else ""
-
-            if fmt_id and fmt_type and fmt_type.upper() != "DATA":
-                non_data_format_ids.append(fmt_id)
-
-    print(non_data_format_ids)
-    return non_data_format_ids
 
 # A class represents a RabbitMQ channel pool
 class AMQPStormChannelPool:
@@ -305,6 +151,176 @@ class DocumentNotFoundError(Exception):
     """Raised when the document paths are not found after max attempts."""
     pass
 
+# --- memory cache for the node list---
+_last_node_cache = None
+_last_node_fetch = 0
+NODE_TTL = 5 * 60  # two minutes
+# -------------------
+
+"""
+    Gets the member node list from CN or the cached result
+"""
+def get_up_node_identifiers_memory_cached():
+    global _last_node_cache, _last_node_fetch
+    now = time.time()
+
+    # ---- use cache if fresh ----
+    if _last_node_cache is not None and (now - _last_node_fetch) < NODE_TTL:
+        print("Using cached node list")
+        return _last_node_cache
+
+    print("Refreshing node list from CN...")
+
+    r = requests.get(NODE_URL, timeout=60)
+    r.raise_for_status()
+
+    root = ET.fromstring(r.text)
+
+    up_nodes = []
+
+    # ----- KEY TRICK: ignore namespaces entirely -----
+    for node in root.findall(".//{*}node"):
+
+        state = node.get("state")
+
+        ident_el = node.find("{*}identifier")
+
+        if state == "up" and ident_el is not None:
+            up_nodes.append(ident_el.text.strip())
+
+    print(f"Found {len(up_nodes)} 'up' nodes")
+
+    _last_node_cache = up_nodes
+    _last_node_fetch = now
+
+    return up_nodes
+
+"""
+    Gets the full map of the node_id and the indexed latest date_modified. If the solr server
+    already has some records, use the latest one. If the running member nodes from CN don't
+    have any solr docs, use a default value as the latest date_modified.
+"""
+def get_full_latest_map():
+    mn_map = asyncio.run(get_latest_date_by_mn_solr5_async())
+    up_nodes = get_up_node_identifiers_memory_cached()
+
+    for node_id in up_nodes:
+        if node_id not in mn_map:
+            print(f"Adding missing node: {node_id}")
+            mn_map[node_id] = DEFAULT_DATE
+
+    return mn_map
+
+"""
+    Use an asynchronized way to get the latest modification date for a given mn
+"""
+async def fetch_latest_date(session, mn):
+    params = {
+        "q": f'authoritativeMN:"{mn}"',
+        "rows": 0,
+        "wt": "json",
+        "stats": "true",
+        "stats.field": "dateModified"
+    }
+    for attempt in range(3):
+        try:
+            async with session.get(SOLR_URL, params=params, timeout=60) as resp:
+                resp.raise_for_status()
+                data = await resp.json()
+                max_date = data.get("stats", {}).get("stats_fields", {}).get("dateModified", {}).get("max")
+                if max_date:
+                    clean = max_date.replace("T", " ").replace("Z", "").split("+")[0]
+                    return mn, clean
+                return mn, None
+        except Exception as e:
+            if attempt < 2:
+                await asyncio.sleep(2)
+            else:
+                print(f"Failed to fetch {mn}: {e}")
+                return mn, None
+
+"""
+    Use an asynchronized way to get the latest modification date for all mns
+"""
+async def get_latest_date_by_mn_solr5_async(batch_size=100):
+    result = {}
+    start = 0
+
+    async with aiohttp.ClientSession() as session:  # <- Session is open for all batches
+        while True:
+            params = {
+                "q": "id:*",
+                "rows": 0,
+                "wt": "json",
+                "facet": "true",
+                "facet.field": "authoritativeMN",
+                "facet.limit": batch_size,
+                "facet.offset": start
+            }
+
+            for attempt in range(3):
+                try:
+                    async with session.get(SOLR_URL, params=params, timeout=60) as resp:
+                        resp.raise_for_status()
+                        data = await resp.json()
+                        break
+                except Exception as e:
+                    if attempt < 2:
+                        await asyncio.sleep(2)
+                    else:
+                        raise
+
+            buckets = data.get("facet_counts", {}).get("facet_fields", {}).get("authoritativeMN", [])
+            if not buckets:
+                break
+
+            mns = [buckets[i] for i in range(0, len(buckets), 2)]
+            print(f"Fetched {len(mns)} MNs from offset {start}")
+
+            # fetch max(dateModified) for this batch in parallel
+            tasks = [fetch_latest_date(session, mn) for mn in mns]
+            batch_results = await asyncio.gather(*tasks)
+            result.update({mn: date for mn, date in batch_results if date is not None})
+
+            if len(buckets) < batch_size * 2:
+                break
+            start += batch_size
+
+    return result
+
+"""
+    Fetch DataONE format XML and return a list of formatId values
+    whose type is not 'DATA'.
+"""
+def load_non_data_format_ids():
+    non_data_format_ids = []
+
+    resp = requests.get(FORMATS_URL, timeout=30)
+    resp.raise_for_status()
+
+    root = ET.fromstring(resp.text)
+
+    # Iterate all objectFormat elements regardless of namespace
+    for fmt in root.iter():
+        if fmt.tag.endswith("objectFormat"):
+            # Find formatId and formatType ignoring namespace
+            fmt_id = None
+            fmt_type = None
+            for child in fmt:
+                if child.tag.endswith("formatId"):
+                    fmt_id = child.text.strip() if child.text else ""
+                elif child.tag.endswith("formatType"):
+                    fmt_type = child.text.strip() if child.text else ""
+
+            if fmt_id and fmt_type and fmt_type.upper() != "DATA":
+                non_data_format_ids.append(fmt_id)
+
+    print(non_data_format_ids)
+    return non_data_format_ids
+
+"""
+    Use the wait-try mechanism to make sure that the given docid exists in the file system
+"""
 def wait_for_docid(docid: str):
     """
     Wait until a file for the given docid exists under either
@@ -372,6 +388,10 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
         print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] [{thread_name}] Unexpected error while processing PID {guid}: {e}")
     return None
 
+"""
+   Periodically to pull new modified records from the systemmetadata table and submit the index
+   tasks for them
+"""
 def poll_and_submit(non_data_formats):
     global pg_pool
 
