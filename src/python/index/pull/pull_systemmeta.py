@@ -31,13 +31,14 @@ RABBITMQ_PASSWORD = "guest"
 DB_USERNAME = "metacat"
 DB_PASSWORD = "your_db_password"
 CN_URL = "https://cn.dataone.org/cn/v2"
+RABBITMQ_URL = "localhost"
+RABBITMQ_PORT_NUMBER = 5672
+SOLR_URL = "http://localhost:8983/solr/search_core/select"
 # Number of worker threads to submit index tasks to RabbitMQ
 # The pool_size of the rabbitmq channel pool is using it as well.
 # The number must be less than those settings:
 # the max number of channels connection to rabbitmq (2047) and the number of the processor core number.
 MAX_WORKERS = 5
-RABBITMQ_URL = "localhost"
-RABBITMQ_PORT_NUMBER = 5672
 DB_DATABASE_NAME = "metacat"
 DB_HOST_NAME = "localhost"
 DB_PORT_NUMBER = 5432
@@ -60,7 +61,6 @@ pg_pool = None
 DEFAULT_DATE = "2000-01-01 00:00:00.000"
 FORMATS_URL = urljoin(CN_URL + "/", "formats")
 NODE_URL = urljoin(CN_URL + "/", "node")
-SOLR_URL = "http://localhost:8983/solr/search_core/select"
 
 
 # A class represents a RabbitMQ channel pool
