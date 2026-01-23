@@ -33,7 +33,7 @@ DB_PASSWORD = "your_db_password"
 CN_URL = "https://cn.dataone.org/cn/v2"
 RABBITMQ_URL = "localhost"
 RABBITMQ_PORT_NUMBER = 5672
-SOLR_URL = "http://localhost:8983/solr/search_core/select"
+SOLR_URL = "http://localhost:8983/solr/metacat-index/select"
 # Number of worker threads to submit index tasks to RabbitMQ
 # The pool_size of the rabbitmq channel pool is using it as well.
 # The number must be less than those settings:
@@ -182,10 +182,17 @@ def get_up_node_identifiers_memory_cached():
     for node in root.findall(".//{*}node"):
 
         state = node.get("state")
-
+        node_type = node.get("type")
         ident_el = node.find("{*}identifier")
 
-        if state == "up" and ident_el is not None:
+        if (
+            state
+            and state.lower() == "up"
+            and node_type
+            and node_type.lower() == "mn"
+            and ident_el is not None
+            and ident_el.text
+        ):
             up_nodes.append(ident_el.text.strip())
 
     print(f"Found {len(up_nodes)} 'up' nodes")
