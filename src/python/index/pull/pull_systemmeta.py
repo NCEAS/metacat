@@ -18,8 +18,7 @@ import time
 import requests
 import xml.etree.ElementTree as ET
 from psycopg2 import pool
-from amqpstorm import Connection
-from amqpstorm.exception import AMQPError
+from amqpstorm import Connection, AMQPError, AMQPConnectionError, AMQPChannelError
 from datetime import datetime
 from concurrent.futures import wait, ALL_COMPLETED
 from urllib.parse import urljoin
@@ -61,6 +60,7 @@ pg_pool = None
 DEFAULT_DATE = "2000-01-01 00:00:00.000"
 FORMATS_URL = urljoin(CN_URL + "/", "formats")
 NODE_URL = urljoin(CN_URL + "/", "node")
+WORKER_TIMEOUT_SEC = 60
 
 
 # A class represents a RabbitMQ channel pool
@@ -74,44 +74,73 @@ class AMQPStormChannelPool:
         self._lock = threading.Lock()
         self._connection = None
         self._channels = queue.Queue(maxsize=pool_size)
+        self._healthy = False
         self._initialize_pool()
 
     def _initialize_pool(self):
+        # NEVER hold lock while connecting
+        self._close_all()
+        try:
+            conn = Connection(
+                self.host,
+                self.username,
+                self.password,
+                port=self.port,
+                heartbeat=30,
+                timeout=10
+            )
+        except Exception as e:
+            print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] [CHANNEL POOL] Failed to connect to RabbitMQ: {e}")
+            self._healthy = False
+            raise
         with self._lock:
-            self._close_all()
-            self._connection = Connection(self.host, self.username, self.password, port=self.port)
+            self._connection = conn
+            self._healthy = True
             for _ in range(self.pool_size):
-                self._put_new_channel_into_queue()
+                self._channels.put(self._create_new_channel())
+
+    def _create_new_channel(self):
+        if not self._connection or not self._connection.is_open:
+            raise Exception("Connection is not open")
+        channel = self._connection.channel()
+        self.ensure_topology(channel)
+        return channel
 
     def _is_healthy(self):
-        return self._connection and self._connection.is_open
+        return self._healthy and self._connection and self._connection.is_open
+
+    def mark_unhealthy(self):
+        with self._lock:
+            self._healthy = False
+
+    def ensure_topology(self, channel):
+        channel.exchange.declare(EXCHANGE_NAME, durable=True)
+        channel.queue.declare(QUEUE_NAME, durable=True, arguments={"x-max-priority": 10})
+        channel.queue.bind(QUEUE_NAME, EXCHANGE_NAME, ROUTING_KEY)
+
 
     def acquire_channel(self):
-        with self._lock:
-            if not self._is_healthy():
-                print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [CHANNEL POOL] Connection lost. Reinitializing.")
-                self._initialize_pool()
+        if not self._is_healthy():
+            print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] [CHANNEL POOL] Connection unhealthy. Reinitializing.")
+            self._initialize_pool()
         try:
-            for _ in range(self.pool_size):
-                channel = self._channels.get(timeout=5)
-                if channel and channel.is_open:
-                    return channel
-                else:
-                    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [CHANNEL POOL] Found "
-                     "closed channel. Creating a new one.")
-                    with self._lock:
-                        self._put_new_channel_into_queue()
-            raise Exception("No healthy AMQPStorm channels available in the pool.")
+            channel = self._channels.get_nowait()
         except queue.Empty:
-            raise Exception("No available AMQPStorm channels in the pool.")
-
+            return self._create_new_channel()
+        if not channel or not channel.is_open:
+            return self._create_new_channel()
+        return channel
 
     def release_channel(self, channel):
-        if channel and channel.is_open:
+        if not channel or not channel.is_open:
+            return
+        try:
+            self._channels.put_nowait(channel)
+        except queue.Full:
             try:
-                self._channels.put(channel, timeout=5)
-            except queue.Full:
-                pass  # Drop if full
+                channel.close()
+            except Exception:
+                pass
 
     def _close_all(self):
         while not self._channels.empty():
@@ -131,12 +160,6 @@ class AMQPStormChannelPool:
         with self._lock:
             self._close_all()
 
-    # Generate a new RabbitMQ channel and put it into the queue
-    def _put_new_channel_into_queue(self):
-        new_channel = self._connection.channel()
-        new_channel.queue.declare(QUEUE_NAME, durable=True, arguments={"x-max-priority": 10})
-        new_channel.queue.bind(QUEUE_NAME, EXCHANGE_NAME, ROUTING_KEY)
-        self._channels.put(new_channel)
 
 # Database connection parameters
 DB_CONFIG = {
@@ -383,9 +406,15 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
                     exchange=EXCHANGE_NAME,
                     properties={'headers': headers, 'priority': priority}
                 )
+            except (AMQPConnectionError, AMQPChannelError, OSError) as e:
+                    print(f"[ERROR] RabbitMQ publish failed for {guid}: {e}")
+                    raise   # VERY IMPORTANT
             finally:
                 if channel:
-                    channel_pool.release_channel(channel)
+                    try:
+                        channel_pool.release_channel(channel)
+                    except Exception:
+                        pass
         else:
             print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [{thread_name}] No GUID "
             "found in the query")
@@ -506,7 +535,11 @@ def poll_and_submit(non_data_formats):
 
                 # Wait for all workers
                 if futures:
-                    wait(futures, return_when=ALL_COMPLETED)
+                    done, not_done = wait(futures, timeout=WORKER_TIMEOUT_SEC)
+                    if not_done:
+                        print(f"[WARN] {len(not_done)} worker(s) hung — cancelling")
+                        for f in not_done:
+                            f.cancel()
                     print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Batch completed.")
 
             except KeyboardInterrupt:
