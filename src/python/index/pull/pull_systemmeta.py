@@ -28,7 +28,7 @@ from urllib.parse import urljoin
 RABBITMQ_USERNAME = "guest"
 RABBITMQ_PASSWORD = "guest"
 DB_USERNAME = "metacat"
-DB_PASSWORD = "your_db_password"
+DB_PASSWORD = "metacat"
 CN_URL = "https://cn.dataone.org/cn/v2"
 RABBITMQ_URL = "localhost"
 RABBITMQ_PORT_NUMBER = 5672
@@ -60,7 +60,6 @@ pg_pool = None
 DEFAULT_DATE = "2000-01-01 00:00:00.000"
 FORMATS_URL = urljoin(CN_URL + "/", "formats")
 NODE_URL = urljoin(CN_URL + "/", "node")
-WORKER_TIMEOUT_SEC = 60
 
 
 # A class represents a RabbitMQ channel pool
@@ -430,7 +429,8 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
 """
 def poll_and_submit(non_data_formats):
     global pg_pool
-
+    worker_timeout_sec = MAX_ROWS/MAX_WORKERS * 0.25
+    print(f"The timeout for workers to completed jobs for a batch is {worker_timeout_sec}")
     channel_pool = AMQPStormChannelPool(
         RABBITMQ_URL, RABBITMQ_PORT_NUMBER,
         RABBITMQ_USERNAME, RABBITMQ_PASSWORD,
@@ -535,11 +535,9 @@ def poll_and_submit(non_data_formats):
 
                 # Wait for all workers
                 if futures:
-                    done, not_done = wait(futures, timeout=WORKER_TIMEOUT_SEC)
+                    done, not_done = wait(futures, timeout=worker_timeout_sec)
                     if not_done:
                         print(f"[WARN] {len(not_done)} worker(s) hung — cancelling")
-                        for f in not_done:
-                            f.cancel()
                     print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Batch completed.")
 
             except KeyboardInterrupt:
