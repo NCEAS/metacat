@@ -415,10 +415,10 @@ def poll_and_submit(non_data_formats):
         thread_name_prefix="PullProcessor"
     ) as executor:
 
-        try:
-            while True:
+        while True:
+            cycle_start = time.time()
+            try:
                 print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Start new polling cycle.")
-                cycle_start = time.time()
 
                 # Get latest timestamps from Solr
                 amn_latest_time = get_full_latest_map()
@@ -434,6 +434,7 @@ def poll_and_submit(non_data_formats):
 
                 # Single Postgres query
                 futures = []
+                conn = None
                 try:
                     conn = pg_pool.getconn()
                     with conn.cursor() as cur:
@@ -499,9 +500,6 @@ def poll_and_submit(non_data_formats):
                                 )
                             )
                             print(f"Submit guid {guid} into RabbitMQ")
-
-                except Exception as poll_error:
-                    print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] [ERROR] Polling failed: {poll_error}")
                 finally:
                     if conn:
                         pg_pool.putconn(conn)
@@ -511,19 +509,22 @@ def poll_and_submit(non_data_formats):
                     wait(futures, return_when=ALL_COMPLETED)
                     print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Batch completed.")
 
-                # --- Sleep to maintain poll interval ---
-                elapsed = time.time() - cycle_start
-                sleep_time = max(0, POLL_INTERVAL - elapsed)
-                if sleep_time > 0:
-                    time.sleep(sleep_time)
+            except KeyboardInterrupt:
+                print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Polling interrupted. Exiting.")
+                break
 
-        except KeyboardInterrupt:
-            print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Polling interrupted. Exiting.")
+            except Exception as poll_error:
+                print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] [ERROR] Polling failed: {poll_error}")
 
-        finally:
-            channel_pool.close()
-            if pg_pool:
-                pg_pool.closeall()
+            # --- Sleep regardless success or failure to maintain poll interval ---
+            elapsed = time.time() - cycle_start
+            sleep_time = max(0, POLL_INTERVAL - elapsed)
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+
+        channel_pool.close()
+        if pg_pool:
+            pg_pool.closeall()
 
 if __name__ == "__main__":
     non_data_formats = load_non_data_format_ids()
