@@ -392,7 +392,8 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
         if object_format and object_format in resourcemap_format_list:
             priority = 3
         if guid:
-            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [{thread_name}] Processing PID: {guid} with type: {index_type}, docid: {doc_id}, priority: {priority}")
+            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [{thread_name}] "
+            "Processing PID: {guid} with type: {index_type}, docid: {doc_id}, priority: {priority}")
             headers = {'index_type': index_type, 'id': guid, 'doc_id': doc_id}
             message = ''
             channel = None
@@ -405,6 +406,7 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
                     exchange=EXCHANGE_NAME,
                     properties={'headers': headers, 'priority': priority}
                 )
+                print(f"Published guid {guid} into RabbitMQ")
             except (AMQPConnectionError, AMQPChannelError, OSError) as e:
                     print(f"[ERROR] RabbitMQ publish failed for {guid}: {e}")
                     raise   # VERY IMPORTANT
@@ -418,9 +420,11 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
             print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [{thread_name}] No GUID "
             "found in the query")
     except AMQPError as amqp_err:
-        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] [{thread_name}] AMQPStorm error while processing PID {guid}: {amqp_err}")
+        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] [{thread_name}] "
+        "AMQPStorm error while processing PID {guid}: {amqp_err}")
     except Exception as e:
-        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] [{thread_name}] Unexpected error while processing PID {guid}: {e}")
+        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] [{thread_name}] "
+        "Unexpected error while processing PID {guid}: {e}")
     return None
 
 """
@@ -445,7 +449,7 @@ def poll_and_submit(non_data_formats):
     ) as executor:
 
         while True:
-            cycle_start = time.time()
+            cycle_start = time.perf_counter()
             try:
                 print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Start new polling cycle.")
 
@@ -497,7 +501,7 @@ def poll_and_submit(non_data_formats):
 
                         # Process rows
                         for guid, object_format, doc_id, modified_time, amn in rows:
-
+                            print(f"Start to process {guid} which was read  from the dbname tables.")
                             # docId retry logic
                             if object_format in non_data_formats and not doc_id:
                                 for attempt in range(1, DOCID_MAX_RETRIES + 1):
@@ -512,10 +516,12 @@ def poll_and_submit(non_data_formats):
                                         doc_id = res[0]
                                         break
                                     else:
-                                        print(f"Retry {attempt}/{DOCID_MAX_RETRIES}: doc_id still missing for guid {guid}")
+                                        print(f"Retry {attempt}/{DOCID_MAX_RETRIES}: doc_id "
+                                        "still missing for guid {guid}")
 
                             if object_format in non_data_formats and not doc_id:
-                                print(f"Skipping guid {guid}: doc_id not found after {DOCID_MAX_RETRIES} retries")
+                                print(f"Skipping guid {guid}: doc_id not found "
+                                "after {DOCID_MAX_RETRIES} retries")
                                 continue
 
                             # Submit task to thread pool
@@ -528,7 +534,6 @@ def poll_and_submit(non_data_formats):
                                     doc_id
                                 )
                             )
-                            print(f"Submit guid {guid} into RabbitMQ")
                 finally:
                     if conn:
                         pg_pool.putconn(conn)
@@ -548,7 +553,7 @@ def poll_and_submit(non_data_formats):
                 print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] [ERROR] Polling failed: {poll_error}")
 
             # --- Sleep regardless success or failure to maintain poll interval ---
-            elapsed = time.time() - cycle_start
+            elapsed = time.perf_counter() - cycle_start
             sleep_time = max(0, POLL_INTERVAL - elapsed)
             if sleep_time > 0:
                 time.sleep(sleep_time)
