@@ -33,6 +33,8 @@ CN_URL = "https://cn.dataone.org/cn/v2"
 RABBITMQ_URL = "localhost"
 RABBITMQ_PORT_NUMBER = 5672
 SOLR_URL = "http://localhost:8983/solr/metacat-index/select"
+POLL_INTERVAL = 1000  # second
+MAX_ROWS = 4000
 # Number of worker threads to submit index tasks to RabbitMQ
 # The pool_size of the rabbitmq channel pool is using it as well.
 # The number must be less than those settings:
@@ -41,8 +43,6 @@ MAX_WORKERS = 5
 DB_DATABASE_NAME = "metacat"
 DB_HOST_NAME = "localhost"
 DB_PORT_NUMBER = 5432
-POLL_INTERVAL = 20  # second
-MAX_ROWS = 4000
 LAST_TIMESTAMP_FILE = "last_timestamp"
 DB_CONNECTION_POOL_SIZE = 3
 DOCUMENTS_DIR = "/var/metacat/documents"
