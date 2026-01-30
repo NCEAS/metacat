@@ -1,5 +1,6 @@
-# This script pulls new records from the systemmetadata table periodically and submit the
-# information as the index tasks to the RabbitMQ service.
+# This script populates a empty solr server from records of a CN. It pulls records from the
+# systemmetadata table periodically and submit the information as the index tasks to the RabbitMQ
+# service.
 # Needed libraries:
 # pip3 install psycopg2-binary
 # pip3 install amqpstorm
@@ -24,6 +25,8 @@ from concurrent.futures import wait, ALL_COMPLETED
 from urllib.parse import urljoin
 
 # --- Configuration ---
+# The script will index all objects which have earlier modified_time than the cut_off_time
+CUT_OFF_TIME = "2026-01-30 00:00:00.000"
 # Replace with your RabbitMQ and database credentials
 RABBITMQ_USERNAME = "guest"
 RABBITMQ_PASSWORD = "guest"
@@ -299,6 +302,7 @@ def save_last_timestamp(ts: datetime):
 def poll_and_submit(non_data_formats):
     global pg_pool
     worker_timeout_sec = MAX_ROWS/MAX_WORKERS * 0.1
+    cut_off_time_datetime = datetime.fromisoformat(CUT_OFF_TIME)
     last_timestamp = load_last_timestamp()
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] The last_timestamp from the previous process is {last_timestamp}")
     channel_pool = AMQPStormChannelPool(
@@ -327,6 +331,10 @@ def poll_and_submit(non_data_formats):
                         """, (last_timestamp,))
                         rows = cur.fetchall()
 
+                        if not rows:
+                            print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] No more records. Existing...")
+                            return
+
                         for guid, object_format, doc_id, modified_time in rows:
                             # Retry if format is non-DATA and doc_id is missing
                             if object_format in non_data_formats and not doc_id:
@@ -344,6 +352,9 @@ def poll_and_submit(non_data_formats):
                                     else:
                                         print(f"Retry {attempt}/{DOCID_MAX_RETRIES}: doc_id still missing for guid {guid}")
 
+                            if (modified_time > cut_off_time_datetime):
+                                print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] All objects before the cut cut off time {CUT_OFF_TIME} have been indexed. Existing...")
+                                return
                             # Skip if still missing after retries
                             if object_format in non_data_formats and not doc_id:
                                 print(f"Skipping guid {guid}: doc_id not found after {DOCID_MAX_RETRIES} retries")
