@@ -108,6 +108,10 @@ spec:
               {{- end }}
               readOnly: false
             - name: {{ .Release.Name }}-config-volume
+              mountPath: /usr/local/tomcat/conf/server.xml
+              subPath: tomcat.k8s.server.xml
+              readOnly: true
+            - name: {{ .Release.Name }}-config-volume
               mountPath: /usr/local/etc/metacat-configMap
               readOnly: true
             - name: {{ .Release.Name }}-d1-cert-volume

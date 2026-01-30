@@ -110,11 +110,17 @@
              Documentation at:
              https://tomcat.apache.org/tomcat-9.0-doc/config/valve.html#Access_Log_Valve
              also see: https://stackoverflow.com/a/55275335 on use of %{x-forwarded-for}i for
-             real client IP -->
+             real client IP
+        -->
         <Valve className="org.apache.catalina.valves.AccessLogValve"
-               pattern="%{x-forwarded-for}i %l %u %t &quot;%r&quot; %s %b" rotatable="false"
-               directory="/dev" fileDateFormat="" prefix="stdout" suffix="" />
-
+            directory="/dev"
+            fileDateFormat=""
+            prefix="stdout"
+            rotatable="false"
+            suffix=""
+            requestAttributesEnabled="true"
+            pattern='{"log_type":"access","time":"%t","remote_ip":"%a","method":%m,"request":%U,"status":%s,"bytes":%b,"duration_ms":%D,"ua":"%{User-Agent}i"}'
+        />
         <!-- Remote IP Valve to process X-Forwarded-For and X-Forwarded-Proto headers
              see: https://tomcat.apache.org/tomcat-9.0-doc/config/valve.html#Remote_Ip_Valve
              and: https://stackoverflow.com/a/55275335 -->
