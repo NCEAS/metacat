@@ -316,13 +316,29 @@ async def get_latest_date_by_mn_solr5_async(batch_size=100):
 
     return result
 
-def load_mn_latest_map():
+def load_mn_latest_map_from_file():
+    nodes = get_node_identifiers_memory_cached()
+    data = {}
+    changed = False
+    loaded_from_file = False
+
     if os.path.exists(MN_STATE_FILE):
-        with open(MN_STATE_FILE, "r") as f:
-            data = json.load(f)
+        try:
+            with open(MN_STATE_FILE, "r") as f:
+                data = json.load(f)
+            loaded_from_file = True
             print(f"Loaded MN state from {MN_STATE_FILE}")
-            return data
-    return None
+            for node_id in nodes:
+                if node_id not in data:
+                    data[node_id] = DEFAULT_DATE
+                    changed = True
+        except Exception as e:
+            print(f"[WARN] Failed to load MN state file, starting fresh: {e}")
+
+    if changed and loaded_from_file:
+        save_mn_latest_map(data)
+
+    return data, loaded_from_file
 
 def save_mn_latest_map(mn_map):
     tmp = MN_STATE_FILE + ".tmp"
@@ -467,8 +483,8 @@ def poll_and_submit(non_data_formats):
                 print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Start new polling cycle.")
 
                 # Get latest timestamps the file or Solr
-                mn_latest_map = load_mn_latest_map()
-                if mn_latest_map is None:
+                mn_latest_map, loaded = load_mn_latest_map_from_file()
+                if not loaded:
                     print("No MN state file found — bootstrapping from Solr")
                     mn_latest_map = get_full_latest_map()
                     save_mn_latest_map(mn_latest_map)
