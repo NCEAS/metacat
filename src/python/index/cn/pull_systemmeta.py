@@ -22,6 +22,7 @@ from amqpstorm import Connection, AMQPError, AMQPConnectionError, AMQPChannelErr
 from datetime import datetime
 from concurrent.futures import wait, ALL_COMPLETED
 from urllib.parse import urljoin
+import fcntl
 
 # --- Configuration ---
 # Replace with your RabbitMQ and database credentials
@@ -33,7 +34,7 @@ CN_URL = "https://cn.dataone.org/cn/v2"
 RABBITMQ_URL = "localhost"
 RABBITMQ_PORT_NUMBER = 5672
 SOLR_URL = "http://localhost:8983/solr/metacat-index/select"
-POLL_INTERVAL = 1000  # second
+POLL_INTERVAL = 10  # second
 MAX_ROWS = 4000
 # Number of worker threads to submit index tasks to RabbitMQ
 # The pool_size of the rabbitmq channel pool is using it as well.
@@ -60,6 +61,7 @@ pg_pool = None
 DEFAULT_DATE = "2000-01-01 00:00:00.000"
 FORMATS_URL = urljoin(CN_URL + "/", "formats")
 NODE_URL = urljoin(CN_URL + "/", "node")
+MN_STATE_FILE = "mn_latest_modified_map.json"
 
 
 # A class represents a RabbitMQ channel pool
@@ -314,6 +316,23 @@ async def get_latest_date_by_mn_solr5_async(batch_size=100):
 
     return result
 
+def load_mn_latest_map():
+    if os.path.exists(MN_STATE_FILE):
+        with open(MN_STATE_FILE, "r") as f:
+            data = json.load(f)
+            print(f"Loaded MN state from {MN_STATE_FILE}")
+            return data
+    return None
+
+def save_mn_latest_map(mn_map):
+    tmp = MN_STATE_FILE + ".tmp"
+    with open(tmp, "w") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        json.dump(mn_map, f, indent=2, sort_keys=True)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, MN_STATE_FILE)
+
 """
     Fetch DataONE format XML and return a list of formatId values
     whose type is not 'DATA'.
@@ -405,6 +424,7 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
                 print(f"Published guid {guid} into RabbitMQ")
             except (AMQPConnectionError, AMQPChannelError, OSError) as e:
                     print(f"[ERROR] RabbitMQ publish failed for {guid}: {e}")
+                    channel_pool.mark_unhealthy()
                     raise   # VERY IMPORTANT
             finally:
                 if channel:
@@ -446,16 +466,23 @@ def poll_and_submit(non_data_formats):
             try:
                 print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Start new polling cycle.")
 
-                # Get latest timestamps from Solr
-                amn_latest_time = get_full_latest_map()
-                print("Latest Solr timestamps by node:")
-                for k, v in amn_latest_time.items():
+                # Get latest timestamps the file or Solr
+                mn_latest_map = load_mn_latest_map()
+                if mn_latest_map is None:
+                    print("No MN state file found — bootstrapping from Solr")
+                    mn_latest_map = get_full_latest_map()
+                    save_mn_latest_map(mn_latest_map)
+                else:
+                    print("Using persisted MN state")
+
+                print("Latest timestamps by node:")
+                for k, v in mn_latest_map.items():
                     print(f"   {k} -> {v}")
 
                 # Build JSON payload for all nodes
                 payload = json.dumps([
                     {"amn": k, "last_time": v}  # use string directly
-                    for k, v in amn_latest_time.items()
+                    for k, v in mn_latest_map.items()
                 ])
 
                 # Single Postgres query
@@ -493,6 +520,7 @@ def poll_and_submit(non_data_formats):
                             continue
 
                         # Process rows
+                        batch_max_time = {}
                         for guid, object_format, doc_id, modified_time, amn in rows:
                             print(f"Start to process {guid} which was read  from the dbname tables.")
                             # docId retry logic
@@ -525,6 +553,11 @@ def poll_and_submit(non_data_formats):
                                     doc_id
                                 )
                             )
+                            batch_max_time[amn] = max(
+                                batch_max_time.get(amn, modified_time),
+                                modified_time
+                            )
+
                 finally:
                     if conn:
                         pg_pool.putconn(conn)
@@ -533,7 +566,11 @@ def poll_and_submit(non_data_formats):
                 if futures:
                     done, not_done = wait(futures, timeout=worker_timeout_sec)
                     if not_done:
-                        print(f"[WARN] {len(not_done)} worker(s) hung — cancelling")
+                        print(f"[WARN] {len(not_done)} worker(s) hung — state NOT advanced")
+                    else:
+                        for amn, ts in batch_max_time.items():
+                            mn_latest_map[amn] = ts.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+                        save_mn_latest_map(mn_latest_map)
                     print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Batch completed.")
 
             except KeyboardInterrupt:
