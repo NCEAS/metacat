@@ -182,7 +182,7 @@ NODE_TTL = 5 * 60  # two minutes
 """
     Gets the member node list from CN or the cached result
 """
-def get_up_node_identifiers_memory_cached():
+def get_node_identifiers_memory_cached():
     global _last_node_cache, _last_node_fetch
     now = time.time()
 
@@ -198,31 +198,28 @@ def get_up_node_identifiers_memory_cached():
 
     root = ET.fromstring(r.text)
 
-    up_nodes = []
+    mn_nodes = []
 
     # ----- KEY TRICK: ignore namespaces entirely -----
     for node in root.findall(".//{*}node"):
 
-        state = node.get("state")
         node_type = node.get("type")
         ident_el = node.find("{*}identifier")
 
         if (
-            state
-            and state.lower() == "up"
-            and node_type
+            node_type
             and node_type.lower() == "mn"
             and ident_el is not None
             and ident_el.text
         ):
-            up_nodes.append(ident_el.text.strip())
+            mn_nodes.append(ident_el.text.strip())
 
-    print(f"Found {len(up_nodes)} 'up' nodes")
+    print(f"Found {len(mn_nodes)} 'mn' nodes")
 
-    _last_node_cache = up_nodes
+    _last_node_cache = mn_nodes
     _last_node_fetch = now
 
-    return up_nodes
+    return mn_nodes
 
 """
     Gets the full map of the node_id and the indexed latest date_modified. If the solr server
@@ -231,9 +228,9 @@ def get_up_node_identifiers_memory_cached():
 """
 def get_full_latest_map():
     mn_map = asyncio.run(get_latest_date_by_mn_solr5_async())
-    up_nodes = get_up_node_identifiers_memory_cached()
+    nodes = get_node_identifiers_memory_cached()
 
-    for node_id in up_nodes:
+    for node_id in nodes:
         if node_id not in mn_map:
             print(f"Adding missing node: {node_id}")
             mn_map[node_id] = DEFAULT_DATE
