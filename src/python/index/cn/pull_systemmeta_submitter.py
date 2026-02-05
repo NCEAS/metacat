@@ -51,7 +51,7 @@ DATA_DIR = "/var/metacat/data"
 CHECK_FILE_WAIT_MILLISECONDS = 50
 CHECK_FILE_MAX_ATTEMPTS = 200
 DOCID_WAIT_SEC = 0.1   # 100 milliseconds
-DOCID_MAX_RETRIES = 5
+DOCID_MAX_RETRIES = 20
 # RabbitMQ queue configuration. They shouldn't be changed
 QUEUE_NAME = "index"
 ROUTING_KEY = "index"
@@ -178,65 +178,47 @@ class DocumentNotFoundError(Exception):
 # --- memory cache for the node list---
 _last_node_cache = None
 _last_node_fetch = 0
-NODE_TTL = 5 * 60  # two minutes
+# two minutes
+NODE_TTL = 5 * 60
 # -------------------
 
 """
-    Gets the member node list from CN or the cached result
+    Gets the member node id list from the systemmetadata table in CN. This is the truth of the node
+    id list
 """
-def get_node_identifiers_memory_cached():
+def get_node_ids_from_systemmetadata():
     global _last_node_cache, _last_node_fetch
     now = time.time()
-
-    # ---- use cache if fresh ----
+    # Use cache if fresh
     if _last_node_cache is not None and (now - _last_node_fetch) < NODE_TTL:
         print("Using cached node list")
         return _last_node_cache
-
-    print("Refreshing node list from CN...")
-
-    r = requests.get(NODE_URL, timeout=60)
-    r.raise_for_status()
-
-    root = ET.fromstring(r.text)
-
+    # Get them from db
     mn_nodes = []
-
-    # ----- KEY TRICK: ignore namespaces entirely -----
-    for node in root.findall(".//{*}node"):
-
-        node_type = node.get("type")
-        ident_el = node.find("{*}identifier")
-
-        if (
-            node_type
-            and node_type.lower() == "mn"
-            and ident_el is not None
-            and ident_el.text
-        ):
-            mn_nodes.append(ident_el.text.strip())
-
-    print(f"Found {len(mn_nodes)} 'mn' nodes")
-
-    _last_node_cache = mn_nodes
-    _last_node_fetch = now
-
-    return mn_nodes
+    conn = pg_pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT DISTINCT TRIM(authoritive_member_node)
+                FROM systemmetadata
+                WHERE authoritive_member_node IS NOT NULL
+                  AND TRIM(authoritive_member_node) <> '';
+            """)
+            for (node,) in cur.fetchall():
+                mn_nodes.append(node)
+        print(f"Get {len(mn_nodes)} 'mn' nodes from db since cache expired")
+        _last_node_cache = mn_nodes
+        _last_node_fetch = now
+        return mn_nodes
+    finally:
+        pg_pool.putconn(conn)
 
 """
-    Gets the full map of the node_id and the indexed latest date_modified. If the solr server
-    already has some records, use the latest one. If the running member nodes from CN don't
-    have any solr docs, use a default value as the latest date_modified.
+    Gets the map of the node_id and the indexed latest date_modified from solr. It can be empty
+    if the solr server is empty.
 """
-def get_full_latest_map():
+def get_mn_latest_map_from_solr():
     mn_map = asyncio.run(get_latest_date_by_mn_solr5_async())
-    nodes = get_node_identifiers_memory_cached()
-
-    for node_id in nodes:
-        if node_id not in mn_map:
-            print(f"Adding missing node: {node_id}")
-            mn_map[node_id] = DEFAULT_DATE
-
     return mn_map
 
 """
@@ -316,30 +298,48 @@ async def get_latest_date_by_mn_solr5_async(batch_size=100):
 
     return result
 
-def load_mn_latest_map_from_file():
-    nodes = get_node_identifiers_memory_cached()
-    data = {}
+"""
+Get a full map of the node_id and latest_modification_date by checking the stored file, Solr
+server and the full node_id list.
+"""
+def get_full_mn_latest_map():
     changed = False
-    loaded_from_file = False
+    node_ids = get_node_ids_from_systemmetadata()
+    # Loaded the map from the stored file first
+    map = load_mn_latest_map_from_file()
+    if not map:
+        # Try to get the map from solr if it can't be load from the file
+        map = get_mn_latest_map_from_solr()
+        changed = True
+    # Check if all node_id in the systemmetadata table is in the map. If not, add it.
+    # This can handle a fresh start as well.
+    for node_id in node_ids:
+            if node_id not in map:
+                print(f"Adding missing node: {node_id}")
+                map[node_id] = DEFAULT_DATE
+                changed = True
+    if changed:
+        save_mn_latest_map(map)
+    return map
 
+"""
+Get a  map of the node_id and latest_modification_date from the stored file. An empty map will be
+returned if the file doesn't exist, is empty, corrupted, or not well-formatted.
+"""
+def load_mn_latest_map_from_file():
+    data = {}
     if os.path.exists(MN_STATE_FILE):
         try:
             with open(MN_STATE_FILE, "r") as f:
                 data = json.load(f)
-            loaded_from_file = True
             print(f"Loaded MN state from {MN_STATE_FILE}")
-            for node_id in nodes:
-                if node_id not in data:
-                    data[node_id] = DEFAULT_DATE
-                    changed = True
         except Exception as e:
             print(f"[WARN] Failed to load MN state file, starting fresh: {e}")
+    return data
 
-    if changed and loaded_from_file:
-        save_mn_latest_map(data)
-
-    return data, loaded_from_file
-
+"""
+Save the given map into a file
+"""
 def save_mn_latest_map(mn_map):
     tmp = MN_STATE_FILE + ".tmp"
     with open(tmp, "w") as f:
@@ -481,16 +481,8 @@ def poll_and_submit(non_data_formats):
             cycle_start = time.perf_counter()
             try:
                 print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Start new polling cycle.")
-
-                # Get latest timestamps the file or Solr
-                mn_latest_map, loaded = load_mn_latest_map_from_file()
-                if not loaded:
-                    print("No MN state file found — bootstrapping from Solr")
-                    mn_latest_map = get_full_latest_map()
-                    save_mn_latest_map(mn_latest_map)
-                else:
-                    print("Using persisted MN state")
-
+                # Get latest map of node_ids and timestamps from the file or Solr
+                mn_latest_map = get_full_mn_latest_map()
                 print("Latest timestamps by node:")
                 for k, v in mn_latest_map.items():
                     print(f"   {k} -> {v}")
