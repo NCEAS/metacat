@@ -1,7 +1,7 @@
 # Submit index tasks for a list of identifiers (one per line).
 # Please edit the pull_systemmetadata_submitter properties first.
 #Usage:
-#    python3 submit_ids_from_file.py ids.txt
+#    python3 reindex.py ids.txt
 
 
 import sys
@@ -19,6 +19,7 @@ from pull_systemmeta_submitter import (
     DOCID_MAX_RETRIES,
     process_pid_wrapper,
     load_non_data_format_ids,
+    lookup_docid_with_retry,
     AMQPStormChannelPool,
     RABBITMQ_URL,
     RABBITMQ_PORT_NUMBER,
@@ -54,30 +55,6 @@ def lookup_docid_and_format(conn, guid):
             (guid,)
         )
         return cur.fetchone()
-
-
-def lookup_docid_with_retry(conn, guid):
-    """
-    Retry docid lookup (mirrors logic in poller).
-    """
-    for attempt in range(1, DOCID_MAX_RETRIES + 1):
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT docid || '.' || rev
-                FROM identifier
-                WHERE guid = %s
-                """,
-                (guid,)
-            )
-            res = cur.fetchone()
-            if res and res[0]:
-                return res[0]
-
-        print(f"Retry {attempt}/{DOCID_MAX_RETRIES}: doc_id still missing for {guid}")
-        time.sleep(DOCID_WAIT_SEC)
-
-    return None
 
 
 # ------------------------------------------------------------
@@ -153,7 +130,7 @@ def submit_from_file(id_file):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python3 submit_ids_from_file.py <id_file>")
+        print("Usage: python3 reindex.py <id_file>")
         sys.exit(1)
 
     submit_from_file(sys.argv[1])

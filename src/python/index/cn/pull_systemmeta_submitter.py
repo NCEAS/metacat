@@ -410,6 +410,29 @@ def wait_for_docid(docid: str):
     )
 
 """
+   Find the docid in identifier table for the given guid. It will try multiple times if it cannot
+    find it. None will be return if the docid cannot be found after multiple retries.
+"""
+def lookup_docid_with_retry(conn, guid):
+    for attempt in range(1, DOCID_MAX_RETRIES + 1):
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT docid || '.' || rev
+                FROM identifier
+                WHERE guid = %s
+                """,
+                (guid,)
+            )
+            res = cur.fetchone()
+            if res and res[0]:
+                return res[0]
+        print(f"Retry {attempt}/{DOCID_MAX_RETRIES}: doc_id still missing for {guid}")
+        time.sleep(DOCID_WAIT_SEC)
+
+    return None
+
+"""
     Processes a single PID:
        1 Construct the rabbitmq message
        2 Publish the message to the rabbitmq service
@@ -531,20 +554,9 @@ def poll_and_submit(non_data_formats):
                             print(f"Start to process {guid}:")
                             # docId retry logic
                             if object_format in non_data_formats and not doc_id:
-                                for attempt in range(1, DOCID_MAX_RETRIES + 1):
-                                    time.sleep(DOCID_WAIT_SEC)
-                                    cur.execute("""
-                                        SELECT docid || '.' || rev
-                                        FROM identifier
-                                        WHERE guid = %s
-                                    """, (guid,))
-                                    res = cur.fetchone()
-                                    if res and res[0]:
-                                        doc_id = res[0]
-                                        break
-                                    else:
-                                        print(f"Retry {attempt}/{DOCID_MAX_RETRIES}: doc_id still missing for guid {guid}")
-
+                                doc_id = lookup_docid_with_retry(conn, guid)
+                            # After multiple retries, we have to skip it if the docid still
+                            # cannot be found
                             if object_format in non_data_formats and not doc_id:
                                 print(f"Skipping guid {guid}: doc_id not found after {DOCID_MAX_RETRIES} retries")
                                 continue
