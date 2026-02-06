@@ -27,6 +27,9 @@ from pull_systemmeta_submitter import (
     RABBITMQ_PASSWORD,
 )
 
+"""
+   Read ids from a file to and array
+"""
 def read_ids_from_file(path):
     ids = []
     with open(path, "r") as f:
@@ -36,11 +39,10 @@ def read_ids_from_file(path):
                 ids.append(v)
     return ids
 
-
+"""
+   Lookup object_format and docid.rev for a guid.
+"""
 def lookup_docid_and_format(conn, guid):
-    """
-    Lookup object_format and docid.rev for a guid.
-    """
     with conn.cursor() as cur:
         cur.execute(
             """
