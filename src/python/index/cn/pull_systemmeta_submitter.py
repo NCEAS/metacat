@@ -198,14 +198,11 @@ def get_node_ids_from_systemmetadata():
     conn = pg_pool.getconn()
     try:
         with conn.cursor() as cur:
-            cur.execute("""
-                SELECT DISTINCT TRIM(authoritive_member_node)
-                FROM systemmetadata
-                WHERE authoritive_member_node IS NOT NULL
-                  AND TRIM(authoritive_member_node) <> '';
-            """)
+            cur.execute("""SELECT DISTINCT authoritive_member_node FROM systemmetadata;""")
             for (node,) in cur.fetchall():
-                mn_nodes.append(node)
+                # excludes None, '' and whitespace-only
+                if node and node.strip():
+                    mn_nodes.append(node)
         print(f"Get {len(mn_nodes)} 'mn' nodes from db since cache expired")
         _last_node_cache = mn_nodes
         _last_node_fetch = now
@@ -531,7 +528,7 @@ def poll_and_submit(non_data_formats):
                         # Process rows
                         batch_max_time = {}
                         for guid, object_format, doc_id, modified_time, amn in rows:
-                            print(f"Start to process {guid} which was read  from the dbname tables.")
+                            print(f"Start to process {guid}:")
                             # docId retry logic
                             if object_format in non_data_formats and not doc_id:
                                 for attempt in range(1, DOCID_MAX_RETRIES + 1):
