@@ -311,11 +311,12 @@ def get_full_mn_latest_map():
         # Try to get the map from solr if it can't be load from the file
         map = get_mn_latest_map_from_solr()
         changed = True
+        print("Can't load the map from the stored file. So load the map from the solr server")
     # Check if all node_id in the systemmetadata table is in the map. If not, add it.
     # This can handle a fresh start as well.
     for node_id in node_ids:
             if node_id not in map:
-                print(f"Adding missing node: {node_id}")
+                print(f"Adding missing node: {node_id} to the map of node_id and latest_modification_date")
                 map[node_id] = DEFAULT_DATE
                 changed = True
     if changed:
