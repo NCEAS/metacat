@@ -570,13 +570,10 @@ def poll_and_submit(non_data_formats):
 
                 # Wait for all workers
                 if futures:
-                    done, not_done = wait(futures, timeout=worker_timeout_sec)
-                    if not_done:
-                        print(f"[WARN] {len(not_done)} worker(s) hung — state NOT advanced")
-                    else:
-                        for amn, ts in batch_max_time.items():
-                            mn_latest_map[amn] = ts.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-                        save_mn_latest_map(mn_latest_map)
+                    wait(futures, timeout=worker_timeout_sec)
+                    for amn, ts in batch_max_time.items():
+                        mn_latest_map[amn] = ts.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+                    save_mn_latest_map(mn_latest_map)
                     print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Batch completed.")
 
             except KeyboardInterrupt:
