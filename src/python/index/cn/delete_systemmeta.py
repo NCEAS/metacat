@@ -4,35 +4,38 @@
 # Needed libraries:
 # pip3 install psycopg2-binary
 # pip3 install amqpstorm
+# You may run this script on the background by this command:
+# nohup python3 delete_systemmeta_listener.py > delete_systemmeta_listener.log 2>&1 &
 
 import psycopg2
+import psycopg2.extensions
 import select
 import json
 import threading
 import concurrent.futures
-import queue
 import time
-import sys
-import os
-from psycopg2 import pool
-from amqpstorm import Connection
+
 from amqpstorm.exception import AMQPError
 
 # Import *reused* components from pull_systemmetadata_submitter.py
 from pull_systemmeta_submitter import (
     DB_CONFIG,
-    DB_CONNECTION_POOL_SIZE,
-    DOCID_WAIT_SEC,
-    DOCID_MAX_RETRIES,
     AMQPStormChannelPool,
     RABBITMQ_URL,
     RABBITMQ_PORT_NUMBER,
     RABBITMQ_USERNAME,
     RABBITMQ_PASSWORD,
+    ROUTING_KEY,
+    EXCHANGE_NAME,
 )
 # Number of worker threads to listen the database events. Since it only handle the delete actions,
 # it can be one.
 MAX_WORKERS = 1
+
+# They are seconds
+SELECT_TIMEOUT = 5
+RECONNECT_DELAY = 5
+MAX_RECONNECT_DELAY = 60
 
 
 """
@@ -82,34 +85,90 @@ def process_pid_wrapper(channel_pool, notify):
         print(f"[ERROR] [{thread_name}] AMQPStorm error while processing PID {guid}: {amqp_err}")
     except Exception as e:
         print(f"[ERROR] [{thread_name}] Unexpected error while processing PID {guid}: {e}")
-    return None
 
-# Method to listen the database tigger and handle the events in a multiple-thread way
-def listen_and_submit():
-    # Connect to PostgreSQL
+def connect_postgres():
     conn = psycopg2.connect(**DB_CONFIG)
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-    cur = conn.cursor()
-    cur.execute("LISTEN systemmetadata_event;")
-    print("Listening on PostgreSQL channel 'systemmetadata_event'...")
-    # Set up RabbitMQ channel pool
-    channel_pool = AMQPStormChannelPool(RABBITMQ_URL, RABBITMQ_PORT_NUMBER, RABBITMQ_USERNAME, RABBITMQ_PASSWORD, MAX_WORKERS)
-    # Set up thread pool
-    with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS, thread_name_prefix='TriggerProcessor') as executor:
+
+    with conn.cursor() as cur:
+        cur.execute("LISTEN systemmetadata_event;")
+
+    print("Listening on PostgreSQL channel 'systemmetadata_event'")
+    return conn
+
+def create_channel_pool():
+    print("Creating RabbitMQ channel pool")
+    return AMQPStormChannelPool(
+        RABBITMQ_URL,
+        RABBITMQ_PORT_NUMBER,
+        RABBITMQ_USERNAME,
+        RABBITMQ_PASSWORD,
+        MAX_WORKERS
+    )
+
+"""
+   Method to listen the database tigger and handle the events in a multiple-thread way
+"""
+def listen_and_submit():
+    conn = None
+    channel_pool = None
+    backoff = RECONNECT_DELAY
+
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=MAX_WORKERS,
+        thread_name_prefix='TriggerProcessor'
+    ) as executor:
+
         try:
             while True:
-                if select.select([conn], [], [], 5) == ([], [], []):
-                    continue
-                conn.poll()
-                while conn.notifies:
-                    notify = conn.notifies.pop(0)
-                    executor.submit(process_pid_wrapper, channel_pool, notify)
+                try:
+                    # Ensure PostgreSQL connection
+                    if conn is None or conn.closed:
+                        print("PostgreSQL disconnected, reconnecting...")
+                        conn = connect_postgres()
+                        backoff = RECONNECT_DELAY
+
+                    # Ensure RabbitMQ pool
+                    if channel_pool is None:
+                        print("RabbitMQ channel pool unavailable, recreating...")
+                        channel_pool = create_channel_pool()
+
+                    ready, _, _ = select.select([conn], [], [], SELECT_TIMEOUT)
+                    if not ready:
+                        continue
+                    conn.poll()
+                    while conn.notifies:
+                        notify = conn.notifies.pop(0)
+                        executor.submit(
+                            process_pid_wrapper,
+                            channel_pool,
+                            notify
+                        )
+                except psycopg2.OperationalError as e:
+                    print(f"[ERROR] PostgreSQL error: {e}")
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+                    conn = None
+                    time.sleep(backoff)
+                    backoff = min(backoff * 2, MAX_RECONNECT_DELAY)
+                except Exception as e:
+                    print(f"[ERROR] Listener loop error: {e}")
+                    time.sleep(2)
         except KeyboardInterrupt:
-            print("Interrupted.")
+            print("Interrupted by user, shutting down")
         finally:
-            cur.close()
-            conn.close()
-            channel_pool.close()
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+            if channel_pool:
+                try:
+                    channel_pool.close()
+                except Exception:
+                    pass
 
 if __name__ == "__main__":
     listen_and_submit()
