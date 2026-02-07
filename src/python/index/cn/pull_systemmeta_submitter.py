@@ -551,31 +551,33 @@ def poll_and_submit(non_data_formats):
                         # Process rows
                         batch_max_time = {}
                         for guid, object_format, doc_id, modified_time, amn in rows:
-                            print(f"Start to process {guid}:")
-                            # docId retry logic
-                            if object_format in non_data_formats and not doc_id:
-                                doc_id = lookup_docid_with_retry(conn, guid)
-                            # After multiple retries, we have to skip it if the docid still
-                            # cannot be found
-                            if object_format in non_data_formats and not doc_id:
-                                print(f"Skipping guid {guid}: doc_id not found after {DOCID_MAX_RETRIES} retries")
-                                continue
+                            try:
+                                print(f"Start to process {guid}:")
+                                # docId retry logic
+                                if object_format in non_data_formats and not doc_id:
+                                    doc_id = lookup_docid_with_retry(conn, guid)
+                                # After multiple retries, we have to skip it if the docid still
+                                # cannot be found
+                                if object_format in non_data_formats and not doc_id:
+                                    print(f"Skipping guid {guid}: doc_id not found after {DOCID_MAX_RETRIES} retries")
+                                    continue
 
-                            # Submit task to thread pool
-                            futures.append(
-                                executor.submit(
-                                    process_pid_wrapper,
-                                    channel_pool,
-                                    guid,
-                                    object_format,
-                                    doc_id
+                                # Submit task to thread pool
+                                futures.append(
+                                    executor.submit(
+                                        process_pid_wrapper,
+                                        channel_pool,
+                                        guid,
+                                        object_format,
+                                        doc_id
+                                    )
                                 )
-                            )
-                            batch_max_time[amn] = max(
-                                batch_max_time.get(amn, modified_time),
-                                modified_time
-                            )
-
+                                batch_max_time[amn] = max(
+                                    batch_max_time.get(amn, modified_time),
+                                    modified_time
+                                )
+                            except Exception as error:
+                                print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] [ERROR] Process {guid}: {error}")
                 finally:
                     if conn:
                         pg_pool.putconn(conn)
