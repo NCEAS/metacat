@@ -18,44 +18,22 @@ from psycopg2 import pool
 from amqpstorm import Connection
 from amqpstorm.exception import AMQPError
 
-# Get the absolute path to the 'pull' directory
-current_dir = os.path.dirname(os.path.abspath(__file__))
-module_dir = os.path.join(current_dir, '../pull')
-
-# Add 'pull' directory to sys.path
-sys.path.append(module_dir)
-
-# Now import the class of AMQPStormChannelPool
-from pull_systemmeta import AMQPStormChannelPool
-
-# --- Configuration ---
-# Replace with your RabbitMQ and database credentials
-RABBITMQ_USERNAME = "guest"
-RABBITMQ_PASSWORD = "guest"
-DB_USERNAME = "tao"
-DB_PASSWORD = "your_db_password"
-RABBITMQ_URL = "localhost"
-RABBITMQ_PORT_NUMBER = 5672
-DB_DATABASE_NAME = "metacat"
-DB_HOST_NAME = "localhost"
-DB_PORT_NUMBER = 5432
+# Import *reused* components from pull_systemmetadata_submitter.py
+from pull_systemmeta_submitter import (
+    DB_CONFIG,
+    DB_CONNECTION_POOL_SIZE,
+    DOCID_WAIT_SEC,
+    DOCID_MAX_RETRIES,
+    AMQPStormChannelPool,
+    RABBITMQ_URL,
+    RABBITMQ_PORT_NUMBER,
+    RABBITMQ_USERNAME,
+    RABBITMQ_PASSWORD,
+)
 # Number of worker threads to listen the database events. Since it only handle the delete actions,
 # it can be one.
 MAX_WORKERS = 1
-# RabbitMQ queue configuration. They shouldn't be changed
-QUEUE_NAME = "index"
-ROUTING_KEY = "index"
-EXCHANGE_NAME = "dataone-index"
-pg_pool = None
 
-# Database connection parameters
-DB_CONFIG = {
-    'dbname': DB_DATABASE_NAME,
-    'user': DB_USERNAME,
-    'password': DB_PASSWORD,
-    'host': DB_HOST_NAME,
-    'port': DB_PORT_NUMBER
-}
 
 """
     Note: this method only handles the delete actions.
