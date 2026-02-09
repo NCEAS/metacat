@@ -34,8 +34,9 @@ CN_URL = "https://cn.dataone.org/cn/v2"
 RABBITMQ_URL = "localhost"
 RABBITMQ_PORT_NUMBER = 5672
 SOLR_URL = "http://localhost:8983/solr/metacat-index/select"
-POLL_INTERVAL = 10  # second
+POLL_INTERVAL = 50  # second
 MAX_ROWS = 4000
+EVERY_SUBMIT_WAIT_TIME_SEC = 0.01
 # Number of worker threads to submit index tasks to RabbitMQ
 # The pool_size of the rabbitmq channel pool is using it as well.
 # The number must be less than those settings:
@@ -542,6 +543,8 @@ def poll_and_submit(non_data_formats):
                         """, (payload,))
 
                         rows = cur.fetchall()
+                        length = len(rows)
+                        print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] The number of the records pulled out from systemmetadata table is {length}")
 
                         if not rows:
                             print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] No new records. Sleeping.")
@@ -563,6 +566,7 @@ def poll_and_submit(non_data_formats):
                                     continue
 
                                 # Submit task to thread pool
+                                time.sleep(EVERY_SUBMIT_WAIT_TIME_SEC)
                                 futures.append(
                                     executor.submit(
                                         process_pid_wrapper,
