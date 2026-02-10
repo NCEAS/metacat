@@ -544,7 +544,6 @@ def poll_and_submit(non_data_formats):
 
                         rows = cur.fetchall()
                         length = len(rows)
-                        print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] The number of the records pulled out from systemmetadata table is {length}")
 
                         if not rows:
                             print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] No new records. Sleeping.")
