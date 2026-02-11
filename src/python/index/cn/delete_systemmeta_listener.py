@@ -5,7 +5,7 @@
 # pip3 install psycopg2-binary
 # pip3 install amqpstorm
 # You may run this script on the background by this command:
-# nohup python3 delete_systemmeta_listener.py > delete_systemmeta_listener.log 2>&1 &
+# nohup python3 -u delete_systemmeta_listener.py > delete_systemmeta_listener.log 2>&1 &
 
 import psycopg2
 import psycopg2.extensions
