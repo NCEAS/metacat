@@ -62,7 +62,7 @@ pg_pool = None
 DEFAULT_DATE = "2000-01-01 00:00:00.000"
 FORMATS_URL = urljoin(CN_URL + "/", "formats")
 NODE_URL = urljoin(CN_URL + "/", "node")
-MN_STATE_FILE = "mn_latest_modified_map.json"
+MN_STATE_FILE = ".mn_latest_modified_map.json"
 
 shutdown_event = threading.Event()
 
