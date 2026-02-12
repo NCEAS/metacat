@@ -64,6 +64,7 @@ FORMATS_URL = urljoin(CN_URL + "/", "formats")
 NODE_URL = urljoin(CN_URL + "/", "node")
 MN_STATE_FILE = "mn_latest_modified_map.json"
 
+shutdown_event = threading.Event()
 
 # A class represents a RabbitMQ channel pool
 class AMQPStormChannelPool:
@@ -547,7 +548,7 @@ def poll_and_submit(non_data_formats):
 
                         if not rows:
                             print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] No new records. Sleeping.")
-                            time.sleep(POLL_INTERVAL)
+                            shutdown_event.wait(POLL_INTERVAL)
                             continue
 
                         # Process rows
@@ -565,7 +566,7 @@ def poll_and_submit(non_data_formats):
                                     continue
 
                                 # Submit task to thread pool
-                                time.sleep(EVERY_SUBMIT_WAIT_TIME_SEC)
+                                shutdown_event.wait(EVERY_SUBMIT_WAIT_TIME_SEC)
                                 futures.append(
                                     executor.submit(
                                         process_pid_wrapper,
@@ -587,7 +588,14 @@ def poll_and_submit(non_data_formats):
 
                 # Wait for all workers
                 if futures:
-                    wait(futures, timeout=worker_timeout_sec)
+                    try:
+                        wait(futures, timeout=worker_timeout_sec)
+                    except KeyboardInterrupt:
+                        print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Interrupted while waiting for workers.")
+                        shutdown_event.set()
+                        for f in futures:
+                            f.cancel()
+                        raise
                     for amn, ts in batch_max_time.items():
                         mn_latest_map[amn] = ts.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
                     save_mn_latest_map(mn_latest_map)
@@ -595,6 +603,7 @@ def poll_and_submit(non_data_formats):
 
             except KeyboardInterrupt:
                 print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Polling interrupted. Exiting.")
+                shutdown_event.set()
                 break
 
             except Exception as poll_error:
@@ -604,7 +613,7 @@ def poll_and_submit(non_data_formats):
             elapsed = time.perf_counter() - cycle_start
             sleep_time = max(0, POLL_INTERVAL - elapsed)
             if sleep_time > 0:
-                time.sleep(sleep_time)
+                shutdown_event.wait(sleep_time)
 
         channel_pool.close()
         if pg_pool:
