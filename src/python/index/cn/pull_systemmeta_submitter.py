@@ -4,7 +4,7 @@
 # pip3 install psycopg2-binary
 # pip3 install amqpstorm
 # You may run this script on the background by this command:
-# nohup python3 -u pull_systemmeta_submitter.py > pull_systemmeta_submitter.log 2>&1 &
+# nohup python3 pull_systemmeta_submitter.py &
 
 import asyncio
 import aiohttp
