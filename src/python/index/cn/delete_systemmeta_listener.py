@@ -5,15 +5,16 @@
 # pip3 install psycopg2-binary
 # pip3 install amqpstorm
 # You may run this script on the background by this command:
-# nohup python3 -u delete_systemmeta_listener.py > delete_systemmeta_listener.log 2>&1 &
+# nohup python3 delete_systemmeta_listener.py &
 
+import concurrent.futures
+import json
+import logging
 import psycopg2
 import psycopg2.extensions
 import select
-import json
-import threading
-import concurrent.futures
 import time
+import threading
 
 from amqpstorm.exception import AMQPError
 
@@ -27,6 +28,8 @@ from pull_systemmeta_submitter import (
     RABBITMQ_PASSWORD,
     ROUTING_KEY,
     EXCHANGE_NAME,
+    setup_logging,
+    logger as submitter_logger
 )
 # Number of worker threads to listen the database events. Since it only handle the delete actions,
 # it can be one.
@@ -37,6 +40,8 @@ SELECT_TIMEOUT = 5
 RECONNECT_DELAY = 5
 MAX_RECONNECT_DELAY = 60
 
+log_name = "delete_systemmeta_listener"
+log_file = f"log/{log_name}.log"
 
 """
     Note: this method only handles the delete actions.
@@ -59,7 +64,7 @@ def process_pid_wrapper(channel_pool, notify):
             index_type = 'delete'
         if guid:
             if index_type == 'delete':
-                print(f"[{thread_name}] Processing PID: {guid} with type: {index_type}, priority: {priority}")
+                logger.debug(f"[{thread_name}] Processing PID: {guid} with type: {index_type}, priority: {priority}")
                 headers = {'index_type': index_type, 'id': guid}
                 message = ''
                 # 2.2 Publish the message to the rabbitmq service
@@ -76,15 +81,15 @@ def process_pid_wrapper(channel_pool, notify):
                     if channel:
                         channel_pool.release_channel(channel)
             else:
-                print(f"[{thread_name}] This script only handles the delete events, rather than {index_type}")
+                logger.warn(f"[{thread_name}] This script only handles the delete events, rather than {index_type}")
         else:
-            print(f"[{thread_name}] No GUID found in payload: {payload}")
+            logger.warn(f"[{thread_name}] No GUID found in payload: {payload}")
     except json.JSONDecodeError:
-        print(f"[ERROR] [{thread_name}] Invalid JSON: {notify.payload}")
+        logger.error(f"[ERROR] [{thread_name}] Invalid JSON: {notify.payload}")
     except AMQPError as amqp_err:
-        print(f"[ERROR] [{thread_name}] AMQPStorm error while processing PID {guid}: {amqp_err}")
+        logger.error(f"[ERROR] [{thread_name}] AMQPStorm error while processing PID {guid}: {amqp_err}")
     except Exception as e:
-        print(f"[ERROR] [{thread_name}] Unexpected error while processing PID {guid}: {e}")
+        logger.error(f"[ERROR] [{thread_name}] Unexpected error while processing PID {guid}: {e}")
 
 def connect_postgres():
     conn = psycopg2.connect(**DB_CONFIG)
@@ -93,11 +98,11 @@ def connect_postgres():
     with conn.cursor() as cur:
         cur.execute("LISTEN systemmetadata_event;")
 
-    print("Listening on PostgreSQL channel 'systemmetadata_event'")
+    logger.debug("Listening on PostgreSQL channel 'systemmetadata_event'")
     return conn
 
 def create_channel_pool():
-    print("Creating RabbitMQ channel pool")
+    logger.debug("Creating RabbitMQ channel pool")
     return AMQPStormChannelPool(
         RABBITMQ_URL,
         RABBITMQ_PORT_NUMBER,
@@ -124,13 +129,13 @@ def listen_and_submit():
                 try:
                     # Ensure PostgreSQL connection
                     if conn is None or conn.closed:
-                        print("PostgreSQL disconnected, reconnecting...")
+                        logger.debug("PostgreSQL disconnected, reconnecting...")
                         conn = connect_postgres()
                         backoff = RECONNECT_DELAY
 
                     # Ensure RabbitMQ pool
                     if channel_pool is None:
-                        print("RabbitMQ channel pool unavailable, recreating...")
+                        logger.debug("RabbitMQ channel pool unavailable, recreating...")
                         channel_pool = create_channel_pool()
 
                     ready, _, _ = select.select([conn], [], [], SELECT_TIMEOUT)
@@ -145,7 +150,7 @@ def listen_and_submit():
                             notify
                         )
                 except psycopg2.OperationalError as e:
-                    print(f"[ERROR] PostgreSQL error: {e}")
+                    logger.error(f"[ERROR] PostgreSQL error: {e}")
                     try:
                         conn.close()
                     except Exception:
@@ -154,10 +159,10 @@ def listen_and_submit():
                     time.sleep(backoff)
                     backoff = min(backoff * 2, MAX_RECONNECT_DELAY)
                 except Exception as e:
-                    print(f"[ERROR] Listener loop error: {e}")
+                    logger.error(f"[ERROR] Listener loop error: {e}")
                     time.sleep(2)
         except KeyboardInterrupt:
-            print("Interrupted by user, shutting down")
+            logger.warn("Interrupted by user, shutting down")
         finally:
             if conn:
                 try:
@@ -171,4 +176,10 @@ def listen_and_submit():
                     pass
 
 if __name__ == "__main__":
+    setup_logging(log_file=log_file, level=logging.DEBUG)
+    # Create a "delete_systemmeta_listener" child logger using the same handlers
+    logger = submitter_logger.getChild(log_name)
+    # Remove the parent prefix
+    logger.name = log_name
+    logger.info("Starting to listen the delete events from the systemmetadata table...")
     listen_and_submit()
