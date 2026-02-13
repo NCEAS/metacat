@@ -296,7 +296,7 @@ async def fetch_latest_date(session, mn):
             if attempt < 2:
                 await asyncio.sleep(2)
             else:
-                logger.warn(f"Failed to fetch {mn}: {e}")
+                logger.warning(f"Failed to fetch {mn}: {e}")
                 return mn, None
 
 """
@@ -385,7 +385,7 @@ def load_mn_latest_map_from_file():
                 data = json.load(f)
             logger.debug(f"Loaded MN state from {MN_STATE_FILE}")
         except Exception as e:
-            logger.warn(f"[WARN] Failed to load MN state file, starting fresh: {e}")
+            logger.warning(f"[WARN] Failed to load MN state file, starting fresh: {e}")
     return data
 
 """
@@ -480,7 +480,7 @@ def lookup_docid_with_retry(conn, guid):
             res = cur.fetchone()
             if res and res[0]:
                 return res[0]
-        logger.warn(f"Retry {attempt}/{DOCID_MAX_RETRIES}: doc_id still missing for {guid}")
+        logger.warning(f"Retry {attempt}/{DOCID_MAX_RETRIES}: doc_id still missing for {guid}")
         time.sleep(DOCID_WAIT_SEC)
 
     return None
@@ -523,7 +523,7 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
                     except Exception:
                         pass
         else:
-            logger.warn(f"[{thread_name}] No GUID found in the query")
+            logger.warning(f"[{thread_name}] No GUID found in the query")
     except AMQPError as amqp_err:
         logger.error(f"[ERROR] [{thread_name}] AMQPStorm error while processing PID {guid}: {amqp_err}")
     except Exception as e:
@@ -642,7 +642,7 @@ def poll_and_submit(non_data_formats):
                     try:
                         wait(futures, timeout=worker_timeout_sec)
                     except KeyboardInterrupt:
-                        logger.warn(f"Interrupted while waiting for workers.")
+                        logger.warning(f"Interrupted while waiting for workers.")
                         shutdown_event.set()
                         for f in futures:
                             f.cancel()
@@ -653,7 +653,7 @@ def poll_and_submit(non_data_formats):
                     logger.debug("Batch completed.")
 
             except KeyboardInterrupt:
-                logger.warn(f"Polling interrupted. Exiting.")
+                logger.warning(f"Polling interrupted. Exiting.")
                 shutdown_event.set()
                 break
 

@@ -81,9 +81,9 @@ def process_pid_wrapper(channel_pool, notify):
                     if channel:
                         channel_pool.release_channel(channel)
             else:
-                logger.warn(f"[{thread_name}] This script only handles the delete events, rather than {index_type}")
+                logger.warning(f"[{thread_name}] This script only handles the delete events, rather than {index_type}")
         else:
-            logger.warn(f"[{thread_name}] No GUID found in payload: {payload}")
+            logger.warning(f"[{thread_name}] No GUID found in payload: {payload}")
     except json.JSONDecodeError:
         logger.error(f"[ERROR] [{thread_name}] Invalid JSON: {notify.payload}")
     except AMQPError as amqp_err:
@@ -162,7 +162,7 @@ def listen_and_submit():
                     logger.error(f"[ERROR] Listener loop error: {e}")
                     time.sleep(2)
         except KeyboardInterrupt:
-            logger.warn("Interrupted by user, shutting down")
+            logger.warning("Interrupted by user, shutting down")
         finally:
             if conn:
                 try:
