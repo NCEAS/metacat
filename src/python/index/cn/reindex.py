@@ -3,12 +3,14 @@
 #Usage:
 #    python3 reindex.py ids.txt
 
-
+import concurrent.futures
+import logging
 import sys
 import time
-import concurrent.futures
-from psycopg2 import pool
+
 from datetime import datetime
+from psycopg2 import pool
+
 
 # Import *reused* components from pull_systemmetadata_submitter.py
 from pull_systemmeta_submitter import (
@@ -25,7 +27,10 @@ from pull_systemmeta_submitter import (
     RABBITMQ_PORT_NUMBER,
     RABBITMQ_USERNAME,
     RABBITMQ_PASSWORD,
+    setup_logging,
+    logger
 )
+log_file = "log/reindex.log"
 
 """
    Read ids from a file to and array
@@ -66,10 +71,10 @@ def lookup_docid_and_format(conn, guid):
 def submit_from_file(id_file):
     ids = read_ids_from_file(id_file)
     if not ids:
-        print("No IDs found in file.")
+        logger.warn("No IDs found in file.")
         return
     non_data_formats = load_non_data_format_ids()
-    print(f"Loaded {len(ids)} IDs from {id_file}")
+    logger.debug(f"Loaded {len(ids)} IDs from {id_file}")
 
     # DB pool
     pg_pool = pool.ThreadedConnectionPool(
@@ -98,14 +103,14 @@ def submit_from_file(id_file):
             for guid in ids:
                 row = lookup_docid_and_format(conn, guid)
                 if not row:
-                    print(f"[WARN] GUID not found in systemmetadata: {guid}")
+                    logger.warn(f"[WARN] GUID not found in systemmetadata: {guid}")
                     continue
                 object_format, doc_id = row
                 if object_format in non_data_formats and not doc_id:
                     doc_id = lookup_docid_with_retry(conn, guid)
 
                 if object_format in non_data_formats and not doc_id:
-                    print(f"[WARN] Skipping {guid}: doc_id not found after multiple try")
+                    logger.warn(f"[WARN] Skipping {guid}: doc_id not found after multiple try")
                     continue
 
                 futures.append(
@@ -128,11 +133,12 @@ def submit_from_file(id_file):
     pg_pool.closeall()
 
     print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Finished submitting {len(ids)} IDs.")
+    logger.info(f"Finished submitting {len(ids)} IDs.")
 
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: python3 reindex.py <id_file>")
         sys.exit(1)
-
+    setup_logging(log_file=log_file, level=logging.DEBUG)
     submit_from_file(sys.argv[1])
