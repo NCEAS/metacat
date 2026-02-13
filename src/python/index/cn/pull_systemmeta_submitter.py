@@ -95,6 +95,10 @@ logging.basicConfig(
     handlers=[handler, logging.StreamHandler()],
     force=True
 )
+# Silence noisy libs
+logging.getLogger("amqpstorm").setLevel(logging.INFO)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("aiohttp").setLevel(logging.WARNING)
 logger = logging.getLogger("pull_systemmeta_submitter")
 
 
