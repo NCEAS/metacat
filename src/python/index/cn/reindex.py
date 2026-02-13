@@ -28,9 +28,11 @@ from pull_systemmeta_submitter import (
     RABBITMQ_USERNAME,
     RABBITMQ_PASSWORD,
     setup_logging,
-    logger
+    logger as submitter_logger
 )
-log_file = "log/reindex.log"
+
+log_name = "reindex"
+log_file = f"log/{log_name}.log"
 
 """
    Read ids from a file to and array
@@ -141,4 +143,8 @@ if __name__ == "__main__":
         print("Usage: python3 reindex.py <id_file>")
         sys.exit(1)
     setup_logging(log_file=log_file, level=logging.DEBUG)
+    # Create a "reindex" child logger using the same handlers
+    logger = submitter_logger.getChild(log_name)
+    # Remove the parent prefix
+    logger.name = log_name
     submit_from_file(sys.argv[1])
