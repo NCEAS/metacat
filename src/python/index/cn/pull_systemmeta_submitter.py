@@ -8,21 +8,29 @@
 
 import asyncio
 import aiohttp
+import concurrent.futures
+import fcntl
 import psycopg2
 import json
+import logging
+import logging.config
 import os
-import threading
-import concurrent.futures
 import queue
-import time
 import requests
+import time
+import threading
 import xml.etree.ElementTree as ET
-from psycopg2 import pool
+
+
 from amqpstorm import Connection, AMQPError, AMQPConnectionError, AMQPChannelError
-from datetime import datetime
 from concurrent.futures import wait, ALL_COMPLETED
+from datetime import datetime
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
+from psycopg2 import pool
 from urllib.parse import urljoin
-import fcntl
+
+
 
 # --- Configuration ---
 # Replace with your RabbitMQ and database credentials
@@ -63,8 +71,32 @@ DEFAULT_DATE = "2000-01-01 00:00:00.000"
 FORMATS_URL = urljoin(CN_URL + "/", "formats")
 NODE_URL = urljoin(CN_URL + "/", "node")
 MN_STATE_FILE = ".mn_latest_modified_map.json"
+LOG_LEVEL = logging.DEBUG
+LOG_FILE = "log/pull_systemmeta_submitter.log"
 
 shutdown_event = threading.Event()
+
+# Ensure log directory exists
+log_path = Path(LOG_FILE)
+log_path.parent.mkdir(parents=True, exist_ok=True)
+# Log settings
+handler = RotatingFileHandler(
+    LOG_FILE,
+    maxBytes=50 * 1024 * 1024,   # 50 MB
+    backupCount=1000             # keep last 1000 files
+)
+formatter = logging.Formatter(
+    '%(asctime)s,%(msecs)03d %(name)s %(levelname)s [%(threadName)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+handler.setFormatter(formatter)
+logging.basicConfig(
+    level=LOG_LEVEL,
+    handlers=[handler, logging.StreamHandler()],
+    force=True
+)
+logger = logging.getLogger("pull_systemmeta_submitter")
+
 
 # A class represents a RabbitMQ channel pool
 class AMQPStormChannelPool:
@@ -547,7 +579,7 @@ def poll_and_submit(non_data_formats):
                         length = len(rows)
 
                         if not rows:
-                            print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] No new records. Sleeping.")
+                            logger.debug("No new records. Sleeping.")
                             shutdown_event.wait(POLL_INTERVAL)
                             continue
 
@@ -599,7 +631,7 @@ def poll_and_submit(non_data_formats):
                     for amn, ts in batch_max_time.items():
                         mn_latest_map[amn] = ts.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
                     save_mn_latest_map(mn_latest_map)
-                    print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Batch completed.")
+                    logger.debug("Batch completed.")
 
             except KeyboardInterrupt:
                 print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Polling interrupted. Exiting.")
