@@ -72,35 +72,50 @@ FORMATS_URL = urljoin(CN_URL + "/", "formats")
 NODE_URL = urljoin(CN_URL + "/", "node")
 MN_STATE_FILE = ".mn_latest_modified_map.json"
 LOG_LEVEL = logging.DEBUG
-LOG_FILE = "log/pull_systemmeta_submitter.log"
+LOGGER_NAME = "pull_systemmeta_submitter"
+LOG_FILE = f"log/{LOGGER_NAME}.log"
 
 shutdown_event = threading.Event()
 
-# Ensure log directory exists
-log_path = Path(LOG_FILE)
-log_path.parent.mkdir(parents=True, exist_ok=True)
-# Log settings
-handler = RotatingFileHandler(
-    LOG_FILE,
-    maxBytes=50 * 1024 * 1024,   # 50 MB
-    backupCount=1000             # keep last 1000 files
-)
-formatter = logging.Formatter(
-    '%(asctime)s,%(msecs)03d %(name)s %(levelname)s [%(threadName)s] %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-handler.setFormatter(formatter)
-logging.basicConfig(
-    level=LOG_LEVEL,
-    handlers=[handler, logging.StreamHandler()],
-    force=True
-)
-# Silence noisy libs
-logging.getLogger("amqpstorm").setLevel(logging.INFO)
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-logging.getLogger("aiohttp").setLevel(logging.WARNING)
-logger = logging.getLogger("pull_systemmeta_submitter")
+logger = logging.getLogger(LOGGER_NAME)
 
+# Settings for not showing the log from some libraries
+def _silence_third_party_logs():
+    """
+    Reduce verbosity of noisy third-party libraries.
+    Safe to call multiple times.
+    """
+    logging.getLogger("amqpstorm").setLevel(logging.INFO)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("aiohttp").setLevel(logging.WARNING)
+
+# Set up the configuration of logging
+def setup_logging(
+    log_file=LOG_FILE,
+    level=LOG_LEVEL,
+    max_bytes=100 * 1024 * 1024,
+    backups=1000,
+):
+    log_dir = os.path.dirname(log_file)
+    if log_dir:
+        os.makedirs(log_dir, exist_ok=True)
+    logger.setLevel(level)
+    logger.handlers.clear()
+    logger.propagate = False
+    handler = RotatingFileHandler(
+        log_file,
+        maxBytes=max_bytes,
+        backupCount=backups,
+    )
+    formatter = logging.Formatter(
+        "%(asctime)s,%(msecs)03d %(name)s %(levelname)s "
+        "[%(process)d:%(threadName)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    _silence_third_party_logs()
+    logger.debug("Logging initialized")
 
 # A class represents a RabbitMQ channel pool
 class AMQPStormChannelPool:
@@ -656,6 +671,8 @@ def poll_and_submit(non_data_formats):
             pg_pool.closeall()
 
 if __name__ == "__main__":
+    setup_logging()
+    logger.info("pull_systemmeta_submitter started")
     non_data_formats = load_non_data_format_ids()
     pg_pool = pool.ThreadedConnectionPool(
             minconn = 1,
