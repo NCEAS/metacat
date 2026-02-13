@@ -129,7 +129,7 @@ class AMQPStormChannelPool:
                 timeout=10
             )
         except Exception as e:
-            print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] [CHANNEL POOL] Failed to connect to RabbitMQ: {e}")
+            logger.error(f"[CHANNEL POOL] Failed to connect to RabbitMQ: {e}")
             self._healthy = False
             raise
         with self._lock:
@@ -160,7 +160,7 @@ class AMQPStormChannelPool:
 
     def acquire_channel(self):
         if not self._is_healthy():
-            print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] [CHANNEL POOL] Connection unhealthy. Reinitializing.")
+            logger.info("[CHANNEL POOL] Connection unhealthy. Reinitializing.")
             self._initialize_pool()
         try:
             channel = self._channels.get_nowait()
@@ -229,7 +229,7 @@ def get_node_ids_from_systemmetadata():
     now = time.time()
     # Use cache if fresh
     if _last_node_cache is not None and (now - _last_node_fetch) < NODE_TTL:
-        print("Using cached node list")
+        logger.debug("Using cached node list")
         return _last_node_cache
     # Get them from db
     mn_nodes = []
@@ -241,7 +241,7 @@ def get_node_ids_from_systemmetadata():
                 # excludes None, '' and whitespace-only
                 if node and node.strip():
                     mn_nodes.append(node)
-        print(f"Get {len(mn_nodes)} 'mn' nodes from db since cache expired")
+        logger.debug(f"Get {len(mn_nodes)} 'mn' nodes from db since cache expired")
         _last_node_cache = mn_nodes
         _last_node_fetch = now
         return mn_nodes
@@ -281,7 +281,7 @@ async def fetch_latest_date(session, mn):
             if attempt < 2:
                 await asyncio.sleep(2)
             else:
-                print(f"Failed to fetch {mn}: {e}")
+                logger.warn(f"Failed to fetch {mn}: {e}")
                 return mn, None
 
 """
@@ -320,7 +320,7 @@ async def get_latest_date_by_mn_solr5_async(batch_size=100):
                 break
 
             mns = [buckets[i] for i in range(0, len(buckets), 2)]
-            print(f"Fetched {len(mns)} MNs from offset {start}")
+            logger.debug(f"Fetched {len(mns)} MNs from offset {start}")
 
             # fetch max(dateModified) for this batch in parallel
             tasks = [fetch_latest_date(session, mn) for mn in mns]
@@ -346,12 +346,12 @@ def get_full_mn_latest_map():
         # Try to get the map from solr if it can't be load from the file
         map = get_mn_latest_map_from_solr()
         changed = True
-        print("Can't load the map from the stored file. So load the map from the solr server")
+        logger.info("Can't load the map from the stored file. So load the map from the solr server")
     # Check if all node_id in the systemmetadata table is in the map. If not, add it.
     # This can handle a fresh start as well.
     for node_id in node_ids:
             if node_id not in map:
-                print(f"Adding missing node: {node_id} to the map of node_id and latest_modification_date")
+                logger.debug(f"Adding missing node: {node_id} to the map of node_id and latest_modification_date")
                 map[node_id] = DEFAULT_DATE
                 changed = True
     if changed:
@@ -368,9 +368,9 @@ def load_mn_latest_map_from_file():
         try:
             with open(MN_STATE_FILE, "r") as f:
                 data = json.load(f)
-            print(f"Loaded MN state from {MN_STATE_FILE}")
+            logger.debug(f"Loaded MN state from {MN_STATE_FILE}")
         except Exception as e:
-            print(f"[WARN] Failed to load MN state file, starting fresh: {e}")
+            logger.warn(f"[WARN] Failed to load MN state file, starting fresh: {e}")
     return data
 
 """
@@ -412,7 +412,7 @@ def load_non_data_format_ids():
             if fmt_id and fmt_type and fmt_type.upper() != "DATA":
                 non_data_format_ids.append(fmt_id)
 
-    print(non_data_format_ids)
+    logger.debug(non_data_format_ids)
     return non_data_format_ids
 
 """
@@ -465,7 +465,7 @@ def lookup_docid_with_retry(conn, guid):
             res = cur.fetchone()
             if res and res[0]:
                 return res[0]
-        print(f"Retry {attempt}/{DOCID_MAX_RETRIES}: doc_id still missing for {guid}")
+        logger.warn(f"Retry {attempt}/{DOCID_MAX_RETRIES}: doc_id still missing for {guid}")
         time.sleep(DOCID_WAIT_SEC)
 
     return None
@@ -483,7 +483,7 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
         if object_format and object_format in resourcemap_format_list:
             priority = 3
         if guid:
-            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [{thread_name}] Processing PID: {guid} with type: {index_type}, docid: {doc_id}, priority: {priority}")
+            logger.debug(f"[{thread_name}] Processing PID: {guid} with type: {index_type}, docid: {doc_id}, priority: {priority}")
             headers = {'index_type': index_type, 'id': guid, 'doc_id': doc_id}
             message = ''
             channel = None
@@ -496,9 +496,9 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
                     exchange=EXCHANGE_NAME,
                     properties={'headers': headers, 'priority': priority}
                 )
-                print(f"Published guid {guid} into RabbitMQ")
+                logger.debug(f"Published guid {guid} into RabbitMQ")
             except (AMQPConnectionError, AMQPChannelError, OSError) as e:
-                    print(f"[ERROR] RabbitMQ publish failed for {guid}: {e}")
+                    logger.error(f"[ERROR] RabbitMQ publish failed for {guid}: {e}")
                     channel_pool.mark_unhealthy()
                     raise   # VERY IMPORTANT
             finally:
@@ -508,11 +508,11 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
                     except Exception:
                         pass
         else:
-            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [{thread_name}] No GUID found in the query")
+            logger.warn(f"[{thread_name}] No GUID found in the query")
     except AMQPError as amqp_err:
-        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] [{thread_name}] AMQPStorm error while processing PID {guid}: {amqp_err}")
+        logger.error(f"[ERROR] [{thread_name}] AMQPStorm error while processing PID {guid}: {amqp_err}")
     except Exception as e:
-        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] [{thread_name}] Unexpected error while processing PID {guid}: {e}")
+        logger.error(f"[ERROR] [{thread_name}] Unexpected error while processing PID {guid}: {e}")
     return None
 
 """
@@ -522,7 +522,7 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
 def poll_and_submit(non_data_formats):
     global pg_pool
     worker_timeout_sec = MAX_ROWS/MAX_WORKERS * 0.25
-    print(f"The timeout for workers to completed jobs for a batch is {worker_timeout_sec}")
+    logger.debug(f"The timeout for workers to completed jobs for a batch is {worker_timeout_sec}")
     channel_pool = AMQPStormChannelPool(
         RABBITMQ_URL, RABBITMQ_PORT_NUMBER,
         RABBITMQ_USERNAME, RABBITMQ_PASSWORD,
@@ -539,12 +539,12 @@ def poll_and_submit(non_data_formats):
         while True:
             cycle_start = time.perf_counter()
             try:
-                print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Start new polling cycle.")
+                logger.debug(f"Start new polling cycle.")
                 # Get latest map of node_ids and timestamps from the file or Solr
                 mn_latest_map = get_full_mn_latest_map()
-                print("Latest timestamps by node:")
+                logger.debug("Latest timestamps by node:")
                 for k, v in mn_latest_map.items():
-                    print(f"   {k} -> {v}")
+                    logger.debug(f"   {k} -> {v}")
 
                 # Build JSON payload for all nodes
                 payload = json.dumps([
@@ -591,14 +591,14 @@ def poll_and_submit(non_data_formats):
                         batch_max_time = {}
                         for guid, object_format, doc_id, modified_time, amn in rows:
                             try:
-                                print(f"Start to process {guid}:")
+                                logger.debug(f"Start to process {guid}:")
                                 # docId retry logic
                                 if object_format in non_data_formats and not doc_id:
                                     doc_id = lookup_docid_with_retry(conn, guid)
                                 # After multiple retries, we have to skip it if the docid still
                                 # cannot be found
                                 if object_format in non_data_formats and not doc_id:
-                                    print(f"Skipping guid {guid}: doc_id not found after {DOCID_MAX_RETRIES} retries")
+                                    logger.info(f"Skipping guid {guid}: doc_id not found after {DOCID_MAX_RETRIES} retries")
                                     continue
 
                                 # Submit task to thread pool
@@ -617,7 +617,7 @@ def poll_and_submit(non_data_formats):
                                     modified_time
                                 )
                             except Exception as error:
-                                print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] [ERROR] Process {guid}: {error}")
+                                logger.error(f"[ERROR] Process {guid}: {error}")
                 finally:
                     if conn:
                         pg_pool.putconn(conn)
@@ -627,7 +627,7 @@ def poll_and_submit(non_data_formats):
                     try:
                         wait(futures, timeout=worker_timeout_sec)
                     except KeyboardInterrupt:
-                        print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Interrupted while waiting for workers.")
+                        logger.warn(f"Interrupted while waiting for workers.")
                         shutdown_event.set()
                         for f in futures:
                             f.cancel()
@@ -638,12 +638,12 @@ def poll_and_submit(non_data_formats):
                     logger.debug("Batch completed.")
 
             except KeyboardInterrupt:
-                print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Polling interrupted. Exiting.")
+                logger.warn(f"Polling interrupted. Exiting.")
                 shutdown_event.set()
                 break
 
             except Exception as poll_error:
-                print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] [ERROR] Polling failed: {poll_error}")
+                logger.error(f"[ERROR] Polling failed: {poll_error}")
 
             # --- Sleep regardless success or failure to maintain poll interval ---
             elapsed = time.perf_counter() - cycle_start
