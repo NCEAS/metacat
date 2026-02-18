@@ -140,7 +140,6 @@ def submit_from_file(id_file):
                 pg_pool.putconn(conn)
             # Wait for all tasks
             concurrent.futures.wait(futures)
-        print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Finished submitting {len(ids)} IDs.")
         logger.info(f"Finished submitting {len(ids)} IDs.")
     except Exception as error:
         logger.error(f"Reindexing failed: {error}")
