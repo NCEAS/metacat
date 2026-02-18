@@ -79,72 +79,76 @@ def lookup_docid_and_format(conn, guid):
 # ------------------------------------------------------------
 
 def submit_from_file(id_file):
-    ids = read_ids_from_file(id_file)
-    if not ids:
-        logger.warn("No IDs found in file.")
-        return
-    non_data_formats = load_non_data_format_ids()
-    logger.debug(f"Loaded {len(ids)} IDs from {id_file}")
+    pg_pool = None
+    channel_pool = None
+    try:
+        ids = read_ids_from_file(id_file)
+        if not ids:
+            logger.warn("No IDs found in file.")
+            return
+        non_data_formats = load_non_data_format_ids()
+        logger.debug(f"Loaded {len(ids)} IDs from {id_file}")
 
-    # DB pool
-    pg_pool = pool.ThreadedConnectionPool(
-        minconn=1,
-        maxconn=DB_CONNECTION_POOL_SIZE,
-        **DB_CONFIG
-    )
+        # DB pool
+        pg_pool = pool.ThreadedConnectionPool(
+            minconn=1,
+            maxconn=DB_CONNECTION_POOL_SIZE,
+            **DB_CONFIG
+        )
 
-    # RabbitMQ channel pool
-    channel_pool = AMQPStormChannelPool(
-        RABBITMQ_URL,
-        RABBITMQ_PORT_NUMBER,
-        RABBITMQ_USERNAME,
-        RABBITMQ_PASSWORD,
-        MAX_WORKERS
-    )
+        # RabbitMQ channel pool
+        channel_pool = AMQPStormChannelPool(
+            RABBITMQ_URL,
+            RABBITMQ_PORT_NUMBER,
+            RABBITMQ_USERNAME,
+            RABBITMQ_PASSWORD,
+            MAX_WORKERS
+        )
 
-    with concurrent.futures.ThreadPoolExecutor(
-        max_workers=MAX_WORKERS,
-        thread_name_prefix="FileSubmitter"
-    ) as executor:
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=MAX_WORKERS,
+            thread_name_prefix="FileSubmitter"
+        ) as executor:
 
-        futures = []
-        conn = pg_pool.getconn()
-        try:
-            for guid in ids:
-                row = lookup_docid_and_format(conn, guid)
-                if not row:
-                    logger.warn(f"[WARN] GUID not found in systemmetadata: {guid}")
-                    continue
-                object_format, doc_id = row
-                if object_format in non_data_formats and not doc_id:
-                    doc_id = lookup_docid_with_retry(conn, guid)
+            futures = []
+            conn = pg_pool.getconn()
+            try:
+                for guid in ids:
+                    row = lookup_docid_and_format(conn, guid)
+                    if not row:
+                        logger.warn(f"[WARN] GUID not found in systemmetadata: {guid}")
+                        continue
+                    object_format, doc_id = row
+                    if object_format in non_data_formats and not doc_id:
+                        doc_id = lookup_docid_with_retry(conn, guid)
 
-                if object_format in non_data_formats and not doc_id:
-                    logger.warn(f"[WARN] Skipping {guid}: doc_id not found after multiple try")
-                    continue
+                    if object_format in non_data_formats and not doc_id:
+                        logger.warn(f"[WARN] Skipping {guid}: doc_id not found after multiple try")
+                        continue
 
-                futures.append(
-                    executor.submit(
-                        process_pid_wrapper,
-                        channel_pool,
-                        guid,
-                        object_format,
-                        doc_id
+                    futures.append(
+                        executor.submit(
+                            process_pid_wrapper,
+                            channel_pool,
+                            guid,
+                            object_format,
+                            doc_id
+                        )
                     )
-                )
 
-        finally:
-            pg_pool.putconn(conn)
-
-        # Wait for all tasks
-        concurrent.futures.wait(futures)
-
-    channel_pool.close()
-    pg_pool.closeall()
-
-    print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Finished submitting {len(ids)} IDs.")
-    logger.info(f"Finished submitting {len(ids)} IDs.")
-
+            finally:
+                pg_pool.putconn(conn)
+            # Wait for all tasks
+            concurrent.futures.wait(futures)
+        print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] Finished submitting {len(ids)} IDs.")
+        logger.info(f"Finished submitting {len(ids)} IDs.")
+    except Exception as error:
+        logger.error(f"Reindexing failed: {error}")
+    finally:
+        if (channel_pool):
+            channel_pool.close()
+        if (pg_pool):
+            pg_pool.closeall()
 
 if __name__ == "__main__":
     setup_logging(log_file=log_file, level=logging.DEBUG)
