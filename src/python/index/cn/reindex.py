@@ -5,6 +5,7 @@
 
 import concurrent.futures
 import logging
+import os
 import sys
 import time
 
@@ -30,6 +31,13 @@ from pull_systemmeta_submitter import (
     setup_logging,
     logger as submitter_logger
 )
+
+
+base_dir = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "../../batch-sync/submit-index")
+)
+sys.path.append(base_dir)
+from find_objects_to_reindex import RESULTS_FILE_PATH
 
 log_name = "reindex"
 log_file = f"log/{log_name}.log"
@@ -139,12 +147,16 @@ def submit_from_file(id_file):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python3 reindex.py <id_file>")
-        sys.exit(1)
     setup_logging(log_file=log_file, level=logging.DEBUG)
     # Create a "reindex" child logger using the same handlers
     logger = submitter_logger.getChild(log_name)
     # Remove the parent prefix
     logger.name = log_name
-    submit_from_file(sys.argv[1])
+    file = None
+    if len(sys.argv) != 2:
+        file = RESULTS_FILE_PATH
+        logger.info(f"Use the default path {file}")
+    else:
+        file = sys.argv[1]
+        logger.info(f"Use the user specified path {file}")
+    submit_from_file(file)
