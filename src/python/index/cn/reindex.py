@@ -1,8 +1,9 @@
 # Submit index tasks for a list of identifiers (one per line).
 # Please edit the pull_systemmetadata_submitter properties first.
 #Usage:
-#    python3 reindex.py ids.txt
+#    python3 reindex.py -f ids.txt
 
+import argparse
 import concurrent.futures
 import logging
 import os
@@ -156,10 +157,21 @@ if __name__ == "__main__":
     # Remove the parent prefix
     logger.name = log_name
     file = None
-    if len(sys.argv) != 2:
+    parser = argparse.ArgumentParser(description="Submit objects from a file for reindexing.")
+    parser.add_argument(
+        "-f",
+        "--file",
+        nargs="?",                 # Makes the argument optional after -f
+        const=None,                # If -f is given without value
+        default=None,              # If -f is not given at all
+        help="Path to the results file"
+    )
+    # This allows unknown arguments
+    args, unknown = parser.parse_known_args()
+    if args.file:
+        file = args.file
+        logger.info(f"Use the user specified path {file}")
+    else:
         file = RESULTS_FILE_PATH
         logger.info(f"Use the default path {file}")
-    else:
-        file = sys.argv[1]
-        logger.info(f"Use the user specified path {file}")
     submit_from_file(file)
