@@ -85,7 +85,7 @@ def submit_from_file(id_file):
     try:
         ids = read_ids_from_file(id_file)
         if not ids:
-            logger.warn("No IDs found in file.")
+            logger.warning("No IDs found in file.")
             return
         non_data_formats = load_non_data_format_ids()
         logger.debug(f"Loaded {len(ids)} IDs from {id_file}")
@@ -117,14 +117,14 @@ def submit_from_file(id_file):
                 for guid in ids:
                     row = lookup_docid_and_format(conn, guid)
                     if not row:
-                        logger.warn(f"[WARN] GUID not found in systemmetadata: {guid}")
+                        logger.warning(f"[WARN] GUID not found in systemmetadata: {guid}")
                         continue
                     object_format, doc_id = row
                     if object_format in non_data_formats and not doc_id:
                         doc_id = lookup_docid_with_retry(conn, guid)
 
                     if object_format in non_data_formats and not doc_id:
-                        logger.warn(f"[WARN] Skipping {guid}: doc_id not found after multiple try")
+                        logger.warning(f"[WARN] Skipping {guid}: doc_id not found after multiple try")
                         continue
 
                     futures.append(
