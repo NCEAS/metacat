@@ -72,9 +72,12 @@ Used to handle objects that may have been missed by `pull_systemmeta_submitter.p
 1. Ensure database, RabbitMQ, and Solr are configured in `pull_systemmeta_submitter.py`.
 2. Run the script with a file containing PIDs:
    ```bash
-   python3 reindex.py <filename-containing-ids>
+   python3 reindex.py -f <filename-containing-ids>
    ```  
   - The file must contain **one PID per line**.
+  - If `-f` is omitted or provided without a value, the default file path will be used.
+    The default path is defined by `RESULTS_FILE_PATH` in
+    `metacat/src/python/batch-sync/submit-index/find_objects_to_reindex.py`.
 3. Default log file: `log/reindex.log` (customizable in the script).
 
 ---
