@@ -631,11 +631,34 @@ public class D1ResourceHandler {
     /**
      * Write the bytes (either whole object file or a specified range) back to the client
      * @param data the input stream contains the bytes of the object
+     * @throws IOException
+     * @throws InvalidRequest
      */
-    protected void writeToResponse(InputStream data) throws IOException {
-        response.setStatus(200);
+    protected void writeToResponse(InputStream data) throws IOException, InvalidRequest {
+        ByteRange range = ByteRange.parseRange(request);
+        response.setHeader("Accept-Ranges", "bytes");
         try (OutputStream out = response.getOutputStream()) {
-            IOUtils.copyLarge(data, out);
+            if (range == null) {
+                // Full stream, size unknown
+                response.setStatus(200);
+                IOUtils.copyLarge(data, out);
+            } else {
+                // Partial content
+                response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+                if (range.getEnd() != null) {
+                    long length = range.getEnd().longValue() - range.getStart() + 1;
+                    response.setHeader("Content-Range",
+                                       "bytes " + range.getStart() + "-" + range.getEnd()
+                                           .longValue() + "/*");
+                    IOUtils.skipFully(data, range.getStart());
+                    IOUtils.copyLarge(data, out, 0, length);
+                } else {
+                    // Open-ended range
+                    response.setHeader("Content-Range", "bytes " + range.getStart() + "-/*");
+                    IOUtils.skipFully(data, range.getStart());
+                    IOUtils.copyLarge(data, out);
+                }
+            }
             out.flush();
         }
     }
