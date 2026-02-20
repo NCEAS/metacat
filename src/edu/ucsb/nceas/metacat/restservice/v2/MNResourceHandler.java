@@ -1342,8 +1342,6 @@ public class MNResourceHandler extends D1ResourceHandler {
     protected void getObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized,
                                                 InterruptedException, NotFound, InvalidRequest,
                                                 NotImplemented, IOException, MarshallingException {
-        OutputStream out = null;
-
         if (pid != null) { //get a specific document
             long start = System.currentTimeMillis();
             Identifier id = new Identifier();
@@ -1417,10 +1415,7 @@ public class MNResourceHandler extends D1ResourceHandler {
             InputStream data = null;
             try {
                 data = MNodeService.getInstance(request).get(session, id);
-                out = response.getOutputStream();
-                response.setStatus(200);
-                IOUtils.copyLarge(data, out);
-                IOUtils.closeQuietly(out);
+                writeToResponse(data);
             } finally {
                 if (data != null) {
                    IOUtils.closeQuietly(data);
@@ -1430,6 +1425,7 @@ public class MNResourceHandler extends D1ResourceHandler {
             logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_GET_METHOD
                     + " Total get method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
         } else {
+            OutputStream out = null;
             //call listObjects with specified params
             Date startTime = null;
             Date endTime = null;

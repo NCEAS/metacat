@@ -2,6 +2,7 @@ package edu.ucsb.nceas.metacat.restservice;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -624,6 +625,18 @@ public class D1ResourceHandler {
                     session.setSubjectInfo(subjectInfo);
                 }
             }
+        }
+    }
+
+    /**
+     * Write the bytes (either whole object file or a specified range) back to the client
+     * @param data the input stream contains the bytes of the object
+     */
+    protected void writeToResponse(InputStream data) throws IOException {
+        response.setStatus(200);
+        try (OutputStream out = response.getOutputStream()) {
+            IOUtils.copyLarge(data, out);
+            out.flush();
         }
     }
 }
