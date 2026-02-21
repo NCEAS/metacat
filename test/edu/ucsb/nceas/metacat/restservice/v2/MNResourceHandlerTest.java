@@ -4,16 +4,21 @@ import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.apache.wicket.protocol.http.mock.MockHttpServletResponse;
 import org.apache.wicket.protocol.http.mock.MockHttpSession;
 import org.apache.wicket.protocol.http.mock.MockServletContext;
+import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Vector;
 
@@ -43,6 +48,7 @@ public class MNResourceHandlerTest {
     protected static final byte HEAD = 5;
 
     private MockHttpServletRequest request;
+    private MockHttpServletResponse response;
     private MockServletContext context;
     private MNResourceHandler resourceHandler;
     private MNodeService mockMNodeService;
@@ -73,8 +79,8 @@ public class MNResourceHandlerTest {
         //  context.addFilter("d1Filter", "edu.ucsb.nceas.metacat.restservice.D1URLFilter");
         // This is OK for now, but may become a problem for the sql query test"
         request = new MockHttpServletRequest(null, new MockHttpSession(context), context);
-        resourceHandler =
-                    new MNResourceHandler(request, new MockHttpServletResponse(request));
+        response = new MockHttpServletResponse(request);
+        resourceHandler = new MNResourceHandler(request, response);
         mockMNodeService = Mockito.mock(MNodeService.class);
         Mockito.when(mockMNodeService.reindex(any(Session.class), any(List.class)))
                                                                     .thenReturn(Boolean.TRUE);
@@ -304,13 +310,57 @@ public class MNResourceHandlerTest {
     }
 
     /**
+     * Test getting a partial object
+     */
+    @Test
+    public void testGetPartialObject() throws Exception {
+        Identifier guid = new Identifier();
+        guid.setValue("testGetPartialObject." + System.currentTimeMillis());
+        request = new MockHttpServletRequest(null, new MockHttpSession(context), context);
+        request.setURL("/object/" + guid.getValue());
+        response = new MockHttpServletResponse(request);
+        try (MockedStatic<MNodeService> staticMock = Mockito.mockStatic(MNodeService.class)) {
+            MNodeService mockMNodeService1 = Mockito.mock(MNodeService.class);
+            // Prepare mock return values
+            String data = "data";
+            ByteArrayInputStream dataStream =
+                new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
+            Mockito.when(mockMNodeService1.get(
+                Mockito.any(),
+                Mockito.any()
+            )).thenReturn(dataStream);
+
+            SystemMetadata sysmeta = new SystemMetadata();
+            sysmeta.setIdentifier(guid);
+            sysmeta.setFileName("file");
+            sysmeta.setFormatId(
+                ObjectFormatCache.getInstance().getFormat("application/octet-stream")
+                    .getFormatId());
+            Mockito.when(mockMNodeService1.getSystemMetadata(
+                Mockito.any(),
+                Mockito.any()
+            )).thenReturn(sysmeta);
+            // static getInstance returns our mock
+            staticMock.when(() ->
+                                MNodeService.getInstance(Mockito.any())
+            ).thenAnswer(invocation -> {
+                return mockMNodeService1;
+            });
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            // Verify response content
+            assertEquals(data, new String(response.getBinaryContent()));
+        }
+    }
+
+    /**
      * Refresh the resource handler with a new request url
      * @param url  the new url will be used in the resource handler
      */
     private void refreshResourceHandler(String url) {
         request = new MockHttpServletRequest(null, new MockHttpSession(context), context);
+        response = new MockHttpServletResponse(request);
         request.setURL(url);
-        resourceHandler =
-                new MNResourceHandler(request, new MockHttpServletResponse(request));
+        resourceHandler = new MNResourceHandler(request, response);
     }
 }
