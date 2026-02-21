@@ -15,6 +15,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
 import java.io.ByteArrayInputStream;
@@ -346,10 +347,46 @@ public class MNResourceHandlerTest {
             ).thenAnswer(invocation -> {
                 return mockMNodeService1;
             });
+            // Entire object
+            response = new MockHttpServletResponse(request);
             resourceHandler = new MNResourceHandler(request, response);
             resourceHandler.handle(GET);
-            // Verify response content
             assertEquals(data, new String(response.getBinaryContent()));
+            // Just get the first character
+            dataStream.reset();
+            request.setHeader("Range", "bytes=0-0");
+            response = new MockHttpServletResponse(request);
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            assertEquals("d", new String(response.getBinaryContent()));
+            // Get two characters
+            dataStream.reset();
+            request.setHeader("Range", "bytes=1-2");
+            response = new MockHttpServletResponse(request);
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            assertEquals("at", new String(response.getBinaryContent()));
+            // Opened end
+            dataStream.reset();
+            request.setHeader("Range", "bytes=2-");
+            response = new MockHttpServletResponse(request);
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            assertEquals("ta", new String(response.getBinaryContent()));
+            // Out of range
+            dataStream.reset();
+            request.setHeader("Range", "bytes=1-7");
+            response = new MockHttpServletResponse(request);
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            assertEquals("ata", new String(response.getBinaryContent()));
+            // Out of range
+            dataStream.reset();
+            request.setHeader("Range", "bytes=7-8");
+            response = new MockHttpServletResponse(request);
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            assertTrue((new String(response.getBinaryContent())).contains("errorCode"));
         }
     }
 
