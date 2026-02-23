@@ -373,6 +373,13 @@ public class MNResourceHandlerTest {
             resourceHandler = new MNResourceHandler(request, response);
             resourceHandler.handle(GET);
             assertEquals("ta", new String(response.getBinaryContent()));
+            // Opened start
+            dataStream.reset();
+            request.setHeader("Range", "bytes=-2");
+            response = new MockHttpServletResponse(request);
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            assertTrue((new String(response.getBinaryContent())).contains("errorCode"));
             // Out of range
             dataStream.reset();
             request.setHeader("Range", "bytes=1-7");
