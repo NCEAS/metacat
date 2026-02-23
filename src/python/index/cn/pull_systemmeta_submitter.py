@@ -554,7 +554,7 @@ def poll_and_submit(non_data_formats):
         while True:
             cycle_start = time.perf_counter()
             try:
-                logger.debug(f"Start new polling cycle.")
+                logger.info("Start a new polling cycle.")
                 # Get latest map of node_ids and timestamps from the file or Solr
                 mn_latest_map = get_full_mn_latest_map()
                 logger.debug("Latest timestamps by node:")
@@ -650,7 +650,7 @@ def poll_and_submit(non_data_formats):
                     for amn, ts in batch_max_time.items():
                         mn_latest_map[amn] = ts.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
                     save_mn_latest_map(mn_latest_map)
-                    logger.debug("Batch completed.")
+                    logger.info("Cycle completed.")
 
             except KeyboardInterrupt:
                 logger.warning(f"Polling interrupted. Exiting.")
