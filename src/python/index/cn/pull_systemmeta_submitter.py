@@ -598,7 +598,7 @@ def poll_and_submit(non_data_formats):
                         length = len(rows)
 
                         if not rows:
-                            logger.debug("No new records. Sleeping.")
+                            logger.info("No new records. Sleeping.")
                             shutdown_event.wait(POLL_INTERVAL)
                             continue
 
