@@ -9,11 +9,10 @@ Users can retrieve a partial object using the HTTP `Range` header with the DataO
 
  - **Rules:**
 
-  - The `start` value **must be specified**.
-  - The first byte of an object is byte `0`.
-  - `start` must be **less than or equal to** `end`.
-  - `end` must be **less than the total object size**.
-  - If `end` is omitted, the response will include all bytes from `start` to the end of the object.
+  - The ``start`` value **must be specified**, and must be **greater than or equal** to ``0`` (since ``0`` denotes the first byte).
+  - ``start`` must be **less than or equal to** ``end``.
+  - ``end`` must be **less than the total object size**.
+  - If ``end`` is omitted, the response will include all bytes from ``start`` to the end of the object.
 
 ::
 
