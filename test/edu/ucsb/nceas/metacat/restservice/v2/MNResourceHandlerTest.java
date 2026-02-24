@@ -5,6 +5,7 @@ import org.apache.wicket.protocol.http.mock.MockHttpServletResponse;
 import org.apache.wicket.protocol.http.mock.MockHttpSession;
 import org.apache.wicket.protocol.http.mock.MockServletContext;
 import org.dataone.client.v2.formats.ObjectFormatCache;
+import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -317,6 +318,7 @@ public class MNResourceHandlerTest {
      */
     @Test
     public void testGetPartialObject() throws Exception {
+        assertNull(request.getHeader("Range"));
         Identifier guid = new Identifier();
         guid.setValue("testGetPartialObject." + System.currentTimeMillis());
         request = new MockHttpServletRequest(null, new MockHttpSession(context), context);
@@ -396,6 +398,51 @@ public class MNResourceHandlerTest {
             resourceHandler = new MNResourceHandler(request, response);
             resourceHandler.handle(GET);
             assertTrue((new String(response.getBinaryContent())).contains("errorCode"));
+            assertNotNull(request.getHeader("Range"));
+            request.setHeader("Range", null);
+            assertNull(request.getHeader("Range"));
+        }
+    }
+
+    /**
+     * Test getting a partial private object
+     */
+    @Test
+    public void testGetPartialPrivateObject() throws Exception {
+        assertNull(request.getHeader("Range"));
+        Identifier guid = new Identifier();
+        guid.setValue("testGetPartialObject." + System.currentTimeMillis());
+        request = new MockHttpServletRequest(null, new MockHttpSession(context), context);
+        request.setURL("/object/" + guid.getValue());
+        response = new MockHttpServletResponse(request);
+        try (MockedStatic<MNodeService> staticMock = Mockito.mockStatic(MNodeService.class)) {
+            MNodeService mockMNodeService1 = Mockito.mock(MNodeService.class);
+            // Prepare mock return values
+            Mockito.when(mockMNodeService1.get(
+                Mockito.any(),
+                Mockito.any()
+            )).thenThrow(new NotAuthorized("0000", "User is not authorized"));
+            Mockito.when(mockMNodeService1.getSystemMetadata(
+                Mockito.any(),
+                Mockito.any()
+            )).thenThrow(new NotAuthorized("0000", "User is not authorized"));
+            // static getInstance returns our mock
+            staticMock.when(() ->
+                                MNodeService.getInstance(Mockito.any())
+            ).thenAnswer(invocation -> {
+                return mockMNodeService1;
+            });
+            // Entire object
+            response = new MockHttpServletResponse(request);
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            assertTrue((new String(response.getBinaryContent())).contains("NotAuthorized"));
+            request.setHeader("Range", "bytes=0-0");
+            response = new MockHttpServletResponse(request);
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            assertTrue((new String(response.getBinaryContent())).contains("NotAuthorized"));
+            // Reset the header
             assertNotNull(request.getHeader("Range"));
             request.setHeader("Range", null);
             assertNull(request.getHeader("Range"));
