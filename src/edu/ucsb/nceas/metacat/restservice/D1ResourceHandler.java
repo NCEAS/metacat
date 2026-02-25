@@ -650,6 +650,7 @@ public class D1ResourceHandler {
                     response.setHeader("Content-Range",
                                        "bytes " + range.getStart() + "-" + range.getEnd()
                                            .longValue() + "/*");
+                    response.setHeader("Content-Length",Long.toString(length));
                     IOUtils.skipFully(data, range.getStart());
                     IOUtils.copyLarge(data, out, 0, length);
                 } else {
