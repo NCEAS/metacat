@@ -1,5 +1,6 @@
 package edu.ucsb.nceas.metacat.restservice;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -644,6 +645,15 @@ public class D1ResourceHandler {
                 IOUtils.copyLarge(data, out);
             } else {
                 // Partial content
+                try {
+                    IOUtils.skipFully(data, range.getStart());
+                } catch (IllegalArgumentException | EOFException e) {
+                    // Incorrect the start number
+                    response.setStatus(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+                    throw new InvalidRequest("1010",
+                                             "Incorrect the start byte " + range.getStart() + ". "
+                                                 + e.getMessage());
+                }
                 response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
                 if (range.getEnd() != null) {
                     long length = range.getEnd().longValue() - range.getStart() + 1;
@@ -651,12 +661,10 @@ public class D1ResourceHandler {
                                        "bytes " + range.getStart() + "-" + range.getEnd()
                                            .longValue() + "/*");
                     response.setHeader("Content-Length",Long.toString(length));
-                    IOUtils.skipFully(data, range.getStart());
                     IOUtils.copyLarge(data, out, 0, length);
                 } else {
                     // Open-ended range
                     response.setHeader("Content-Range", "bytes " + range.getStart() + "-/*");
-                    IOUtils.skipFully(data, range.getStart());
                     IOUtils.copyLarge(data, out);
                 }
             }
