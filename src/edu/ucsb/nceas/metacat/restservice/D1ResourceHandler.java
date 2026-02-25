@@ -651,7 +651,8 @@ public class D1ResourceHandler {
                     // Incorrect the start number
                     response.setStatus(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
                     throw new InvalidRequest("1010",
-                                             "Incorrect the start byte " + range.getStart() + ". "
+                                             "Start byte (" + range.getStart() + ") must be "
+                                                 + "between 0 and the end byte (inclusive). "
                                                  + e.getMessage());
                 }
                 response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
