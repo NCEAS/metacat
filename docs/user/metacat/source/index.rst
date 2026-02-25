@@ -113,6 +113,8 @@ Contents
    oaipmh
    event-logging
    sitemaps
+   retrieving-partial-objects
+   readonly
    metacat-properties
    development
 
