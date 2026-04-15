@@ -480,7 +480,10 @@ def lookup_docid_with_retry(conn, guid):
             res = cur.fetchone()
             if res and res[0]:
                 return res[0]
-        logger.warning(f"Retry {attempt}/{DOCID_MAX_RETRIES}: doc_id still missing for {guid}")
+        if attempt == DOCID_MAX_RETRIES:
+            logger.warning(
+                f"Final retry ({attempt}/{DOCID_MAX_RETRIES}): doc_id still missing for {guid}"
+            )
         time.sleep(DOCID_WAIT_SEC)
 
     return None
