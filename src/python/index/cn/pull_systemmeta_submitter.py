@@ -557,10 +557,6 @@ def poll_and_submit(non_data_formats):
                 logger.info("Start a new polling cycle.")
                 # Get latest map of node_ids and timestamps from the file or Solr
                 mn_latest_map = get_full_mn_latest_map()
-                logger.debug("Latest timestamps by node:")
-                for k, v in mn_latest_map.items():
-                    logger.debug(f"   {k} -> {v}")
-
                 # Build JSON payload for all nodes
                 payload = json.dumps([
                     {"amn": k, "last_time": v}  # use string directly
