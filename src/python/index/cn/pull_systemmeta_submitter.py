@@ -613,6 +613,11 @@ def poll_and_submit(non_data_formats):
                                 # cannot be found
                                 if object_format in non_data_formats and not doc_id:
                                     logger.info(f"Skipping guid {guid}: doc_id not found after {DOCID_MAX_RETRIES} retries")
+                                    # Event though the guid is skipped, we still need to set its
+                                    # date as the last modified_time
+                                    batch_max_time[amn] = max(batch_max_time.get(amn, modified_time),
+                                        modified_time
+                                    )
                                     continue
 
                                 # Submit task to thread pool
@@ -646,10 +651,10 @@ def poll_and_submit(non_data_formats):
                         for f in futures:
                             f.cancel()
                         raise
-                    for amn, ts in batch_max_time.items():
-                        mn_latest_map[amn] = ts.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-                    save_mn_latest_map(mn_latest_map)
-                    logger.info("Cycle completed.")
+                for amn, ts in batch_max_time.items():
+                    mn_latest_map[amn] = ts.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+                save_mn_latest_map(mn_latest_map)
+                logger.info("Cycle completed.")
 
             except KeyboardInterrupt:
                 logger.warning(f"Polling interrupted. Exiting.")
