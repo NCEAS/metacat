@@ -132,26 +132,37 @@ class AMQPStormChannelPool:
         self._initialize_pool()
 
     def _initialize_pool(self):
-        # NEVER hold lock while connecting
-        self._close_all()
-        try:
-            conn = Connection(
-                self.host,
-                self.username,
-                self.password,
-                port=self.port,
-                heartbeat=30,
-                timeout=10
-            )
-        except Exception as e:
-            logger.error(f"[CHANNEL POOL] Failed to connect to RabbitMQ: {e}")
-            self._healthy = False
-            raise
+        # Create connection OUTSIDE lock
+        conn = self._create_connection()
         with self._lock:
-            self._connection = conn
-            self._healthy = True
-            for _ in range(self.pool_size):
-                self._channels.put(self._create_new_channel())
+            if not self._is_healthy():  # double-check
+                self._close_all_locked()
+                self._connection = conn
+                self._healthy = True
+                # rebuild pool
+                for _ in range(self.pool_size):
+                    try:
+                        self._channels.put(self._create_new_channel())
+                    except Exception:
+                        pass
+            else:
+                # Another thread already fixed it → discard extra connection
+                try:
+                    new_conn.close()
+                except Exception:
+                    pass
+
+    # NEVER hold lock while performing network I/O (connection creation)
+    # Only lock when mutating shared state. So please don't put this method into a lock
+    def _create_connection(self):
+        return Connection(
+            self.host,
+            self.username,
+            self.password,
+            port=self.port,
+            heartbeat = 120,
+            timeout = 10
+        )
 
     def _create_new_channel(self):
         if not self._connection or not self._connection.is_open:
@@ -173,17 +184,75 @@ class AMQPStormChannelPool:
         channel.queue.bind(QUEUE_NAME, EXCHANGE_NAME, ROUTING_KEY)
 
 
-    def acquire_channel(self):
-        if not self._is_healthy():
-            logger.info("[CHANNEL POOL] Connection unhealthy. Reinitializing.")
-            self._initialize_pool()
-        try:
-            channel = self._channels.get_nowait()
-        except queue.Empty:
-            return self._create_new_channel()
-        if not channel or not channel.is_open:
-            return self._create_new_channel()
-        return channel
+    # Acquire channel (core)
+    def acquire_channel(self, max_retries=3):
+        attempt = 0
+        while attempt <= max_retries:
+            if attempt > 0:
+                logger.info(f"[CHANNEL POOL] acquire retry #{attempt}")
+            # --- Step 1: ensure healthy connection ---
+            if not self._is_healthy():
+                # Create connection OUTSIDE lock
+                try:
+                    new_conn = self._create_connection()
+                except Exception as e:
+                    if attempt >= max_retries:
+                        raise RuntimeError(f"Failed to connect after retries: {e}")
+                    time.sleep(0.5 * (2 ** attempt))
+                    attempt += 1
+                    continue
+                # Swap inside lock to create channels
+                with self._lock:
+                    # Double check inside the the lock to see if another thread fixed the issue
+                    if not self._is_healthy():
+                        self._close_all_locked()
+                        self._connection = new_conn
+                        self._healthy = True
+                        # rebuild pool
+                        while not self._channels.empty():
+                            try:
+                                ch = self._channels.get_nowait()
+                                if ch and ch.is_open:
+                                    ch.close()
+                            except Exception:
+                                pass
+                        for _ in range(self.pool_size):
+                            try:
+                                self._channels.put(self._create_new_channel())
+                            except Exception:
+                                pass
+                    else:
+                        # Another thread fixed it
+                        try:
+                            new_conn.close()
+                        except Exception:
+                            pass
+            # --- Step 2: acquire channel ---
+            try:
+                ch = self._channels.get_nowait()
+            except queue.Empty:
+                # pool exhausted → create extra channel
+                try:
+                    return self._create_new_channel()
+                except Exception:
+                    self.mark_unhealthy()
+                    attempt += 1
+                    continue
+            # --- Step 3: validate channel ---
+            if not ch or not ch.is_open:
+                try:
+                    return self._create_new_channel()
+                except Exception:
+                    self.mark_unhealthy()
+                    attempt += 1
+                    continue
+            if not self._connection or not self._connection.is_open:
+                self.mark_unhealthy()
+                attempt += 1
+                continue
+            return ch
+        raise RuntimeError("Failed to acquire healthy channel after retries")
+
 
     def release_channel(self, channel):
         if not channel or not channel.is_open:
@@ -196,7 +265,7 @@ class AMQPStormChannelPool:
             except Exception:
                 pass
 
-    def _close_all(self):
+    def _close_all_locked(self):
         while not self._channels.empty():
             try:
                 ch = self._channels.get_nowait()
@@ -204,6 +273,7 @@ class AMQPStormChannelPool:
                     ch.close()
             except Exception:
                 pass
+
         if self._connection and self._connection.is_open:
             try:
                 self._connection.close()
@@ -212,7 +282,8 @@ class AMQPStormChannelPool:
 
     def close(self):
         with self._lock:
-            self._close_all()
+            self._close_all_locked()
+            self._healthy = False
 
 
 # Database connection parameters
