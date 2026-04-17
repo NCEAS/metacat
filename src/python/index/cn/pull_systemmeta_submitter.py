@@ -586,10 +586,6 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
                     properties={'headers': headers, 'priority': priority}
                 )
                 logger.debug(f"Published guid {guid} into RabbitMQ")
-            except (AMQPConnectionError, AMQPChannelError, OSError) as e:
-                    logger.error(f"[ERROR] RabbitMQ publish failed for {guid}: {e}")
-                    channel_pool.mark_unhealthy()
-                    raise   # VERY IMPORTANT
             finally:
                 if channel:
                     try:
@@ -598,10 +594,13 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
                         pass
         else:
             logger.warning(f"[{thread_name}] No GUID found in the query")
-    except AMQPError as amqp_err:
+    except (AMQPConnectionError, AMQPChannelError, AMQPError) as amqp_err:
         logger.error(f"[ERROR] [{thread_name}] AMQPStorm error while processing PID {guid}: {amqp_err}")
+        channel_pool.mark_unhealthy()
+        raise
     except Exception as e:
         logger.error(f"[ERROR] [{thread_name}] Unexpected error while processing PID {guid}: {e}")
+        raise
     return None
 
 """
