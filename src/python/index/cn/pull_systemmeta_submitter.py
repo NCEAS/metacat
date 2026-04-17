@@ -197,7 +197,7 @@ class AMQPStormChannelPool:
                     new_conn = self._create_connection()
                 except Exception as e:
                     if attempt >= max_retries:
-                        raise RuntimeError(f"Failed to connect after retries: {e}")
+                        raise AMQPConnectionError(f"Failed to connect RabbitMQ after retries: {e}")
                     time.sleep(0.5 * (2 ** attempt))
                     attempt += 1
                     continue
@@ -251,7 +251,7 @@ class AMQPStormChannelPool:
                 attempt += 1
                 continue
             return ch
-        raise RuntimeError("Failed to acquire healthy channel after retries")
+        raise AMQPChannelError("Failed to acquire healthy RabbitMQ channel after retries")
 
 
     def release_channel(self, channel):
