@@ -610,13 +610,9 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
 """
 def poll_and_submit(non_data_formats):
     global pg_pool
+    global channel_pool
     worker_timeout_sec = MAX_ROWS/MAX_WORKERS * 0.25
     logger.debug(f"The timeout for workers to completed jobs for a batch is {worker_timeout_sec}")
-    channel_pool = AMQPStormChannelPool(
-        RABBITMQ_URL, RABBITMQ_PORT_NUMBER,
-        RABBITMQ_USERNAME, RABBITMQ_PASSWORD,
-        MAX_WORKERS
-    )
 
     non_data_formats = set(non_data_formats)
 
@@ -754,4 +750,16 @@ if __name__ == "__main__":
             maxconn = DB_CONNECTION_POOL_SIZE,
             **DB_CONFIG
     )
+    while True:
+        try:
+            channel_pool = AMQPStormChannelPool(
+                    RABBITMQ_URL, RABBITMQ_PORT_NUMBER,
+                    RABBITMQ_USERNAME, RABBITMQ_PASSWORD,
+                    MAX_WORKERS
+            )
+            break
+        except AMQPError as amqp_err:
+                logger.error(f"[ERROR] AMQPStorm error while initializing the RabbitMQ channel pool: {amqp_err}. It will retry again.")
+                # Sleep 10 seconds
+                time.sleep(10)
     poll_and_submit(non_data_formats)
