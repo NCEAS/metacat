@@ -42,7 +42,7 @@ CN_URL = "https://cn.dataone.org/cn/v2"
 RABBITMQ_URL = "localhost"
 RABBITMQ_PORT_NUMBER = 5672
 SOLR_URL = "http://localhost:8983/solr/metacat-index/select"
-POLL_INTERVAL = 50  # second
+PULL_INTERVAL = 50  # second
 MAX_ROWS = 4000
 EVERY_SUBMIT_WAIT_TIME_SEC = 0.01
 # Number of worker threads to submit index tasks to RabbitMQ
@@ -135,7 +135,7 @@ class AMQPStormChannelPool:
         # Create connection OUTSIDE lock
         conn = self._create_connection()
         with self._lock:
-            if not self._is_healthy():  # double-check
+            if not self.is_healthy():  # double-check
                 self._close_all_locked()
                 self._connection = conn
                 self._healthy = True
@@ -171,7 +171,7 @@ class AMQPStormChannelPool:
         self.ensure_topology(channel)
         return channel
 
-    def _is_healthy(self):
+    def is_healthy(self):
         return self._healthy and self._connection and self._connection.is_open
 
     def mark_unhealthy(self):
@@ -191,7 +191,7 @@ class AMQPStormChannelPool:
             if attempt > 0:
                 logger.info(f"[CHANNEL POOL] acquire retry #{attempt}")
             # --- Step 1: ensure healthy connection ---
-            if not self._is_healthy():
+            if not self.is_healthy():
                 # Create connection OUTSIDE lock
                 try:
                     new_conn = self._create_connection()
@@ -204,7 +204,7 @@ class AMQPStormChannelPool:
                 # Swap inside lock to create channels
                 with self._lock:
                     # Double check inside the the lock to see if another thread fixed the issue
-                    if not self._is_healthy():
+                    if not self.is_healthy():
                         self._close_all_locked()
                         self._connection = new_conn
                         self._healthy = True
@@ -623,7 +623,16 @@ def poll_and_submit(non_data_formats):
         while True:
             cycle_start = time.perf_counter()
             try:
-                logger.info("Start a new polling cycle.")
+                logger.info("Start a new pulling cycle.")
+                # Check if the connection to RabbitMQ is healthy
+                if not channel_pool.is_healthy():
+                    # Try to reconnect RabbitMQ by acquiring a channel if the connection is not healthy
+                    try:
+                        channel_pool.acquire_channel()
+                    except (AMQPConnectionError, AMQPChannelError, AMQPError) as amqp_err:
+                        logger.error(f"Cannot connect RabbitMQ since {amqp_err}. The submitter will try the pull process later")
+                        shutdown_event.wait(PULL_INTERVAL)
+                        continue
                 # Get latest map of node_ids and timestamps from the file or Solr
                 mn_latest_map = get_full_mn_latest_map()
                 # Build JSON payload for all nodes
@@ -664,7 +673,7 @@ def poll_and_submit(non_data_formats):
 
                         if not rows:
                             logger.info("No new records. Sleeping.")
-                            shutdown_event.wait(POLL_INTERVAL)
+                            shutdown_event.wait(PULL_INTERVAL)
                             continue
 
                         # Process rows
@@ -708,15 +717,26 @@ def poll_and_submit(non_data_formats):
                         pg_pool.putconn(conn)
 
                 # Wait for all workers
+                disconnectionHappened = None
                 if futures:
                     try:
-                        wait(futures, timeout=worker_timeout_sec)
+                        done, not_done = wait(futures, timeout=worker_timeout_sec)
+                        for f in done:
+                            exc = f.exception()
+                            if exc:
+                                if isinstance(exc, (AMQPConnectionError, AMQPChannelError, AMQPError)):
+                                    logger.info("In the previous pull, at least one RabbitMQ disconnection happened.")
+                                    disconnectionHappened = True
+                                    break
                     except KeyboardInterrupt:
                         logger.warning(f"Interrupted while waiting for workers.")
                         shutdown_event.set()
                         for f in futures:
                             f.cancel()
                         raise
+                if disconnectionHappened:
+                    logger.info("In the previous pull, one RabbitMQ disconnection happened. The entire pull will be discard and try again.")
+                    continue
                 for amn, ts in batch_max_time.items():
                     mn_latest_map[amn] = ts.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
                 save_mn_latest_map(mn_latest_map)
@@ -732,7 +752,7 @@ def poll_and_submit(non_data_formats):
 
             # --- Sleep regardless success or failure to maintain poll interval ---
             elapsed = time.perf_counter() - cycle_start
-            sleep_time = max(0, POLL_INTERVAL - elapsed)
+            sleep_time = max(0, PULL_INTERVAL - elapsed)
             if sleep_time > 0:
                 shutdown_event.wait(sleep_time)
 
