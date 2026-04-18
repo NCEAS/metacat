@@ -9,6 +9,7 @@
 import asyncio
 import aiohttp
 import concurrent.futures
+import configparser
 import fcntl
 import psycopg2
 import json
@@ -31,18 +32,23 @@ from psycopg2 import pool
 from queue import Empty
 from urllib.parse import urljoin
 
+# Get the settings from config.ini
+config = configparser.ConfigParser()
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+config.read(os.path.join(BASE_DIR, "config.ini"))
 
+RABBITMQ_USERNAME = config["rabbitmq"]["username"]
+RABBITMQ_PASSWORD = config["rabbitmq"]["password"]
+RABBITMQ_URL = config["rabbitmq"]["hostname"]
+RABBITMQ_PORT_NUMBER = int(config["rabbitmq"]["port"])
+
+DB_USERNAME = config["database"]["username"]
+DB_PASSWORD = config["database"]["password"]
+
+CN_URL = config["services"]["cn_url"]
+SOLR_URL = config["services"]["solr_url"]
 
 # --- Configuration ---
-# Replace with your RabbitMQ and database credentials
-RABBITMQ_USERNAME = "guest"
-RABBITMQ_PASSWORD = "guest"
-DB_USERNAME = "metacat"
-DB_PASSWORD = "metacat"
-CN_URL = "https://cn.dataone.org/cn/v2"
-RABBITMQ_URL = "localhost"
-RABBITMQ_PORT_NUMBER = 5672
-SOLR_URL = "http://localhost:8983/solr/metacat-index/select"
 PULL_INTERVAL = 50  # second
 MAX_ROWS = 4000
 EVERY_SUBMIT_WAIT_TIME_SEC = 0.01
@@ -75,9 +81,7 @@ MN_STATE_FILE = ".mn_latest_modified_map.json"
 LOG_LEVEL = logging.DEBUG
 LOGGER_NAME = "pull_systemmeta_submitter"
 LOG_FILE = f"log/{LOGGER_NAME}.log"
-
 shutdown_event = threading.Event()
-
 logger = logging.getLogger(LOGGER_NAME)
 
 # Settings for not showing the log from some libraries
