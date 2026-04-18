@@ -28,6 +28,7 @@ from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from psycopg2 import pool
+from queue import Empty
 from urllib.parse import urljoin
 
 
@@ -129,9 +130,9 @@ class AMQPStormChannelPool:
         self._connection = None
         self._channels = queue.Queue(maxsize=pool_size)
         self._healthy = False
-        self._initialize_pool()
+        self.initialize_pool()
 
-    def _initialize_pool(self):
+    def initialize_pool(self):
         # Create connection OUTSIDE lock
         conn = self._create_connection()
         with self._lock:
@@ -140,11 +141,7 @@ class AMQPStormChannelPool:
                 self._connection = conn
                 self._healthy = True
                 # rebuild pool
-                for _ in range(self.pool_size):
-                    try:
-                        self._channels.put(self._create_new_channel())
-                    except Exception:
-                        pass
+                self._reset_pool()
             else:
                 # Another thread already fixed it → discard extra connection
                 try:
@@ -209,18 +206,7 @@ class AMQPStormChannelPool:
                         self._connection = new_conn
                         self._healthy = True
                         # rebuild pool
-                        while not self._channels.empty():
-                            try:
-                                ch = self._channels.get_nowait()
-                                if ch and ch.is_open:
-                                    ch.close()
-                            except Exception:
-                                pass
-                        for _ in range(self.pool_size):
-                            try:
-                                self._channels.put(self._create_new_channel())
-                            except Exception:
-                                pass
+                        self._reset_pool()
                     else:
                         # Another thread fixed it
                         try:
@@ -284,6 +270,27 @@ class AMQPStormChannelPool:
         with self._lock:
             self._close_all_locked()
             self._healthy = False
+
+    # This method is not thread safe and the caller should have a lock for it
+    def _reset_pool(self):
+        # Drain
+        while True:
+            try:
+                ch = self._channels.get_nowait()
+            except Empty:
+                break
+            try:
+                if ch and ch.is_open:
+                    ch.close()
+            except Exception:
+                pass
+        # Rebuild
+        for _ in range(self.pool_size):
+            try:
+                ch = self._create_new_channel()
+                self._channels.put(ch)
+            except Exception as e:
+                logger.warning(f"Failed to create channel: {e}")
 
 
 # Database connection parameters
@@ -626,9 +633,9 @@ def poll_and_submit(non_data_formats):
                 logger.info("Start a new pulling cycle.")
                 # Check if the connection to RabbitMQ is healthy
                 if not channel_pool.is_healthy():
-                    # Try to reconnect RabbitMQ by acquiring a channel if the connection is not healthy
+                    # Reconnect RabbitMQ by initializing the pool if the connection is not healthy
                     try:
-                        channel_pool.acquire_channel()
+                        channel_pool.initialize_pool()
                     except (AMQPConnectionError, AMQPChannelError, AMQPError) as amqp_err:
                         logger.error(f"Cannot connect RabbitMQ since {amqp_err}. The submitter will try the pull process later")
                         shutdown_event.wait(PULL_INTERVAL)
