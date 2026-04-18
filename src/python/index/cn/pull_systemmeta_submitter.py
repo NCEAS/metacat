@@ -1,6 +1,7 @@
 # This script pulls new records from the systemmetadata table periodically and submit the
 # information as the index tasks to the RabbitMQ service.
 # Needed libraries:
+# pip3 install aiohttp
 # pip3 install psycopg2-binary
 # pip3 install amqpstorm
 # You may run this script on the background by this command:
