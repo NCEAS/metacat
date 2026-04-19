@@ -1,5 +1,5 @@
 # Submit index tasks for a list of identifiers (one per line).
-# Please edit the pull_systemmetadata_submitter properties first.
+# Please edit config.ini first.
 #Usage:
 #    python3 reindex.py -f ids.txt
 
@@ -33,12 +33,7 @@ from pull_systemmeta_submitter import (
     logger as submitter_logger
 )
 
-
-base_dir = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "../../batch-sync/submit-index")
-)
-sys.path.append(base_dir)
-from find_objects_to_reindex import RESULTS_FILE_PATH
+DEFAULT_IDS_FILE_PATH = "/var/metacat/.metacat/reindex-script/pids_to_process.txt"
 
 log_name = "reindex"
 log_file = f"log/{log_name}.log"
@@ -172,6 +167,6 @@ if __name__ == "__main__":
         file = args.file
         logger.info(f"Use the user specified path {file}")
     else:
-        file = RESULTS_FILE_PATH
+        file = DEFAULT_IDS_FILE_PATH
         logger.info(f"Use the default path {file}")
     submit_from_file(file)
