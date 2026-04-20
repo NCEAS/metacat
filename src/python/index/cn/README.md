@@ -16,12 +16,12 @@ This is the main index task generator. It:
 - Periodically pulls new records from the Metacat `systemmetadata` table.
 - Generates and sends index tasks to RabbitMQ.
 
-**Important:** Configure database, RabbitMQ, and Solr settings in the script before running.
+**Important:** Configure database, RabbitMQ, and Solr settings in `config.ini` before running.
 
 ### `delete_systemmeta_listener.py`
 This script handles delete actions from Metacat and sends delete index tasks to RabbitMQ.
 
-**Note:** Ensure database, RabbitMQ, and Solr are configured in `pull_systemmeta_submitter.py` before running.
+**Note:** Ensure database, RabbitMQ, and Solr are configured in `config.ini` before running.
 
 ### `reindex.py`
 Used to handle objects that may have been missed by `pull_systemmeta_submitter.py`.
@@ -29,7 +29,7 @@ Used to handle objects that may have been missed by `pull_systemmeta_submitter.p
 - Feed the script with a file containing a list of PIDs to index (one PID per line).
 - The script will iterate through the file, submit the index tasks, and exit when done.
 
-**Note:** Configure database, RabbitMQ, and Solr in `pull_systemmeta_submitter.py` before running.
+**Note:** Configure database, RabbitMQ, and Solr in `config.ini` before running.
 
 ---
 
@@ -37,7 +37,7 @@ Used to handle objects that may have been missed by `pull_systemmeta_submitter.p
 
 ### `pull_systemmeta_submitter.py`
 
-1. Configure database, RabbitMQ, and Solr in the script.
+1. Configure database, RabbitMQ, and Solr in `config.ini`.
 2. Run the script in the background:
    ```bash
    nohup python3 pull_systemmeta_submitter.py &
@@ -52,8 +52,8 @@ Used to handle objects that may have been missed by `pull_systemmeta_submitter.p
 
 ### `delete_systemmeta_listener.py`
 
-1. Ensure database, RabbitMQ, and Solr are configured in `pull_systemmeta_submitter.py`.
-2. Create a trigger in the Metacat database:
+1. Ensure database, RabbitMQ, and Solr are configured in `config.ini`.
+2. Create a trigger in the Metacat database (only need to run once):
    ```bash
    psql -h localhost -U <database-username> <database-name> < metacat/src/scripts/sql/systemmetadata-trigger.sql
    ```  
@@ -69,7 +69,7 @@ Used to handle objects that may have been missed by `pull_systemmeta_submitter.p
 
 ### `reindex.py`
 
-1. Ensure database, RabbitMQ, and Solr are configured in `pull_systemmeta_submitter.py`.
+1. Ensure database, RabbitMQ, and Solr are configured in `config.ini`.
 2. Run the script with a file containing PIDs:
    ```bash
    python3 reindex.py -f <filename-containing-ids>
