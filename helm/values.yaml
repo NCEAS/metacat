@@ -1161,10 +1161,6 @@ dataone-indexer:
     additionalConfig: {}
 
   solr:
-    ## @param dataone-indexer.solr.javaMem Java memory options to pass to the Solr container
-    ##
-    javaMem: "-Xms512m -Xmx2g"
-
     ## @param dataone-indexer.solr.customCollection name of the solr collection to use
     ## (optional override of indexer-assigned name). Do not leave blank!
     ## NOTE: if you change this value after having run metacat for the first time, you may need
