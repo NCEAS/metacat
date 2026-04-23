@@ -1,8 +1,17 @@
 # Metacat Release Notes
 
-> [!CAUTION]
-> If you are upgrading from a helm chart version earlier than 2.1.0, please see the [Upgrade
-> Notes](#chart-upgrade-notes) below. Failure to do so may result in loss of data!
+> [!IMPORTANT]
+> **Helm Charts:**
+> 1. If you are upgrading from a helm chart version earlier than 2.1.0, please see the [Upgrade Notes](#chart-upgrade-notes) below. Failure to do so may result in loss of data!
+> 2. We are continuing to move away from using Bitnami helm charts for production dependencies. The Metacat chart now assumes you will provide your own instances of PostgreSQL and RabbitMQ, which are no longer included as sub-charts. You are free to choose any method of deploying these dependencies; we have had success with:
+>    - CloudNative PG Operator to deploy your PostgreSQL cluster - see [Appendix 5 of the helm/README.md](./helm/README.md#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg)
+>    - RabbitMQ Cluster Operator to deploy your RabbitMQ cluster - see [Appendix 6 of the helm/README.md](./helm/README.md#appendix-6-the-rabbitmq-cluster-operator)
+
+## Release Notes for helm chart 4.1.0
+
+**Release date: 2026-04-23**
+
+This is a chart-only release, with no changes to the Metacat codebase. The dataone-indexer sub-chart has been upgraded to version 2.1.0, which includes indexing-performance and robustness improvements (see [dataone-indexer Release Notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md#dataone-indexer-version-330--helm-chart-version-210) for details)
 
 ## Release Notes for Metacat 3.3.0
 
