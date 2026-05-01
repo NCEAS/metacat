@@ -3669,89 +3669,25 @@ public class MNodeService extends D1NodeService
                                                + "reindex all objects in this Metacat instance");
         Runnable indexAll = new Runnable() {
             public void run() {
-                List<String> resourceMapFormats = ResourceMapNamespaces.getNamespaces();
-                buildAllNonResourceMapIndex(resourceMapFormats);
-                buildAllResourceMapIndex(resourceMapFormats);
+                buildAllObjectIndex();
             }
         };
-        Thread thread = new Thread(indexAll);
+        Thread thread = new Thread(indexAll, "index-all-objects");
         thread.start();
     }
 
     /**
-     * Index all non-resourcemap objects first. We don't put the list of pids in a vector anymore.
-     * @param resourceMapFormatList  the list of the resource map format
+     * Index all objects. We don't put the list of pids in a vector anymore.
      */
-    private void buildAllNonResourceMapIndex(List<String> resourceMapFormatList) {
-        boolean firstTime = true;
+    private void buildAllObjectIndex() {
         StringBuilder sql = new StringBuilder("select guid from systemmetadata");
-        if (resourceMapFormatList != null && resourceMapFormatList.size() > 0) {
-            for (String format : resourceMapFormatList) {
-                if (format != null && !format.trim().equals("")) {
-                    if (firstTime) {
-                        sql.append(" where object_format !='");
-                        sql.append(format);
-                        sql.append("'");
-                        firstTime = false;
-                    } else {
-                        sql.append(" and object_format !='");
-                        sql.append(format);
-                        sql.append("'");
-                    }
-                }
-            }
-            sql.append(" order by date_uploaded asc");
-        }
-        logMetacat.debug("MNodeService.buildAllNonResourceMapIndex - the final query is "
-                                                                        + sql.toString());
         try {
             long size = buildIndexFromQuery(sql.toString());
-            logMetacat.info(
-                "MNodeService.buildAllNonResourceMapIndex - the number of non-resource map "
-                    + "objects is "
-                    + size + " being submitted to the index queue.");
+            logMetacat.info("The number of objects is " + size
+                                + " being submitted to the index queue.");
         } catch (SQLException | ServiceFailure e) {
             logMetacat.error(
-                "MNodeService.buildAllNonResourceMapIndex - can't index the objects since: "
-                    + e.getMessage());
-        }
-    }
-
-    /**
-     * Index all resource map objects. We don't put the list of pids in a vector anymore.
-     * @param resourceMapFormatList
-     */
-    private void buildAllResourceMapIndex(List<String> resourceMapFormatList) {
-        StringBuilder sql = new StringBuilder("select guid from systemmetadata");
-        if (resourceMapFormatList != null && resourceMapFormatList.size() > 0) {
-            boolean firstTime = true;
-            for (String format : resourceMapFormatList) {
-                if (format != null && !format.trim().equals("")) {
-                    if (firstTime) {
-                        sql.append(" where object_format ='");
-                        sql.append(format);
-                        sql.append("'");
-                        firstTime = false;
-                    } else {
-                        sql.append(" or object_format ='");
-                        sql.append(format);
-                        sql.append("'");
-                    }
-                }
-            }
-            sql.append(" order by date_uploaded asc");
-        }
-        logMetacat.info("MNodeService.buildAllResourceMapIndex - the final query is "
-                                                                    + sql.toString());
-        try {
-            long size = buildIndexFromQuery(sql.toString());
-            logMetacat.info(
-                "MNodeService.buildAllResourceMapIndex - the number of resource map objects is "
-                    + size + " being submitted to the index queue.");
-        } catch (SQLException | ServiceFailure e) {
-            logMetacat.error(
-                "MNodeService.buildAllResourceMapIndex - can't index the objects since: "
-                    + e.getMessage());
+                "Can't index all objects since: " + e.getMessage());
         }
     }
 
