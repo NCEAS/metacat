@@ -3680,9 +3680,9 @@ public class MNodeService extends D1NodeService
      * Index all objects. We don't put the list of pids in a vector anymore.
      */
     private void buildAllObjectIndex() {
-        StringBuilder sql = new StringBuilder("select guid from systemmetadata");
+        String sql = "select guid from systemmetadata";
         try {
-            long size = buildIndexFromQuery(sql.toString());
+            long size = buildIndexFromQuery(sql);
             logMetacat.info("The number of objects is " + size
                                 + " being submitted to the index queue.");
         } catch (SQLException | ServiceFailure e) {
