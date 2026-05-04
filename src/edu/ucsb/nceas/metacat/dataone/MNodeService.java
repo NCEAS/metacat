@@ -14,7 +14,6 @@ import edu.ucsb.nceas.metacat.ReadOnlyChecker;
 import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.admin.upgrade.UpdateDOI;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
-import edu.ucsb.nceas.metacat.common.resourcemap.ResourceMapNamespaces;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
@@ -33,7 +32,6 @@ import edu.ucsb.nceas.metacat.storage.ObjectInfo;
 import edu.ucsb.nceas.metacat.storage.Storage;
 import edu.ucsb.nceas.metacat.systemmetadata.MCSystemMetadata;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
-import edu.ucsb.nceas.metacat.systemmetadata.log.SystemMetadataDeltaLogger;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
@@ -146,6 +144,7 @@ import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Represents Metacat's implementation of the DataONE Member Node service API. Methods implement the
@@ -198,6 +197,8 @@ public class MNodeService extends D1NodeService
     private boolean needSync = true;
     private static UpdateDOI doiUpdater = null;
     private static MetacatSolrIndex metacatSolrIndex = null;
+    private final static AtomicBoolean indexAllProcessRunning = new AtomicBoolean(false);
+
 
     static {
         // use a shared executor service with nThreads == one less than available processors
@@ -3665,11 +3666,21 @@ public class MNodeService extends D1NodeService
      */
     protected void handleReindexAllAction() {
         // Process all of the documents
-        logMetacat.debug("MNodeService.handleReindexAllAction - "
-                                               + "reindex all objects in this Metacat instance");
+        //Check if another thread has been running the index-all command
+        //The first boolean variable is the expected value, and the second is the update value.
+        if (!indexAllProcessRunning.compareAndSet(false, true)) {
+            logMetacat.warn("Another index-all process has been running and Metacat will NOT "
+                                + "run it again.");
+            return;
+        }
+        logMetacat.debug("Reindex all objects in this Metacat instance");
         Runnable indexAll = new Runnable() {
             public void run() {
-                buildAllObjectIndex();
+                try {
+                    buildAllObjectIndex();
+                } finally {
+                    indexAllProcessRunning.set(false);
+                }
             }
         };
         Thread thread = new Thread(indexAll, "index-all-objects");
