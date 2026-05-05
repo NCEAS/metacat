@@ -7,6 +7,23 @@
 >    - CloudNative PG Operator to deploy your PostgreSQL cluster - see [Appendix 5 of the helm/README.md](./helm/README.md#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg)
 >    - RabbitMQ Cluster Operator to deploy your RabbitMQ cluster - see [Appendix 6 of the helm/README.md](./helm/README.md#appendix-6-the-rabbitmq-cluster-operator)
 
+## Release Notes for Metacat 3.4.0
+
+**Release date: 2026-05-06**
+
+### New Features & Enhancements:
+- Add support for partial object retrieval using HTTP byte ranges.
+- Improve the `index-all` command so only one thread can run it at a time, and remove resourcemap/non-resourcemap sorting, to speed up indexing.
+- Add indexes for `smReplicationStatus` and `smReplicationPolicy`, and remove the obsolete `smReplicationPolicy_guid` index.
+- CN Indexing-Related Changes
+  - Add and document the CN systemmetadata-trigger indexing flow, including new utilities to populate Solr from CN and reindex a supplied list of PIDs.
+  - Split CN indexing configuration into a dedicated config file and improve the logging and reconnect behavior of the indexing scripts.
+  - CN-related Solr schema and config changes
+
+### Security Upgrades:
+- Upgrade Solr to 9.10.1
+- Upgrade log4j-core to 2.25.3
+
 ## Release Notes for helm chart 4.1.0
 
 **Release date: 2026-04-23**
