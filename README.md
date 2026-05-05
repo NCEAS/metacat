@@ -43,7 +43,7 @@ for the next release.
 
 Cite this software as:
 
-> Jing Tao, Matthew Brooke, Dou Mok, Ian Nesbitt, Matthew B. Jones. 2025. Metacat: Data Preservation and Discovery System (3.3.0). Arctic Data Center. Software. [doi:10.18739/A2542JB3D](https://doi.org/10.18739/A2542JB3D)
+> Jing Tao, Matthew Brooke, Dou Mok, Ian Nesbitt, Matthew B. Jones. 2025. Metacat: Data Preservation and Discovery System (3.4.0). Arctic Data Center. Software. [doi:10.18739/A2542JB3D](https://doi.org/10.18739/A2542JB3D)
 
 ## Current Contributors
 
