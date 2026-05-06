@@ -24,11 +24,19 @@
 - Upgrade Solr to 9.10.1
 - Upgrade log4j-core to 2.25.3
 
+## Release Notes for helm chart 4.2.0
+
+**Release date: 2026-05-06**
+
+This chart deploys the new Metacat 3.4.0 release. This Metacat app version update is the only change to the chart.
+
 ## Release Notes for helm chart 4.1.0
 
 **Release date: 2026-04-23**
 
-This is a chart-only release, with no changes to the Metacat codebase. The dataone-indexer sub-chart has been upgraded to version 2.1.0, which includes indexing-performance and robustness improvements (see [dataone-indexer Release Notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md#dataone-indexer-version-330--helm-chart-version-210) for details)
+This is a chart-only release, with no changes to the Metacat codebase. The dataone-indexer sub-chart has been upgraded to version 2.1.0, which includes indexing-performance and robustness improvements (see [dataone-indexer Release Notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md#dataone-indexer-version-330--helm-chart-version-210) for details).
+
+In addition to the sub-chart version upgrade, this release removes the indexer values override: `dataone-indexer.solr.javaMem: "-Xms512m -Xmx2g"`, so that Solr will now use the indexer's default Java memory setting of `-XX:MaxRAMPercentage=50` (50% of the container memory limit). See the [dataone-indexer values.yaml documentation](https://github.com/DataONEorg/dataone-indexer/blob/22b9b98517e04e2370de83d682ad2964dce04c9d/helm/values.yaml#L503) for more details on Java memory settings for Solr.
 
 ## Release Notes for Metacat 3.3.0
 
