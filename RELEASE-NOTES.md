@@ -14,7 +14,7 @@
 ### New Features & Enhancements:
 - Add support for partial object retrieval using HTTP byte ranges.
 - Improve the `index-all` command so only one thread can run it at a time, and remove resourcemap/non-resourcemap sorting, to speed up indexing.
-- Add indexes for `smReplicationStatus` and `smReplicationPolicy`, and remove the obsolete `smReplicationPolicy_guid` index.
+- Add database indexes for `smReplicationStatus` and `smReplicationPolicy`, and remove the obsolete `smReplicationPolicy_guid` index.
 - CN Indexing-Related Changes
   - Add and document the CN systemmetadata-trigger indexing flow, including new utilities to populate Solr from CN and reindex a supplied list of PIDs.
   - Split CN indexing configuration into a dedicated config file and improve the logging and reconnect behavior of the indexing scripts.
@@ -28,7 +28,7 @@
 
 **Release date: 2026-05-06**
 
-This chart deploys the new Metacat 3.4.0 release. This Metacat app version update is the only change to the chart.
+This chart deploys the new Metacat 3.4.0 release. The Metacat app version update is the only change to the chart.
 
 ## Release Notes for helm chart 4.1.0
 
