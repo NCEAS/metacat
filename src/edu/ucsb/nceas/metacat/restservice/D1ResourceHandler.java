@@ -1,7 +1,9 @@
 package edu.ucsb.nceas.metacat.restservice;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -624,6 +626,50 @@ public class D1ResourceHandler {
                     session.setSubjectInfo(subjectInfo);
                 }
             }
+        }
+    }
+
+    /**
+     * Write the bytes (either whole object file or a specified range) back to the client
+     * @param data the input stream contains the bytes of the object
+     * @throws IOException
+     * @throws InvalidRequest
+     */
+    protected void writeToResponse(InputStream data) throws IOException, InvalidRequest {
+        ByteRange range = ByteRange.parseRange(request);
+        response.setHeader("Accept-Ranges", "bytes");
+        try (OutputStream out = response.getOutputStream()) {
+            if (range == null) {
+                // Full stream, size unknown
+                response.setStatus(200);
+                IOUtils.copyLarge(data, out);
+            } else {
+                // Partial content
+                try {
+                    IOUtils.skipFully(data, range.getStart());
+                } catch (IllegalArgumentException | EOFException e) {
+                    // Incorrect the start number
+                    response.setStatus(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+                    throw new InvalidRequest("1010",
+                                             "Start byte (" + range.getStart() + ") must be "
+                                                 + "between 0 and the end byte (inclusive). "
+                                                 + e.getMessage());
+                }
+                response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+                if (range.getEnd() != null) {
+                    long length = range.getEnd().longValue() - range.getStart() + 1;
+                    response.setHeader("Content-Range",
+                                       "bytes " + range.getStart() + "-" + range.getEnd()
+                                           .longValue() + "/*");
+                    response.setHeader("Content-Length",Long.toString(length));
+                    IOUtils.copyLarge(data, out, 0, length);
+                } else {
+                    // Open-ended range
+                    response.setHeader("Content-Range", "bytes " + range.getStart() + "-/*");
+                    IOUtils.copyLarge(data, out);
+                }
+            }
+            out.flush();
         }
     }
 }
