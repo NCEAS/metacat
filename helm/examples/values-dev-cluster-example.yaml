@@ -109,13 +109,15 @@ dataone-indexer:
     debug: false
 
   rabbitmq:
+    persistence:
+      storageClassName: "csi-cephfs-sc-ephemeral"
     resources:
       requests:
         cpu: 500m
         memory: 512Mi
       limits:
-        cpu: 1.0
-        memory: 1024Mi
+        cpu: "1"
+        memory: 1Gi
 
   solr:
     javaMem: "-XX:MaxRAMPercentage=75.0"

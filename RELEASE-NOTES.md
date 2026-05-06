@@ -9,7 +9,7 @@
 
 ## Release Notes for Metacat 3.4.0
 
-**Release date: 2026-05-06**
+**Release date: 2026-05-07**
 
 ### New Features & Enhancements:
 - Add support for partial object retrieval using HTTP byte ranges.
@@ -26,7 +26,7 @@
 
 ## Release Notes for helm chart 4.2.0
 
-**Release date: 2026-05-06**
+**Release date: 2026-05-07**
 
 This chart deploys the new Metacat 3.4.0 release. The Metacat app version update is the only change to the chart.
 
