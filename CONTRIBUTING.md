@@ -45,10 +45,7 @@ In short:
 
 Development is managed through the git repository at https://github.com/NCEAS/metacat.  The repository is organized into several branches, each with a specific purpose.  
 
-**main**. The `main` branch is the source of truth for the current stable release. A release occurs when tested changes are merged from `develop` into `main`, and that merge commit SHA is tagged with the release tag (e.g., `3.4.0`). The tip of `main` therefore always reflects the latest stable release. The version number in all configuration files and the README on `main` follows [semantic versioning](https://semver.org/) and should always be set to either:
-
-- the current release version, if the HEAD of `main` still matches the current release tag. For example, `2.8.5`.
-- the planned next release number with a `beta` designator or release candidate `rc` designator appended as appropriate.  For example, `2.8.6-beta1` or `2.9.0-rc1`.
+**main**. The `main` branch is the source of truth for the current stable release. A release occurs when tested changes are merged from `develop` into `main`, and that merge commit SHA is tagged with the release tag (e.g., `3.4.0`). The tip of `main` therefore always reflects the latest stable release. The version number in all configuration files and the README on `main` follows [semantic versioning](https://semver.org/) and should always be set to the current release version, for example, `3.4.0`.
 
 **develop**. Development takes place on a single branch for integrated development and testing of the set of features targeting the next release. Commits should only be pushed to this branch once they are ready to be deployed to production immediately after being pushed.
 
@@ -56,7 +53,7 @@ Development is managed through the git repository at https://github.com/NCEAS/me
 
 Feature branches are named with a prefix of `feature`
 and should include the issue number and a short descriptive label reflecting their purpose.  For example,
-`feature-1456-new-search` would be a branch name for a feature related to a new search tool. Feature branches are generally created from the current `develop` branch, and, after review and approval, would be merged back into the `develop` branchin preparation for release testing.
+`feature-1456-new-search` would be a branch name for a feature related to a new search tool. Feature branches are generally created from the current `develop` branch, and, after review and approval, would be merged back into the `develop` branch in preparation for release testing.
 
 All feature branches should be frequently merged with changes from `develop` to
 ensure that the feature branch stays up to date with other features that have
@@ -82,7 +79,7 @@ particular release.
             }
 }}%%
 gitGraph
-    commit id: "1" tag: "v1.0.0"
+    commit id: "1" tag: "1.0.0"
     branch develop
     checkout develop
     commit id: "2"
@@ -99,7 +96,7 @@ gitGraph
     checkout develop
     merge bug-B  id: "10" type: NORMAL
     checkout main
-    merge develop id: "11" tag: "v1.1.0"
+    merge develop id: "11" tag: "1.1.0"
 ```
 
 ## Release process
@@ -118,7 +115,7 @@ cycle can be repeated multiple times until all features planned for the release
 have been fully tested in `develop` and approved. At release time, the
 finalized `develop` state is merged to `main`, that merge commit SHA is
 tagged with the new release tag, and then merged back to `develop`. At this point, the tip of `main` reflects the
-new stable release, the relase tag, `main` branch and `develop` branch all point at the same commit hash, and development continues in `develop` for the next release.
+new stable release, the release tag, `main` branch and `develop` branch all point at the same commit hash, and development continues in `develop` for the next release.
 
 ## Testing
 
