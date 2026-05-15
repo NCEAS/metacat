@@ -36,7 +36,7 @@ Direct link (while logged in to GitHub):
 
 If you are unable to use GitHub private reporting, contact the maintainers at:
 
-- synotify@nceas.ucsb.edu
+- sysadmin@dataone.org
 
 Use a subject line starting with `SECURITY:` and include the same details listed above.
 
