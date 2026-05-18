@@ -44,6 +44,11 @@ hidden: true    # do NOT show in template picker every time someone creates a ne
   - [ ] Draft release email
   - [ ] PR & merge release prep branch to `develop`
 - [ ] PR & merge `develop` -> `main`
+- [ ] Merge `main` back to `develop`
+  ```shell
+  git checkout develop; git merge main --ff-only
+  git push
+  ```
 - [ ] **(Linux VM)** build and push docker image
 - [ ] **(Mac)** package and push helm chart
 - [ ] **(Mac)** build binary packages & upload to knb site
@@ -74,6 +79,11 @@ hidden: true    # do NOT show in template picker every time someone creates a ne
   - [ ] `git cherry-pick` any commits that need to be included from develop
   - [ ] PR & merge to develop
   - [ ] PR & merge to main
+  - [ ] Merge `main` back to `develop`
+    ```shell
+    git checkout develop; git merge main --ff-only
+    git push
+    ```
 - [ ] **(Mac)** package and push helm chart
   ```shell
   helm package -u ./helm
