@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.math.BigInteger;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -1600,20 +1602,24 @@ public class IdentifierManagerIT {
         ObjectList list = IdentifierManager.getInstance().querySystemMetadata(startTime, endTime,
                 objectFormatId, nodeId, start, count, identifier, isSID);
         int size1= list.sizeObjectInfoList();
-        assertTrue( size1>0);
+        assertTrue(size1 > 0);
+        // Create a LocalDate for Jan 1, 1980
+        LocalDate localDate = LocalDate.of(1980, 1, 1);
+        Date newStartTime = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        Date newEndTime = new Date();
         nodeId = new NodeReference();
         String currentNodeId = Settings.getConfiguration().getString("dataone.nodeId");
         nodeId.setValue(currentNodeId);
-        list = IdentifierManager.getInstance().querySystemMetadata(startTime, endTime,
+        list = IdentifierManager.getInstance().querySystemMetadata(newStartTime, newEndTime,
                 objectFormatId, nodeId, start, count, identifier, isSID);
         int size2= list.sizeObjectInfoList();
-        assertTrue( size2 > 0);
-        assertTrue( size1 >= size2);
+        assertTrue(size2 > 0);
+        assertTrue(size1 >= size2);
         nodeId.setValue("there_bei_we12");
         list = IdentifierManager.getInstance().querySystemMetadata(startTime, endTime,
                 objectFormatId, nodeId, start, count, identifier, isSID);
         int size3 = list.sizeObjectInfoList();
-        assertTrue(size3==0);
+        assertTrue(size3 == 0);
 
         Session session = getTestSession();
         Identifier guid = new Identifier();
