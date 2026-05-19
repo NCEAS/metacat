@@ -21,6 +21,15 @@ data are well and consistently described.
 ## Installation
 See [installation notes](./docs/user/metacat/source/install.rst) for detailed instructions for your OS.
 
+## Support Policy
+
+Metacat follows an accelerated end-of-life policy. Due to limited
+maintenance funding, we support only the current release: the latest
+tagged release, which is also the HEAD of the `main` branch. Older
+releases do not receive backported security fixes or ongoing support.
+See [SECURITY.md](SECURITY.md) and [CONTRIBUTING.md](CONTRIBUTING.md)
+for details.
+
 ## Documentation
 See the docs directory for detailed documentation and installation
 instructions.
