@@ -2,7 +2,10 @@
 
 ## Supported Versions
 
-Metacat follows a latest-release support model.
+Metacat follows an accelerated end-of-life policy. Due to limited
+maintenance funding, we support only the current release: the latest
+tagged release, which is also the HEAD of the `main` branch. Older
+releases do not receive backported security fixes or ongoing support.
 
 - Only the most recent product release is supported for security fixes.
 - Security fixes are not backported to older releases.
@@ -36,7 +39,7 @@ Direct link (while logged in to GitHub):
 
 If you are unable to use GitHub private reporting, contact the maintainers at:
 
-- sysadmin@dataone.org
+- security@dataone.org
 
 Use a subject line starting with `SECURITY:` and include the same details listed above.
 
