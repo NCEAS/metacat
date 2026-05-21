@@ -14,8 +14,8 @@
 
 Metacat 3.4.1 is a patch release focused exclusively on critical security updates (plus one minor bug fix).
 
-> [!IMPORTANT]
-> We strongly advise all users to upgrade to this version as soon as possible, since it addresses critical security vulnerabilities. For details on the vulnerabilities and mitigation steps, please see the security advisories linked below.
+> [!WARNING]
+> We strongly advise all users to upgrade to this version as soon as possible, since it addresses critical security vulnerabilities. For details on the vulnerabilities and mitigation steps, please see the security advisories linked below:
 
 ### Security
 
@@ -28,6 +28,9 @@ Metacat 3.4.1 is a patch release focused exclusively on critical security update
 ## Release Notes for Helm Chart 4.2.1
 
 **Release date: 2026-05-21**
+
+> [!WARNING]
+> If you are using the helm chart to deply Metacat, we strongly advise upgrading to this version as soon as possible, since it addresses critical security vulnerabilities. For details on the vulnerabilities and mitigation steps, please see the security advisories linked in the [Release Notes for Metacat 3.4.1](#release-notes-for-metacat-341) above.
 
 Metacat Helm Chart 4.2.1 is a patch release deployed solely to support the Metacat 3.4.1 code release. There are no functional changes to the chart configuration or templates.
 
