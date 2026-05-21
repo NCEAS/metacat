@@ -157,6 +157,8 @@
     </servlet-mapping>
 
     <!-- CN REST services v1-->
+    <!-- Removing the CN servlet-url mapping is to mitigate any unknown vulnerabilities for MNs.
+         We need to add it back when we deploy metacat 3.4.1+ on CNs.-->
     <!--<servlet-mapping>
         <servlet-name>CNRestServletV1</servlet-name>
         <url-pattern>/d1/cn/v1/*</url-pattern>
@@ -169,6 +171,8 @@
     </servlet-mapping>
 
     <!-- CN REST services v2-->
+    <!-- Removing the CN servlet-url mapping is to mitigate any unknown vulnerabilities for MNs.
+         We need to add it back when we deploy metacat 3.4.1+ on CNs.-->
     <!--<servlet-mapping>
         <servlet-name>CNRestServletV2</servlet-name>
         <url-pattern>/d1/cn/v2/*</url-pattern>
