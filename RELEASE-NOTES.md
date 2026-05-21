@@ -7,6 +7,39 @@
 >    - CloudNative PG Operator to deploy your PostgreSQL cluster - see [Appendix 5 of the helm/README.md](./helm/README.md#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg)
 >    - RabbitMQ Cluster Operator to deploy your RabbitMQ cluster - see [Appendix 6 of the helm/README.md](./helm/README.md#appendix-6-the-rabbitmq-cluster-operator)
 
+
+## Release Notes for Metacat 3.4.1
+
+**Release date: 2026-05-21**
+
+Metacat 3.4.1 is a patch release focused exclusively on critical security updates (plus one minor bug fix).
+
+> [!IMPORTANT]
+> We strongly advise all users to upgrade to this version as soon as possible, since it addresses critical security vulnerabilities. For details on the vulnerabilities and mitigation steps, please see the security advisories linked below.
+
+### Security
+
+- **CVE-2026-48114**: Addressed security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-wrc6-rc34-hrcg](https://github.com/NCEAS/metacat/security/advisories/GHSA-wrc6-rc34-hrcg)
+- **CVE-2026-47754**: Addressed security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-m852-f287-7cgw](https://github.com/NCEAS/metacat/security/advisories/GHSA-m852-f287-7cgw)
+
+### Bug Fixes
+- Add missing database indexes; see [Issue #2299](https://github.com/NCEAS/metacat/issues/2299).
+
+## Release Notes for Helm Chart 4.2.1
+
+**Release date: 2026-05-21**
+
+Metacat Helm Chart 4.2.1 is a patch release deployed solely to support the Metacat 3.4.1 code release. There are no functional changes to the chart configuration or templates.
+
+
+
+
+
+
+
+
+
+
 ## Release Notes for Metacat 3.4.0
 
 **Release date: 2026-05-07**
