@@ -157,10 +157,10 @@
     </servlet-mapping>
 
     <!-- CN REST services v1-->
-    <servlet-mapping>
+    <!--<servlet-mapping>
         <servlet-name>CNRestServletV1</servlet-name>
         <url-pattern>/d1/cn/v1/*</url-pattern>
-    </servlet-mapping>    
+    </servlet-mapping> -->
 
     <!-- MN REST services v1 -->
     <servlet-mapping>
@@ -169,10 +169,10 @@
     </servlet-mapping>
 
     <!-- CN REST services v2-->
-    <servlet-mapping>
+    <!--<servlet-mapping>
         <servlet-name>CNRestServletV2</servlet-name>
         <url-pattern>/d1/cn/v2/*</url-pattern>
-    </servlet-mapping>    
+    </servlet-mapping> -->
 
     <!-- MN REST services v2-->
     <servlet-mapping>
