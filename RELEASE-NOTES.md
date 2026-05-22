@@ -15,12 +15,19 @@
 Metacat 3.4.1 is a patch release focused exclusively on critical security updates (plus one minor bug fix).
 
 > [!WARNING]
-> We strongly advise all users to upgrade to this version as soon as possible, since it addresses critical security vulnerabilities. For details on the vulnerabilities and mitigation steps, please see the security advisories linked below:
+> 
+> We strongly advise all users to upgrade to this version as soon as possible, since it addresses multiple critical security vulnerabilities affecting all previous metacat versions. For details on the vulnerabilities and mitigation steps, please see the security advisories linked below:
 
 ### Security
 
-- **CVE-2026-48114**: Addressed security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-wrc6-rc34-hrcg](https://github.com/NCEAS/metacat/security/advisories/GHSA-wrc6-rc34-hrcg)
-- **CVE-2026-47754**: Addressed security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-m852-f287-7cgw](https://github.com/NCEAS/metacat/security/advisories/GHSA-m852-f287-7cgw)
+The following critical security vulnerabilities were reported against all versions of Metacat 3.4.0 and before:
+- **CVE Number Pending**: Addressed SQL injection security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-wrc6-rc34-hrcg](Security-Advisories.md#ghsa-6g6j-wh5h-77h5-unauthenticated-sql-injection-vulnerability-for-metacat)
+
+The following critical security vulnerabilities were reported against all versions of Metacat 2.19.1 and before:
+- **CVE-2026-47754**: Addressed path traversal security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-m852-f287-7cgw](Security-Advisories.md#ghsa-m852-f287-7cgw-unauthenticated-path-traversal-in-metacat-2x)
+- **CVE-2026-48114**: Addressed SQL injection security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-wrc6-rc34-hrcg](Security-Advisories.md#ghsa-wrc6-rc34-hrcg-unauthenticated-sql-injection-vulnerability-for-metacat-2x)
+
+The official CVE reports will be published for all these vulnerabilities within the next few days.
 
 ### Bug Fixes
 - Add missing database indexes; see [Issue #2299](https://github.com/NCEAS/metacat/issues/2299).
