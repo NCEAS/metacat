@@ -2,6 +2,7 @@
 
 ## GHSA-6g6j-wh5h-77h5: Unauthenticated SQL injection vulnerability for Metacat
 
+- CVE: Pending
 - Severity: Critical
 - Affected versions: >= 2.0.0, <= 3.4.0
 - Patched versions: >= 3.4.1
@@ -64,6 +65,7 @@ If upgrading to Metacat 3.4.1 isn't immediately possible, most deployments can m
 
 ## GHSA-m852-f287-7cgw: unauthenticated path traversal in Metacat 2.x
 
+- CVE-2026-47754
 - Severity: Critical
 - Affected versions: <= 2.19.1
 - Patched versions: >= 3.0.0
@@ -173,6 +175,7 @@ After removing those features, restart Tomcat or whichever software is hosting y
 
 ## GHSA-wrc6-rc34-hrcg: unauthenticated SQL injection vulnerability for Metacat 2.x
 
+- CVE-2026-48114
 - Severity: Critical
 - Affected versions: <= 2.19.1
 - Patched versions: >= 3.0.0
