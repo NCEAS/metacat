@@ -297,7 +297,7 @@
         <dependency>
             <groupId>org.apache.wicket</groupId>
             <artifactId>wicket-core</artifactId>
-            <version>9.19.0</version>
+            <version>10.7.0</version>
             <exclusions>
                 <exclusion>
                   <groupId>org.slf4j</groupId>
