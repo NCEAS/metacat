@@ -45,9 +45,20 @@ public class MetacatSolrIndexIT {
                                                                        SolrRequest.METHOD.POST);
         input = IOUtils.toString(inputStream, "UTF-8");
         assertTrue(input.contains("name=\"checksum\""));
+        // QT (uppercase) is fine.
+        params.set("QT", "/admin/file");
+        params.set("file", "solrconfig.xml");
+        inputStream = MetacatSolrIndex.getInstance().query(params, null, false,
+                                                           SolrRequest.METHOD.GET);
+        input = IOUtils.toString(inputStream, "UTF-8");
+        assertTrue(input.contains("name=\"checksum\""));
+        inputStream = MetacatSolrIndex.getInstance().query(params, null, false,
+                                                           SolrRequest.METHOD.POST);
+        input = IOUtils.toString(inputStream, "UTF-8");
+        assertTrue(input.contains("name=\"checksum\""));
         // Add the qt parameter
         params.set("qt", "/admin/file");
-        params.set("file", "solrconfig.xml");
+        params.remove("QT");
         // Requests containing "qt" must be rejected in the both get and post methods
         try {
             MetacatSolrIndex.getInstance().query(params, null, false, SolrRequest.METHOD.GET);
