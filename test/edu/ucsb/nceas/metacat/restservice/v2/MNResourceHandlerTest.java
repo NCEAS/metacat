@@ -51,14 +51,14 @@ public class MNResourceHandlerTest {
     /**HTTP Verb HEAD*/
     protected static final byte HEAD = 5;
 
-    private MockHttpServletRequest request;
-    private MockHttpServletResponse response;
-    private MockServletContext context;
-    private MNResourceHandler resourceHandler;
-    private MNodeService mockMNodeService;
+    protected MockHttpServletRequest request;
+    protected MockHttpServletResponse response;
+    protected MockServletContext context;
+    protected MNResourceHandler resourceHandler;
+    protected MNodeService mockMNodeService;
 
 
-    private static final String PATH = "/";
+    protected static final String PATH = "/";
     private static final String ENCODED_PID =
          "http%3A%2F%2Fdx.doi.org%2F10.5061%2Fdryad.12%3Fver%3D2017-08-29T11%3A52%3A08.075-05%3A00";
     private static final String DECODED_PID =
@@ -453,7 +453,7 @@ public class MNResourceHandlerTest {
      * Refresh the resource handler with a new request url
      * @param url  the new url will be used in the resource handler
      */
-    private void refreshResourceHandler(String url) {
+    protected void refreshResourceHandler(String url) {
         request = new MockHttpServletRequest(null, new MockHttpSession(context), context);
         response = new MockHttpServletResponse(request);
         request.setURL(url);

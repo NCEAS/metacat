@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import java.io.InputStream;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -52,10 +53,12 @@ public class MetacatSolrIndexIT {
                                                            SolrRequest.METHOD.GET);
         input = IOUtils.toString(inputStream, "UTF-8");
         assertTrue(input.contains("name=\"checksum\""));
+        assertFalse(input.contains("solr.SchemaCodecFactory"));
         inputStream = MetacatSolrIndex.getInstance().query(params, null, false,
                                                            SolrRequest.METHOD.POST);
         input = IOUtils.toString(inputStream, "UTF-8");
         assertTrue(input.contains("name=\"checksum\""));
+        assertFalse(input.contains("solr.SchemaCodecFactory"));
         // Add the qt parameter
         params.set("qt", "/admin/file");
         params.remove("QT");
