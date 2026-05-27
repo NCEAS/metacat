@@ -89,7 +89,7 @@ public class MNResourceHandlerIT extends MNResourceHandlerTest {
 
 
     /**
-     * Test the solr query with the http get method
+     * Test the solr query with the http post method
      * @throws Exception
      */
     @Test
