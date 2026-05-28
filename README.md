@@ -6,7 +6,7 @@ Version: 3.4.2 Release
 
 Send feedback and bugs to: 
 
-- metacat-dev@ecoinformatics.org
+- developers@ecoinformatics.org
 - http://github.com/NCEAS/metacat
 
 Metacat is repository software for preserving data and metadata

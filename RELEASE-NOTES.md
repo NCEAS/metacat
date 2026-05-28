@@ -8,6 +8,31 @@
 >    - RabbitMQ Cluster Operator to deploy your RabbitMQ cluster - see [Appendix 6 of the helm/README.md](./helm/README.md#appendix-6-the-rabbitmq-cluster-operator)
 
 
+## Release Notes for Metacat 3.4.2
+
+**Release date: 2026-05-28**
+
+Metacat 3.4.2 is a patch release to provide an important security update
+
+### Security
+
+The following moderate-severity security vulnerability was reported against all versions of Metacat 3.4.1 and before:
+- **CVE Number Pending**: Addressed security vulnerability "Metacat acts as unintended proxy to backend Apache SOLR engine". For full details and mitigation steps, please see the security advisory: [GHSA-57g5-qq6w-7jr8](https://github.com/NCEAS/metacat/blob/main/Security-Advisories.md#ghsa-57g5-qq6w-7jr8-metacat-acts-as-unintended-proxy-to-backend-apache-solr-engine)
+
+The following dependency update addresses a vulnerability in the PostgreSQL JDBC Driver ([CVE-2026-42198](https://nvd.nist.gov/vuln/detail/CVE-2026-42198) describes a high-severity client-side denial of service, but **we believe this is not exploitable in standard Metacat installations**).
+- Upgrade org.postgresql client library from 42.7.7 to 42.7.11
+
+## Release Notes for Helm Chart 4.2.2
+
+**Release date: 2026-05-28**
+
+Metacat Helm Chart 4.2.2 is a patch release deployed primarily to support the Metacat 3.4.2 code release. There is only one functional change to the chart:
+
+- Logging changes:
+  - Make Original Client IP Available to Metacat in K8s (using `x-forwarded-for` header value)
+  - Use json formatting for logs in K8s, to make them more easily parsable by log management tools
+
+
 ## Release Notes for Metacat 3.4.1
 
 **Release date: 2026-05-21**
@@ -21,11 +46,11 @@ Metacat 3.4.1 is a patch release focused exclusively on critical security update
 ### Security
 
 The following critical security vulnerabilities were reported against all versions of Metacat 3.4.0 and before:
-- **CVE Number Pending**: Addressed SQL injection security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-wrc6-rc34-hrcg](Security-Advisories.md#ghsa-6g6j-wh5h-77h5-unauthenticated-sql-injection-vulnerability-for-metacat)
+- **CVE-2026-48528**: Addressed SQL injection security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-6g6j-wh5h-77h5](https://github.com/NCEAS/metacat/security/advisories/GHSA-6g6j-wh5h-77h5)
 
 The following critical security vulnerabilities were reported against all versions of Metacat 2.19.1 and before:
-- **CVE-2026-47754**: Addressed path traversal security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-m852-f287-7cgw](Security-Advisories.md#ghsa-m852-f287-7cgw-unauthenticated-path-traversal-in-metacat-2x)
-- **CVE-2026-48114**: Addressed SQL injection security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-wrc6-rc34-hrcg](Security-Advisories.md#ghsa-wrc6-rc34-hrcg-unauthenticated-sql-injection-vulnerability-for-metacat-2x)
+- **CVE-2026-47754**: Addressed path traversal security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-m852-f287-7cgw](https://github.com/NCEAS/metacat/security/advisories/GHSA-m852-f287-7cgw)
+- **CVE-2026-48114**: Addressed SQL injection security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-wrc6-rc34-hrcg](https://github.com/NCEAS/metacat/security/advisories/GHSA-wrc6-rc34-hrcg)
 
 The official CVE reports will be published for all these vulnerabilities within the next few days.
 
