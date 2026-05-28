@@ -58,7 +58,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  *
  */
 public class MetacatSolrIndex {
-
+    private final static String QT = "qt";
     private static Log log = LogFactory.getLog(MetacatSolrIndex.class);
     private static MetacatSolrIndex solrIndex = null;
     private static String nodeType = null;
@@ -102,11 +102,12 @@ public class MetacatSolrIndex {
      * @throws UnsupportedType
      * @throws NotFound
      * @throws NotImplemented
+     * @throws InvalidRequest
      */
     public InputStream query(String query, Set<Subject> authorizedSubjects, boolean isMNadmin)
         throws SolrServerException, IOException, PropertyNotFoundException, SQLException,
         ClassNotFoundException, ParserConfigurationException, SAXException, NotImplemented,
-        NotFound, UnsupportedType, SolrException {
+        NotFound, UnsupportedType, SolrException, InvalidRequest {
         //allow "+" in query syntax, see: https://projects.ecoinformatics.org/ecoinfo/issues/6435
         query = query.replaceAll("\\+", "%2B");
         SolrParams solrParams = parseQueryString(query);
@@ -163,12 +164,13 @@ public class MetacatSolrIndex {
      * @throws NotImplemented
      * @throws NotFound
      * @throws UnsupportedType
+     * @throws InvalidRequest
      */
     public InputStream query(
         SolrParams solrParams, Set<Subject> authorizedSubjects, boolean isMNadmin)
         throws SolrServerException, IOException, PropertyNotFoundException, SQLException,
         ClassNotFoundException, ParserConfigurationException, SAXException, NotImplemented,
-        NotFound, UnsupportedType {
+        NotFound, UnsupportedType, InvalidRequest {
         return query(solrParams, authorizedSubjects, isMNadmin, SolrRequest.METHOD.GET);
 
     }
@@ -190,13 +192,21 @@ public class MetacatSolrIndex {
      * @throws NotImplemented
      * @throws NotFound
      * @throws UnsupportedType
+     * @throws InvalidRequest
      */
     public InputStream query(
         SolrParams solrParams, Set<Subject> authorizedSubjects, boolean isMNadmin,
         SolrRequest.METHOD method)
         throws SolrServerException, IOException, PropertyNotFoundException, SQLException,
         ClassNotFoundException, ParserConfigurationException, SAXException, NotImplemented,
-        NotFound, UnsupportedType {
+        NotFound, UnsupportedType, InvalidRequest {
+        // From the Java doc: returns an array of the String values of a param, or null if no
+        // mapping for the param exists
+        String[] qts = solrParams.getParams(QT);
+        if (qts != null) {
+            throw new InvalidRequest("2823",
+                                     "The parameter - " + QT + " is not allowed in the query");
+        }
         if (authorizedSubjects == null || authorizedSubjects.isEmpty()) {
             //throw new SolrServerException("MetacatSolrIndex.query - There is no any authorized
             // subjects(even the public user) in this query session.");
