@@ -17,8 +17,7 @@ Metacat 3.4.2 is a patch release to provide an important security update
 ### Security
 
 The following moderate-severity security vulnerability was reported against all versions of Metacat 3.4.1 and before:
-- [//]: # (TODO - add CVE)
-- **CVE Number Pending**: Addressed security vulnerability "Metacat acts as unintended proxy to backend Apache SOLR engine". For full details and mitigation steps, please see the security advisory: [GHSA-57g5-qq6w-7jr8](https://github.com/NCEAS/metacat/security/advisories/GHSA-57g5-qq6w-7jr8)
+- **CVE Number Pending**: Addressed security vulnerability "Metacat acts as unintended proxy to backend Apache SOLR engine". For full details and mitigation steps, please see the security advisory: [GHSA-57g5-qq6w-7jr8](https://github.com/NCEAS/metacat/blob/main/Security-Advisories.md#ghsa-57g5-qq6w-7jr8-metacat-acts-as-unintended-proxy-to-backend-apache-solr-engine)
 
 The following dependency update addresses a vulnerability in the PostgreSQL JDBC Driver ([CVE-2026-42198](https://nvd.nist.gov/vuln/detail/CVE-2026-42198) describes a high-severity client-side denial of service, but **we believe this is not exploitable in standard Metacat installations**).
 - Upgrade org.postgresql client library from 42.7.7 to 42.7.11
