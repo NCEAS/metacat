@@ -2,7 +2,7 @@
 
 ## GHSA-6g6j-wh5h-77h5: Unauthenticated SQL injection vulnerability for Metacat
 
-- CVE: Pending
+- CVE-2026-48528
 - Severity: Critical
 - Affected versions: >= 2.0.0, <= 3.4.0
 - Patched versions: >= 3.4.1
@@ -166,9 +166,7 @@ For example, to disable 1.x servlet endpoints in Tomcat, edit the `web.xml` conf
 ```
 
 After removing those features, restart Tomcat or whichever software is hosting your servlets.
-[f]()
-[c](#ghsa-6g6j-wh5h-77h5-unauthenticated-sql-injection-vulnerability-for-metacat)
-[w]()
+
 ---
 
 ---
