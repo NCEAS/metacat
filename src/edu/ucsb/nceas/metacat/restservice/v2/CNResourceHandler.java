@@ -598,9 +598,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         InputStream data = null;
         try {
             data = CNodeService.getInstance(request).get(session, id);
-            OutputStream out = response.getOutputStream();
-            response.setStatus(200);
-            IOUtils.copyLarge(data, out);
+            writeToResponse(data);
         } finally {
             if (data != null) {
                 IOUtils.closeQuietly(data);

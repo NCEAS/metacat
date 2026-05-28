@@ -1505,11 +1505,9 @@ public class IdentifierManager {
 
             if (nodeId != null && nodeId.getValue() != null && !nodeId.getValue().trim().equals("")) {
                 if (!f1 && !f2 && !f3 && !f4) {
-                    whereClauseSql += " where authoritive_member_node = '" +
-                        nodeId.getValue().trim() + "'";
+                    whereClauseSql += " where authoritive_member_node = ?";
                 } else {
-                    whereClauseSql += " and authoritive_member_node = '" +
-                        nodeId.getValue().trim() + "'";
+                    whereClauseSql += " and authoritive_member_node = ?";
                 }
                 f5 = true;
             }
@@ -1555,6 +1553,11 @@ public class IdentifierManager {
                 countStmt.setTimestamp(2, new Timestamp(endTime.getTime()));
                 countStmt.setString(3, objectFormatId.getValue());
                 countStmt.setString(4, identifier.getValue());
+                if (f5) {
+                    fieldStmt.setString(5, nodeId.getValue().trim());
+                    countStmt.setString(5, nodeId.getValue().trim());
+                }
+
             } if (f1 && f2 && f3 && !f4) {
                 fieldStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 fieldStmt.setTimestamp(2, new Timestamp(endTime.getTime()));
@@ -1563,6 +1566,10 @@ public class IdentifierManager {
                 countStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 countStmt.setTimestamp(2, new Timestamp(endTime.getTime()));
                 countStmt.setString(3, objectFormatId.getValue());
+                if (f5) {
+                    fieldStmt.setString(4, nodeId.getValue().trim());
+                    countStmt.setString(4, nodeId.getValue().trim());
+                }
             } else if (f1 && f2 && !f3 && f4) {
                 fieldStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 fieldStmt.setTimestamp(2, new Timestamp(endTime.getTime()));
@@ -1571,12 +1578,20 @@ public class IdentifierManager {
                 countStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 countStmt.setTimestamp(2, new Timestamp(endTime.getTime()));
                 countStmt.setString(3, identifier.getValue());
+                if (f5) {
+                    fieldStmt.setString(4, nodeId.getValue().trim());
+                    countStmt.setString(4, nodeId.getValue().trim());
+                }
             } else if (f1 && f2 && !f3 && !f4) {
                 fieldStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 fieldStmt.setTimestamp(2, new Timestamp(endTime.getTime()));
                 // count
                 countStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 countStmt.setTimestamp(2, new Timestamp(endTime.getTime()));
+                if (f5) {
+                    fieldStmt.setString(3, nodeId.getValue().trim());
+                    countStmt.setString(3, nodeId.getValue().trim());
+                }
             } else if (f1 && !f2 && f3 && f4) {
                 fieldStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 fieldStmt.setString(2, objectFormatId.getValue());
@@ -1585,22 +1600,38 @@ public class IdentifierManager {
                 countStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 countStmt.setString(2, objectFormatId.getValue());
                 countStmt.setString(3, identifier.getValue());
+                if (f5) {
+                    fieldStmt.setString(4, nodeId.getValue().trim());
+                    countStmt.setString(4, nodeId.getValue().trim());
+                }
             } else if (f1 && !f2 && f3 && !f4) {
                 fieldStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 fieldStmt.setString(2, objectFormatId.getValue());
                 // count
                 countStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 countStmt.setString(2, objectFormatId.getValue());
+                if (f5) {
+                    fieldStmt.setString(3, nodeId.getValue().trim());
+                    countStmt.setString(3, nodeId.getValue().trim());
+                }
             } else if (f1 && !f2 && !f3 && f4) {
                 fieldStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 fieldStmt.setString(2, identifier.getValue());
                 // count
                 countStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 countStmt.setString(2, identifier.getValue());
+                if (f5) {
+                    fieldStmt.setString(3, nodeId.getValue().trim());
+                    countStmt.setString(3, nodeId.getValue().trim());
+                }
             } else if (f1 && !f2 && !f3 && !f4) {
                 fieldStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 // count
                 countStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
+                if (f5) {
+                    fieldStmt.setString(2, nodeId.getValue().trim());
+                    countStmt.setString(2, nodeId.getValue().trim());
+                }
             } else if (!f1 && f2 && f3 && f4) {
                 fieldStmt.setTimestamp(1, new Timestamp(endTime.getTime()));
                 fieldStmt.setString(2, objectFormatId.getValue());
@@ -1609,38 +1640,69 @@ public class IdentifierManager {
                 countStmt.setTimestamp(1, new Timestamp(endTime.getTime()));
                 countStmt.setString(2, objectFormatId.getValue());
                 countStmt.setString(3, identifier.getValue());
+                if (f5) {
+                    fieldStmt.setString(4, nodeId.getValue().trim());
+                    countStmt.setString(4, nodeId.getValue().trim());
+                }
             } else if (!f1 && f2 && f3 && !f4) {
                 fieldStmt.setTimestamp(1, new Timestamp(endTime.getTime()));
                 fieldStmt.setString(2, objectFormatId.getValue());
                 // count
                 countStmt.setTimestamp(1, new Timestamp(endTime.getTime()));
                 countStmt.setString(2, objectFormatId.getValue());
+                if (f5) {
+                    fieldStmt.setString(3, nodeId.getValue().trim());
+                    countStmt.setString(3, nodeId.getValue().trim());
+                }
             } else if (!f1 && !f2 && f3 && f4) {
                 fieldStmt.setString(1, objectFormatId.getValue());
                 fieldStmt.setString(2, identifier.getValue());
                 // count
                 countStmt.setString(1, objectFormatId.getValue());
                 countStmt.setString(2, identifier.getValue());
+                if (f5) {
+                    fieldStmt.setString(3, nodeId.getValue().trim());
+                    countStmt.setString(3, nodeId.getValue().trim());
+                }
             } else if (!f1 && !f2 && f3 && !f4) {
                 fieldStmt.setString(1, objectFormatId.getValue());
                 // count
                 countStmt.setString(1, objectFormatId.getValue());
+                if (f5) {
+                    fieldStmt.setString(2, nodeId.getValue().trim());
+                    countStmt.setString(2, nodeId.getValue().trim());
+                }
             } else if (!f1 && f2 && !f3 && f4) {
                 fieldStmt.setTimestamp(1, new Timestamp(endTime.getTime()));
                 fieldStmt.setString(2, identifier.getValue());
                 // count
                 countStmt.setTimestamp(1, new Timestamp(endTime.getTime()));
                 countStmt.setString(2, identifier.getValue());
+                if (f5) {
+                    fieldStmt.setString(3, nodeId.getValue().trim());
+                    countStmt.setString(3, nodeId.getValue().trim());
+                }
             } else if (!f1 && f2 && !f3 && !f4) {
                 fieldStmt.setTimestamp(1, new Timestamp(endTime.getTime()));
                 // count
                 countStmt.setTimestamp(1, new Timestamp(endTime.getTime()));
+                if (f5) {
+                    fieldStmt.setString(2, nodeId.getValue().trim());
+                    countStmt.setString(2, nodeId.getValue().trim());
+                }
             } else if (!f1 && !f2 && !f3 && f4) {
                 fieldStmt.setString(1, identifier.getValue());
                 // count
                 countStmt.setString(1, identifier.getValue());
+                if (f5) {
+                    fieldStmt.setString(2, nodeId.getValue().trim());
+                    countStmt.setString(2, nodeId.getValue().trim());
+                }
             } else if (!f1 && !f2 && !f3 && !f4) {
-                //do nothing
+                if (f5) {
+                    fieldStmt.setString(1, nodeId.getValue().trim());
+                    countStmt.setString(1, nodeId.getValue().trim());
+                }
             }
 
             logMetacat.info("list objects fieldStmt: " + fieldStmt.toString());

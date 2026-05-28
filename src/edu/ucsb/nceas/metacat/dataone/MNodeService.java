@@ -14,7 +14,6 @@ import edu.ucsb.nceas.metacat.ReadOnlyChecker;
 import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.admin.upgrade.UpdateDOI;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
-import edu.ucsb.nceas.metacat.common.resourcemap.ResourceMapNamespaces;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
@@ -33,7 +32,6 @@ import edu.ucsb.nceas.metacat.storage.ObjectInfo;
 import edu.ucsb.nceas.metacat.storage.Storage;
 import edu.ucsb.nceas.metacat.systemmetadata.MCSystemMetadata;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
-import edu.ucsb.nceas.metacat.systemmetadata.log.SystemMetadataDeltaLogger;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
@@ -146,6 +144,7 @@ import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Represents Metacat's implementation of the DataONE Member Node service API. Methods implement the
@@ -198,6 +197,8 @@ public class MNodeService extends D1NodeService
     private boolean needSync = true;
     private static UpdateDOI doiUpdater = null;
     private static MetacatSolrIndex metacatSolrIndex = null;
+    private final static AtomicBoolean indexAllProcessRunning = new AtomicBoolean(false);
+
 
     static {
         // use a shared executor service with nThreads == one less than available processors
@@ -3665,93 +3666,39 @@ public class MNodeService extends D1NodeService
      */
     protected void handleReindexAllAction() {
         // Process all of the documents
-        logMetacat.debug("MNodeService.handleReindexAllAction - "
-                                               + "reindex all objects in this Metacat instance");
+        //Check if another thread has been running the index-all command
+        //The first boolean variable is the expected value, and the second is the update value.
+        if (!indexAllProcessRunning.compareAndSet(false, true)) {
+            logMetacat.warn("Another index-all process has been running and Metacat will NOT "
+                                + "run it again.");
+            return;
+        }
+        logMetacat.debug("Reindex all objects in this Metacat instance");
         Runnable indexAll = new Runnable() {
             public void run() {
-                List<String> resourceMapFormats = ResourceMapNamespaces.getNamespaces();
-                buildAllNonResourceMapIndex(resourceMapFormats);
-                buildAllResourceMapIndex(resourceMapFormats);
+                try {
+                    buildAllObjectIndex();
+                } finally {
+                    indexAllProcessRunning.set(false);
+                }
             }
         };
-        Thread thread = new Thread(indexAll);
+        Thread thread = new Thread(indexAll, "index-all-objects");
         thread.start();
     }
 
     /**
-     * Index all non-resourcemap objects first. We don't put the list of pids in a vector anymore.
-     * @param resourceMapFormatList  the list of the resource map format
+     * Index all objects. We don't put the list of pids in a vector anymore.
      */
-    private void buildAllNonResourceMapIndex(List<String> resourceMapFormatList) {
-        boolean firstTime = true;
-        StringBuilder sql = new StringBuilder("select guid from systemmetadata");
-        if (resourceMapFormatList != null && resourceMapFormatList.size() > 0) {
-            for (String format : resourceMapFormatList) {
-                if (format != null && !format.trim().equals("")) {
-                    if (firstTime) {
-                        sql.append(" where object_format !='");
-                        sql.append(format);
-                        sql.append("'");
-                        firstTime = false;
-                    } else {
-                        sql.append(" and object_format !='");
-                        sql.append(format);
-                        sql.append("'");
-                    }
-                }
-            }
-            sql.append(" order by date_uploaded asc");
-        }
-        logMetacat.debug("MNodeService.buildAllNonResourceMapIndex - the final query is "
-                                                                        + sql.toString());
+    private void buildAllObjectIndex() {
+        String sql = "select guid from systemmetadata";
         try {
-            long size = buildIndexFromQuery(sql.toString());
-            logMetacat.info(
-                "MNodeService.buildAllNonResourceMapIndex - the number of non-resource map "
-                    + "objects is "
-                    + size + " being submitted to the index queue.");
+            long size = buildIndexFromQuery(sql);
+            logMetacat.info("The number of objects is " + size
+                                + " being submitted to the index queue.");
         } catch (SQLException | ServiceFailure e) {
             logMetacat.error(
-                "MNodeService.buildAllNonResourceMapIndex - can't index the objects since: "
-                    + e.getMessage());
-        }
-    }
-
-    /**
-     * Index all resource map objects. We don't put the list of pids in a vector anymore.
-     * @param resourceMapFormatList
-     */
-    private void buildAllResourceMapIndex(List<String> resourceMapFormatList) {
-        StringBuilder sql = new StringBuilder("select guid from systemmetadata");
-        if (resourceMapFormatList != null && resourceMapFormatList.size() > 0) {
-            boolean firstTime = true;
-            for (String format : resourceMapFormatList) {
-                if (format != null && !format.trim().equals("")) {
-                    if (firstTime) {
-                        sql.append(" where object_format ='");
-                        sql.append(format);
-                        sql.append("'");
-                        firstTime = false;
-                    } else {
-                        sql.append(" or object_format ='");
-                        sql.append(format);
-                        sql.append("'");
-                    }
-                }
-            }
-            sql.append(" order by date_uploaded asc");
-        }
-        logMetacat.info("MNodeService.buildAllResourceMapIndex - the final query is "
-                                                                    + sql.toString());
-        try {
-            long size = buildIndexFromQuery(sql.toString());
-            logMetacat.info(
-                "MNodeService.buildAllResourceMapIndex - the number of resource map objects is "
-                    + size + " being submitted to the index queue.");
-        } catch (SQLException | ServiceFailure e) {
-            logMetacat.error(
-                "MNodeService.buildAllResourceMapIndex - can't index the objects since: "
-                    + e.getMessage());
+                "Can't index all objects since: " + e.getMessage());
         }
     }
 

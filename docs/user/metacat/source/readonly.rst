@@ -1,5 +1,5 @@
 Read-only Mode
-~~~~~~~~~~~~~~
+==============
 
 Metacat has a feature to place itself in **read-only mode** - its content can NOT be
 modified; however, it can be read and searched. The default setting of Metacat is

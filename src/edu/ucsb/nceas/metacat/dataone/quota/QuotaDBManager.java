@@ -1,30 +1,10 @@
-/**
- *  Copyright: 2020 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 package edu.ucsb.nceas.metacat.dataone.quota;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -197,25 +177,34 @@ public class QuotaDBManager {
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.lookupRemoteUsageId");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String query = "select " + USAGEREMOTEID + " from " + TABLE + " where " + QUOTAID + "=" + quotaId + " and " + INSTANCEID + "='" + instanceId + "'";
+            String query = "select " + USAGEREMOTEID + " from " + TABLE + " where " + QUOTAID +
+                "=?" + " and " + INSTANCEID + "=?";
             stmt = dbConn.prepareStatement(query);
+            stmt.setInt(1, quotaId);
+            stmt.setString(2, instanceId);
             logMetacat.debug("QuotaDBManager.lookupRemoteUsageId - the select query is " + query);
             rs = stmt.executeQuery();
             while (rs.next()) {
                 //make sure it is greater than 0, so it is not empty.
                 if (rs.getInt(1) > 0) {
-                    remoteId = rs.getInt(1);//It may have multiple rows. They all should have the same value. So we only choose the first one.
-                    logMetacat.debug("QuotaDBManager.lookupRemoteUsageId - in the local db, Metacat find the cached remote usage id " + remoteId + " with quota id " + quotaId + " and instance id " + instanceId);
+                    //It may have multiple rows. They all should have the same value.
+                    // So we only choose the first one.
+                    remoteId = rs.getInt(1);
+                    logMetacat.debug(
+                        "In the local db, Metacat find the cached remote usage id "
+                            + remoteId + " with quota id " + quotaId + " and instance id "
+                            + instanceId);
                     break;
                 }
             }
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
-        logMetacat.debug("QuotaDBManager.lookupRemoteUsageId - From the local db, the cached remote usage id is " + remoteId + " with quota id " + quotaId + " and instance id " + instanceId + 
-                         ". If it is " + BookKeeperClient.DEFAULT_REMOTE_USAGE_ID + ", which means we don't find one in the local database.");
+        logMetacat.debug("From the local db, the cached remote usage id is "
+                + remoteId + " with quota id " + quotaId + " and instance id " + instanceId
+                + ". If it is " + BookKeeperClient.DEFAULT_REMOTE_USAGE_ID
+                + ", which means we don't find one in the local database.");
         return remoteId;
     }
-    
 
 }

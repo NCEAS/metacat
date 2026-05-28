@@ -4,22 +4,32 @@ import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.apache.wicket.protocol.http.mock.MockHttpServletResponse;
 import org.apache.wicket.protocol.http.mock.MockHttpSession;
 import org.apache.wicket.protocol.http.mock.MockServletContext;
+import org.dataone.client.v2.formats.ObjectFormatCache;
+import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Vector;
 
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 
+import javax.servlet.http.HttpServletRequest;
 
 
 /**
@@ -41,14 +51,14 @@ public class MNResourceHandlerTest {
     /**HTTP Verb HEAD*/
     protected static final byte HEAD = 5;
 
-    private MockHttpServletRequest request;
-    private MockServletContext context;
-    private MNResourceHandler resourceHandler;
-    private MNodeService mockMNodeService;
-    private MockedStatic<MNodeService> staticMNodeService;
+    protected MockHttpServletRequest request;
+    protected MockHttpServletResponse response;
+    protected MockServletContext context;
+    protected MNResourceHandler resourceHandler;
+    protected MNodeService mockMNodeService;
 
 
-    private static final String PATH = "/";
+    protected static final String PATH = "/";
     private static final String ENCODED_PID =
          "http%3A%2F%2Fdx.doi.org%2F10.5061%2Fdryad.12%3Fver%3D2017-08-29T11%3A52%3A08.075-05%3A00";
     private static final String DECODED_PID =
@@ -73,9 +83,8 @@ public class MNResourceHandlerTest {
         //  context.addFilter("d1Filter", "edu.ucsb.nceas.metacat.restservice.D1URLFilter");
         // This is OK for now, but may become a problem for the sql query test"
         request = new MockHttpServletRequest(null, new MockHttpSession(context), context);
-        resourceHandler =
-                    new MNResourceHandler(request, new MockHttpServletResponse(request));
-        staticMNodeService = Mockito.mockStatic(MNodeService.class);
+        response = new MockHttpServletResponse(request);
+        resourceHandler = new MNResourceHandler(request, response);
         mockMNodeService = Mockito.mock(MNodeService.class);
         Mockito.when(mockMNodeService.reindex(any(Session.class), any(List.class)))
                                                                     .thenReturn(Boolean.TRUE);
@@ -92,9 +101,7 @@ public class MNResourceHandlerTest {
      */
     @After
     public void tearDown() throws Exception {
-        if (staticMNodeService != null) {
-            staticMNodeService.close();
-        }
+
     }
 
     /**
@@ -103,52 +110,56 @@ public class MNResourceHandlerTest {
      */
     @Test
     public void testReindex() throws Exception {
-        List<Identifier> ids;
+        try (MockedStatic<MNodeService> staticMock = Mockito.mockStatic(MNodeService.class)) {
+            // static getInstance returns our mock
+            staticMock.when(() -> MNodeService.getInstance(any(HttpServletRequest.class)))
+                .thenReturn(mockMNodeService);
+            List<Identifier> ids;
+            // test /index/pid
+            Identifier id = new Identifier();
+            id.setValue(DECODED_PID);
+            ids = new Vector<Identifier>();
+            ids.add(id);
+            refreshResourceHandler("/" + INDEX + "/" + ENCODED_PID);
+            //Reindex doesn't have GET and POST method
+            resourceHandler.handle(GET);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).reindex(null, ids);
+            resourceHandler.handle(POST);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).reindex(null, ids);
+            resourceHandler.handle(PUT);
+            // Verify that reindex() was called
+            Mockito.verify(mockMNodeService, Mockito.times(1)).reindex(null, ids);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).reindexAll(null);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).reindexAll(any(Session.class));
 
-        // test /index/pid
-        Identifier id = new Identifier();
-        id.setValue(DECODED_PID);
-        ids = new Vector<Identifier>();
-        ids.add(id);
-        refreshResourceHandler("/" + INDEX + "/" + ENCODED_PID);
-        //Reindex doesn't have GET and POST method
-        resourceHandler.handle(GET);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).reindex(null, ids);
-        resourceHandler.handle(POST);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).reindex(null, ids);
-        resourceHandler.handle(PUT);
-        // Verify that reindex() was called
-        Mockito.verify(mockMNodeService, Mockito.times(1)).reindex(null, ids);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).reindexAll(null);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).reindexAll(any(Session.class));
+            //test /index?pid=pid1&pid=pid2
+            Identifier id1 = new Identifier();
+            id1.setValue(URN_PID);
+            ids.add(id1);
+            refreshResourceHandler("/" + INDEX + "?pid=" + ENCODED_PID + "&pid=" + URN_PID);
+            resourceHandler.handle(PUT);
+            // Verify that reindex() was called
+            Mockito.verify(mockMNodeService, Mockito.times(1)).reindex(null, ids);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).reindexAll(null);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).reindexAll(any(Session.class));
 
-        //test /index?pid=pid1&pid=pid2
-        Identifier id1 = new Identifier();
-        id1.setValue(URN_PID);
-        ids.add(id1);
-        refreshResourceHandler("/" + INDEX + "?pid=" + ENCODED_PID + "&pid=" + URN_PID);
-        resourceHandler.handle(PUT);
-        // Verify that reindex() was called
-        Mockito.verify(mockMNodeService, Mockito.times(1)).reindex(null, ids);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).reindexAll(null);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).reindexAll(any(Session.class));
+            //test /index/?pid=pid1&pid=pid2
+            refreshResourceHandler("/" + INDEX + "/?pid=" + ENCODED_PID + "&pid=" + URN_PID);
+            resourceHandler.handle(PUT);
+            // Verify that reindex() was called
+            Mockito.verify(mockMNodeService, Mockito.times(2)).reindex(null, ids);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).reindexAll(null);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).reindexAll(any(Session.class));
 
-        //test /index/?pid=pid1&pid=pid2
-        refreshResourceHandler("/" + INDEX + "/?pid=" + ENCODED_PID + "&pid=" + URN_PID);
-        resourceHandler.handle(PUT);
-        // Verify that reindex() was called
-        Mockito.verify(mockMNodeService, Mockito.times(2)).reindex(null, ids);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).reindexAll(null);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).reindexAll(any(Session.class));
-
-        //test /index/?all=false&pid=pid1&pid=pid2
-        refreshResourceHandler("/" + INDEX + "/?all=false&pid=" + ENCODED_PID
-                                                                    + "&pid=" + URN_PID);
-        resourceHandler.handle(PUT);
-        // Verify that reindex() was called
-        Mockito.verify(mockMNodeService, Mockito.times(3)).reindex(null, ids);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).reindexAll(null);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).reindexAll(any(Session.class));
+            //test /index/?all=false&pid=pid1&pid=pid2
+            refreshResourceHandler("/" + INDEX + "/?all=false&pid=" + ENCODED_PID
+                                       + "&pid=" + URN_PID);
+            resourceHandler.handle(PUT);
+            // Verify that reindex() was called
+            Mockito.verify(mockMNodeService, Mockito.times(3)).reindex(null, ids);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).reindexAll(null);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).reindexAll(any(Session.class));
+        }
     }
 
     /**
@@ -157,29 +168,34 @@ public class MNResourceHandlerTest {
      */
     @Test
     public void testReindexWithAll() throws Exception {
-        //test /index/?all=true&pid=pid1&pid=pid2
-        refreshResourceHandler("/"+ INDEX+ "/?all=true&pid=" + ENCODED_PID + "&pid=" + URN_PID);
-        resourceHandler.handle(PUT);
-        // Verify that reindexAll() was called
-        Mockito.verify(mockMNodeService, Mockito.times(0))
-                                                    .reindex(any(Session.class), any(List.class));
-        Mockito.verify(mockMNodeService, Mockito.times(1)).reindexAll(null);
+        try (MockedStatic<MNodeService> staticMock = Mockito.mockStatic(MNodeService.class)) {
+            // static getInstance returns our mock
+            staticMock.when(() -> MNodeService.getInstance(any(HttpServletRequest.class)))
+                .thenReturn(mockMNodeService);
+            //test /index/?all=true&pid=pid1&pid=pid2
+            refreshResourceHandler("/"+ INDEX+ "/?all=true&pid=" + ENCODED_PID + "&pid=" + URN_PID);
+            resourceHandler.handle(PUT);
+            // Verify that reindexAll() was called
+            Mockito.verify(mockMNodeService, Mockito.times(0))
+                .reindex(any(Session.class), any(List.class));
+            Mockito.verify(mockMNodeService, Mockito.times(1)).reindexAll(null);
 
-        //test /index/?all=true
-        refreshResourceHandler("/" + INDEX + "/?all=true");
-        resourceHandler.handle(PUT);
-        // Verify that reindexAll() was called
-        Mockito.verify(mockMNodeService, Mockito.times(0))
-                                                    .reindex(any(Session.class), any(List.class));
-        Mockito.verify(mockMNodeService, Mockito.times(2)).reindexAll(null);
+            //test /index/?all=true
+            refreshResourceHandler("/" + INDEX + "/?all=true");
+            resourceHandler.handle(PUT);
+            // Verify that reindexAll() was called
+            Mockito.verify(mockMNodeService, Mockito.times(0))
+                .reindex(any(Session.class), any(List.class));
+            Mockito.verify(mockMNodeService, Mockito.times(2)).reindexAll(null);
 
-        //test /index?all=true
-        refreshResourceHandler("/" + INDEX + "?all=true");
-        resourceHandler.handle(PUT);
-        // Verify that reindexAll() was called
-        Mockito.verify(mockMNodeService, Mockito.times(0))
-                                                    .reindex(any(Session.class), any(List.class));
-        Mockito.verify(mockMNodeService, Mockito.times(3)).reindexAll(null);
+            //test /index?all=true
+            refreshResourceHandler("/" + INDEX + "?all=true");
+            resourceHandler.handle(PUT);
+            // Verify that reindexAll() was called
+            Mockito.verify(mockMNodeService, Mockito.times(0))
+                .reindex(any(Session.class), any(List.class));
+            Mockito.verify(mockMNodeService, Mockito.times(3)).reindexAll(null);
+        }
     }
 
     /**
@@ -188,90 +204,95 @@ public class MNResourceHandlerTest {
      */
     @Test
     public void testUpdateIdMetadata() throws Exception {
-        String[] ids;
-        String[] formats = null;
-        Session session = null;
+        try (MockedStatic<MNodeService> staticMock = Mockito.mockStatic(MNodeService.class)) {
+            // static getInstance returns our mock
+            staticMock.when(() -> MNodeService.getInstance(any(HttpServletRequest.class)))
+                .thenReturn(mockMNodeService);
+            String[] ids;
+            String[] formats = null;
+            Session session = null;
 
-        // test /identifiers/pid
-        ids = new String[1];
-        ids[0] = DOI1;
-        refreshResourceHandler("/" + IDENTIFIERS + "/" + DOI1);
-        //updateIdMetadata doesn't have GET and POST method
-        resourceHandler.handle(GET);
-        Mockito.verify(mockMNodeService, Mockito.times(0))
-                                                    .updateIdMetadata(session, ids, formats);
-        resourceHandler.handle(POST);
-        Mockito.verify(mockMNodeService, Mockito.times(0))
-                                                    .updateIdMetadata(session, ids, formats);
-        resourceHandler.handle(PUT);
-        Mockito.verify(mockMNodeService, Mockito.times(1))
-                                                    .updateIdMetadata(session, ids, formats);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(session);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(any(Session.class));
+            // test /identifiers/pid
+            ids = new String[1];
+            ids[0] = DOI1;
+            refreshResourceHandler("/" + IDENTIFIERS + "/" + DOI1);
+            //updateIdMetadata doesn't have GET and POST method
+            resourceHandler.handle(GET);
+            Mockito.verify(mockMNodeService, Mockito.times(0))
+                .updateIdMetadata(session, ids, formats);
+            resourceHandler.handle(POST);
+            Mockito.verify(mockMNodeService, Mockito.times(0))
+                .updateIdMetadata(session, ids, formats);
+            resourceHandler.handle(PUT);
+            Mockito.verify(mockMNodeService, Mockito.times(1))
+                .updateIdMetadata(session, ids, formats);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(session);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(any(Session.class));
 
 
-        // test /identifiers/?pid=pid1&pid=pid2
-        ids = new String[2];
-        ids[0] = DOI1;
-        ids[1] = DOI2;
-        refreshResourceHandler("/" + IDENTIFIERS + "/?pid=" + DOI1 + "&pid=" + DOI2);
-        resourceHandler.handle(PUT);
-        Mockito.verify(mockMNodeService, Mockito.times(1))
-                                                    .updateIdMetadata(session, ids, formats);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(session);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(any(Session.class));
+            // test /identifiers/?pid=pid1&pid=pid2
+            ids = new String[2];
+            ids[0] = DOI1;
+            ids[1] = DOI2;
+            refreshResourceHandler("/" + IDENTIFIERS + "/?pid=" + DOI1 + "&pid=" + DOI2);
+            resourceHandler.handle(PUT);
+            Mockito.verify(mockMNodeService, Mockito.times(1))
+                .updateIdMetadata(session, ids, formats);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(session);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(any(Session.class));
 
-        // test /identifiers?pid=pid1&pid=pid2
-        ids = new String[2];
-        ids[0] = DOI1;
-        ids[1] = DOI2;
-        refreshResourceHandler("/" + IDENTIFIERS + "?pid=" + DOI1 + "&pid=" + DOI2);
-        resourceHandler.handle(PUT);
-        Mockito.verify(mockMNodeService, Mockito.times(2))
-                                                    .updateIdMetadata(session, ids, formats);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(session);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(any(Session.class));
+            // test /identifiers?pid=pid1&pid=pid2
+            ids = new String[2];
+            ids[0] = DOI1;
+            ids[1] = DOI2;
+            refreshResourceHandler("/" + IDENTIFIERS + "?pid=" + DOI1 + "&pid=" + DOI2);
+            resourceHandler.handle(PUT);
+            Mockito.verify(mockMNodeService, Mockito.times(2))
+                .updateIdMetadata(session, ids, formats);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(session);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(any(Session.class));
 
-        // test /identifiers?formatId=format1&formatId=format2
-        ids = null;
-        formats = new String[2];
-        formats[0] = EML2_NAMESPACE;
-        formats[1] = EML201_NAMESPACE;
-        refreshResourceHandler("/" + IDENTIFIERS + "?formatId=" + EML2_NAMESPACE
-                                                        + "&formatId=" + EML201_NAMESPACE);
-        resourceHandler.handle(PUT);
-        Mockito.verify(mockMNodeService, Mockito.times(1))
-                                                    .updateIdMetadata(session, ids, formats);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(session);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(any(Session.class));
+            // test /identifiers?formatId=format1&formatId=format2
+            ids = null;
+            formats = new String[2];
+            formats[0] = EML2_NAMESPACE;
+            formats[1] = EML201_NAMESPACE;
+            refreshResourceHandler("/" + IDENTIFIERS + "?formatId=" + EML2_NAMESPACE
+                                       + "&formatId=" + EML201_NAMESPACE);
+            resourceHandler.handle(PUT);
+            Mockito.verify(mockMNodeService, Mockito.times(1))
+                .updateIdMetadata(session, ids, formats);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(session);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(any(Session.class));
 
-        // test /identifiers?formatId=format1&formatId=format2&pid=pid1
-        ids = new String[1];
-        ids[0] = DOI1;
-        formats = new String[2];
-        formats[0] = EML2_NAMESPACE;
-        formats[1] = EML201_NAMESPACE;
-        refreshResourceHandler("/" + IDENTIFIERS + "?formatId=" + EML2_NAMESPACE
-                + "&formatId=" + EML201_NAMESPACE + "&pid=" + DOI1);
-        resourceHandler.handle(PUT);
-        Mockito.verify(mockMNodeService, Mockito.times(1))
-                                                    .updateIdMetadata(session, ids, formats);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(session);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(any(Session.class));
+            // test /identifiers?formatId=format1&formatId=format2&pid=pid1
+            ids = new String[1];
+            ids[0] = DOI1;
+            formats = new String[2];
+            formats[0] = EML2_NAMESPACE;
+            formats[1] = EML201_NAMESPACE;
+            refreshResourceHandler("/" + IDENTIFIERS + "?formatId=" + EML2_NAMESPACE
+                                       + "&formatId=" + EML201_NAMESPACE + "&pid=" + DOI1);
+            resourceHandler.handle(PUT);
+            Mockito.verify(mockMNodeService, Mockito.times(1))
+                .updateIdMetadata(session, ids, formats);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(session);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(any(Session.class));
 
-        // test /identifiers?formatId=format1&formatId=format2&pid=pid1&all=false;
-        ids = new String[1];
-        ids[0] = DOI1;
-        formats = new String[2];
-        formats[0] = EML2_NAMESPACE;
-        formats[1] = EML201_NAMESPACE;
-        refreshResourceHandler("/" + IDENTIFIERS + "?formatId=" + EML2_NAMESPACE
-                + "&formatId=" + EML201_NAMESPACE + "&pid=" + DOI1 + "&all=false");
-        resourceHandler.handle(PUT);
-        Mockito.verify(mockMNodeService, Mockito.times(2))
-                                                    .updateIdMetadata(session, ids, formats);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(session);
-        Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(any(Session.class));
+            // test /identifiers?formatId=format1&formatId=format2&pid=pid1&all=false;
+            ids = new String[1];
+            ids[0] = DOI1;
+            formats = new String[2];
+            formats[0] = EML2_NAMESPACE;
+            formats[1] = EML201_NAMESPACE;
+            refreshResourceHandler("/" + IDENTIFIERS + "?formatId=" + EML2_NAMESPACE
+                                       + "&formatId=" + EML201_NAMESPACE + "&pid=" + DOI1 + "&all=false");
+            resourceHandler.handle(PUT);
+            Mockito.verify(mockMNodeService, Mockito.times(2))
+                .updateIdMetadata(session, ids, formats);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(session);
+            Mockito.verify(mockMNodeService, Mockito.times(0)).updateAllIdMetadata(any(Session.class));
+        }
     }
 
     /**
@@ -279,23 +300,163 @@ public class MNResourceHandlerTest {
      */
     @Test
     public void testUpdateIdMetadataWithAll() throws Exception {
-        // test /identifiers?all=true;
-        refreshResourceHandler("/" + IDENTIFIERS + "?all=true");
-        resourceHandler.handle(PUT);
-        Mockito.verify(mockMNodeService, Mockito.times(0))
+        try (MockedStatic<MNodeService> staticMock = Mockito.mockStatic(MNodeService.class)) {
+            // static getInstance returns our mock
+            staticMock.when(() -> MNodeService.getInstance(any(HttpServletRequest.class)))
+                .thenReturn(mockMNodeService);
+            // test /identifiers?all=true;
+            refreshResourceHandler("/" + IDENTIFIERS + "?all=true");
+            resourceHandler.handle(PUT);
+            Mockito.verify(mockMNodeService, Mockito.times(0))
                 .updateIdMetadata(any(Session.class), any(String[].class), any(String[].class));
-        Mockito.verify(mockMNodeService, Mockito.times(1)).updateAllIdMetadata(null);
+            Mockito.verify(mockMNodeService, Mockito.times(1)).updateAllIdMetadata(null);
+        }
+    }
+
+    /**
+     * Test getting a partial object
+     */
+    @Test
+    public void testGetPartialObject() throws Exception {
+        assertNull(request.getHeader("Range"));
+        Identifier guid = new Identifier();
+        guid.setValue("testGetPartialObject." + System.currentTimeMillis());
+        request = new MockHttpServletRequest(null, new MockHttpSession(context), context);
+        request.setURL("/object/" + guid.getValue());
+        response = new MockHttpServletResponse(request);
+        try (MockedStatic<MNodeService> staticMock = Mockito.mockStatic(MNodeService.class)) {
+            MNodeService mockMNodeService1 = Mockito.mock(MNodeService.class);
+            // Prepare mock return values
+            String data = "data";
+            ByteArrayInputStream dataStream =
+                new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
+            Mockito.when(mockMNodeService1.get(
+                Mockito.any(),
+                Mockito.any()
+            )).thenReturn(dataStream);
+
+            SystemMetadata sysmeta = new SystemMetadata();
+            sysmeta.setIdentifier(guid);
+            sysmeta.setFileName("file");
+            sysmeta.setFormatId(
+                ObjectFormatCache.getInstance().getFormat("application/octet-stream")
+                    .getFormatId());
+            Mockito.when(mockMNodeService1.getSystemMetadata(
+                Mockito.any(),
+                Mockito.any()
+            )).thenReturn(sysmeta);
+            // static getInstance returns our mock
+            staticMock.when(() ->
+                                MNodeService.getInstance(Mockito.any())
+            ).thenAnswer(invocation -> {
+                return mockMNodeService1;
+            });
+            // Entire object
+            response = new MockHttpServletResponse(request);
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            assertEquals(data, new String(response.getBinaryContent()));
+            // Just get the first character
+            dataStream.reset();
+            request.setHeader("Range", "bytes=0-0");
+            response = new MockHttpServletResponse(request);
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            assertEquals("d", new String(response.getBinaryContent()));
+            // Get two characters
+            dataStream.reset();
+            request.setHeader("Range", "bytes=1-2");
+            response = new MockHttpServletResponse(request);
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            assertEquals("at", new String(response.getBinaryContent()));
+            // Opened end
+            dataStream.reset();
+            request.setHeader("Range", "bytes=2-");
+            response = new MockHttpServletResponse(request);
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            assertEquals("ta", new String(response.getBinaryContent()));
+            // Opened start
+            dataStream.reset();
+            request.setHeader("Range", "bytes=-2");
+            response = new MockHttpServletResponse(request);
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            assertTrue((new String(response.getBinaryContent())).contains("errorCode"));
+            // Out of range
+            dataStream.reset();
+            request.setHeader("Range", "bytes=1-7");
+            response = new MockHttpServletResponse(request);
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            assertEquals("ata", new String(response.getBinaryContent()));
+            // Out of range
+            dataStream.reset();
+            request.setHeader("Range", "bytes=7-8");
+            response = new MockHttpServletResponse(request);
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            assertTrue((new String(response.getBinaryContent())).contains("errorCode"));
+            assertNotNull(request.getHeader("Range"));
+            request.setHeader("Range", null);
+            assertNull(request.getHeader("Range"));
+        }
+    }
+
+    /**
+     * Test getting a partial private object
+     */
+    @Test
+    public void testGetPartialPrivateObject() throws Exception {
+        assertNull(request.getHeader("Range"));
+        Identifier guid = new Identifier();
+        guid.setValue("testGetPartialObject." + System.currentTimeMillis());
+        request = new MockHttpServletRequest(null, new MockHttpSession(context), context);
+        request.setURL("/object/" + guid.getValue());
+        response = new MockHttpServletResponse(request);
+        try (MockedStatic<MNodeService> staticMock = Mockito.mockStatic(MNodeService.class)) {
+            MNodeService mockMNodeService1 = Mockito.mock(MNodeService.class);
+            // Prepare mock return values
+            Mockito.when(mockMNodeService1.get(
+                Mockito.any(),
+                Mockito.any()
+            )).thenThrow(new NotAuthorized("0000", "User is not authorized"));
+            Mockito.when(mockMNodeService1.getSystemMetadata(
+                Mockito.any(),
+                Mockito.any()
+            )).thenThrow(new NotAuthorized("0000", "User is not authorized"));
+            // static getInstance returns our mock
+            staticMock.when(() ->
+                                MNodeService.getInstance(Mockito.any())
+            ).thenAnswer(invocation -> {
+                return mockMNodeService1;
+            });
+            // Entire object
+            response = new MockHttpServletResponse(request);
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            assertTrue((new String(response.getBinaryContent())).contains("NotAuthorized"));
+            request.setHeader("Range", "bytes=0-0");
+            response = new MockHttpServletResponse(request);
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            assertTrue((new String(response.getBinaryContent())).contains("NotAuthorized"));
+            // Reset the header
+            assertNotNull(request.getHeader("Range"));
+            request.setHeader("Range", null);
+            assertNull(request.getHeader("Range"));
+        }
     }
 
     /**
      * Refresh the resource handler with a new request url
      * @param url  the new url will be used in the resource handler
      */
-    private void refreshResourceHandler(String url) {
+    protected void refreshResourceHandler(String url) {
         request = new MockHttpServletRequest(null, new MockHttpSession(context), context);
+        response = new MockHttpServletResponse(request);
         request.setURL(url);
-        Mockito.when(MNodeService.getInstance(request)).thenReturn(mockMNodeService);
-        resourceHandler =
-                new MNResourceHandler(request, new MockHttpServletResponse(request));
+        resourceHandler = new MNResourceHandler(request, response);
     }
 }

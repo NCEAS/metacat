@@ -20,7 +20,7 @@ hidden: true    # do NOT show in template picker every time someone creates a ne
 
 ### Release of Software & helm Chart Together
 
-- [ ] Create a branch named `feature-<issueNum>-<releaseVer>-release-prep`, and do the following:
+- [ ] Create a branch named `task-<issueNum>-release-<releaseVer>-prep`, and do the following:
   - [ ] **pom.xml**: Update `<version>x.x.x</version>`
   - [ ] **Chart.yaml**: Update chart `version` and `appVersion`
   - [ ] Grep codebase for previous release number, just in case
@@ -44,13 +44,19 @@ hidden: true    # do NOT show in template picker every time someone creates a ne
   - [ ] Draft release email
   - [ ] PR & merge release prep branch to `develop`
 - [ ] PR & merge `develop` -> `main`
+- [ ] Merge `main` back to `develop`
+  ```shell
+  git checkout develop; git merge main --ff-only
+  git push
+  ```
 - [ ] **(Linux VM)** build and push docker image
 - [ ] **(Mac)** package and push helm chart
 - [ ] **(Mac)** build binary packages & upload to knb site
 - [ ] Tag the release; look up the `<commit-sha>` from `git log`, then:
   ```shell
-  git tag x.x.x <commit-sha>
-  git tag chart-x.x.x <commit-sha>
+  # Always use annotated tags (-a) for releases
+  git tag -a x.x.x <commit-sha> -m "Metacat Release x.x.x"
+  git tag -a chart-x.x.x <commit-sha> -m "Metacat Helm Chart x.x.x"
   git push --tags    ## IMPORTANT - DON'T FORGET THIS!
   ```
 - [ ] Add the metadata for the reserved DOI and publish it with the correct softwareheritage url
@@ -73,6 +79,11 @@ hidden: true    # do NOT show in template picker every time someone creates a ne
   - [ ] `git cherry-pick` any commits that need to be included from develop
   - [ ] PR & merge to develop
   - [ ] PR & merge to main
+  - [ ] Merge `main` back to `develop`
+    ```shell
+    git checkout develop; git merge main --ff-only
+    git push
+    ```
 - [ ] **(Mac)** package and push helm chart
   ```shell
   helm package -u ./helm
@@ -81,7 +92,8 @@ hidden: true    # do NOT show in template picker every time someone creates a ne
   ```
 - [ ] Tag the release; look up the `<commit-sha>` from `git log`, then:
   ```shell
-  git tag chart-x.x.x <commit-sha>
+  # Always use annotated tags (-a) for releases
+  git tag -a chart-x.x.x <commit-sha> -m "Metacat Helm Chart x.x.x"
   git push --tags    ## IMPORTANT - DON'T FORGET THIS!
   ```
 - [ ] Add to GH `Releases` page

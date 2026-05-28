@@ -1,8 +1,8 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 3.3.0 Release
+Version: 3.4.2 Release
 - See [Release Notes](RELEASE-NOTES.md)
-- DOI: [doi:10.18739/A2CV4BT70](https://doi.org/10.18739/A2CV4BT70)
+- DOI: [doi:10.18739/A2DF6K55B](https://doi.org/10.18739/A2DF6K55B)
 
 Send feedback and bugs to: 
 
@@ -20,6 +20,15 @@ data are well and consistently described.
 
 ## Installation
 See [installation notes](./docs/user/metacat/source/install.rst) for detailed instructions for your OS.
+
+## Support Policy
+
+Metacat follows an accelerated end-of-life policy. Due to limited
+maintenance funding, we support only the current release: the latest
+tagged release, which is also the HEAD of the `main` branch. Older
+releases do not receive backported security fixes or ongoing support.
+See [SECURITY.md](SECURITY.md) and [CONTRIBUTING.md](CONTRIBUTING.md)
+for details.
 
 ## Documentation
 See the docs directory for detailed documentation and installation
@@ -43,7 +52,7 @@ for the next release.
 
 Cite this software as:
 
-> Jing Tao, Matthew Brooke, Dou Mok, Ian Nesbitt, Matthew B. Jones. 2025. Metacat: Data Preservation and Discovery System (3.3.0). Arctic Data Center. Software. [doi:10.18739/A2CV4BT70](https://doi.org/10.18739/A2CV4BT70)
+> Jing Tao, Matthew Brooke, Dou Mok, Ian Nesbitt, Matthew B. Jones. 2025. Metacat: Data Preservation and Discovery System (3.4.2). Arctic Data Center. Software. [doi:10.18739/A2DF6K55B](https://doi.org/10.18739/A2DF6K55B)
 
 ## Current Contributors
 

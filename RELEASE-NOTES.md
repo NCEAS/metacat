@@ -1,8 +1,77 @@
 # Metacat Release Notes
 
-> [!CAUTION]
-> If you are upgrading from a helm chart version earlier than 2.1.0, please see the [Upgrade
-> Notes](#chart-upgrade-notes) below. Failure to do so may result in loss of data!
+> [!IMPORTANT]
+> **Helm Charts:**
+> 1. If you are upgrading from a helm chart version earlier than 2.1.0, please see the [Upgrade Notes](#chart-upgrade-notes) below. Failure to do so may result in loss of data!
+> 2. We are continuing to move away from using Bitnami helm charts for production dependencies. The Metacat chart now assumes you will provide your own instances of PostgreSQL and RabbitMQ, which are no longer included as sub-charts. You are free to choose any method of deploying these dependencies; we have had success with:
+>    - CloudNative PG Operator to deploy your PostgreSQL cluster - see [Appendix 5 of the helm/README.md](./helm/README.md#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg)
+>    - RabbitMQ Cluster Operator to deploy your RabbitMQ cluster - see [Appendix 6 of the helm/README.md](./helm/README.md#appendix-6-the-rabbitmq-cluster-operator)
+
+
+## Release Notes for Metacat 3.4.1
+
+**Release date: 2026-05-21**
+
+Metacat 3.4.1 is a patch release focused exclusively on critical security updates (plus one minor bug fix).
+
+> [!WARNING]
+> 
+> We strongly advise all users to upgrade to this version as soon as possible, since it addresses multiple critical security vulnerabilities affecting all previous metacat versions. For details on the vulnerabilities and mitigation steps, please see the security advisories linked below:
+
+### Security
+
+The following critical security vulnerabilities were reported against all versions of Metacat 3.4.0 and before:
+- **CVE Number Pending**: Addressed SQL injection security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-wrc6-rc34-hrcg](Security-Advisories.md#ghsa-6g6j-wh5h-77h5-unauthenticated-sql-injection-vulnerability-for-metacat)
+
+The following critical security vulnerabilities were reported against all versions of Metacat 2.19.1 and before:
+- **CVE-2026-47754**: Addressed path traversal security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-m852-f287-7cgw](Security-Advisories.md#ghsa-m852-f287-7cgw-unauthenticated-path-traversal-in-metacat-2x)
+- **CVE-2026-48114**: Addressed SQL injection security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-wrc6-rc34-hrcg](Security-Advisories.md#ghsa-wrc6-rc34-hrcg-unauthenticated-sql-injection-vulnerability-for-metacat-2x)
+
+The official CVE reports will be published for all these vulnerabilities within the next few days.
+
+### Bug Fixes
+- Add missing database indexes; see [Issue #2299](https://github.com/NCEAS/metacat/issues/2299).
+
+## Release Notes for Helm Chart 4.2.1
+
+**Release date: 2026-05-21**
+
+> [!WARNING]
+> If you are using the helm chart to deploy Metacat, we strongly advise upgrading to this version as soon as possible, since it addresses critical security vulnerabilities. For details on the vulnerabilities and mitigation steps, please see the security advisories linked in the [Release Notes for Metacat 3.4.1](#release-notes-for-metacat-341) above.
+
+Metacat Helm Chart 4.2.1 is a patch release deployed solely to support the Metacat 3.4.1 code release. There are no functional changes to the chart configuration or templates.
+
+
+## Release Notes for Metacat 3.4.0
+
+**Release date: 2026-05-07**
+
+### New Features & Enhancements:
+- Add support for partial object retrieval using HTTP byte ranges.
+- Improve the `index-all` command so only one thread can run it at a time, and remove resourcemap/non-resourcemap sorting, to speed up indexing.
+- Add database indexes for `smReplicationStatus` and `smReplicationPolicy`, and remove the obsolete `smReplicationPolicy_guid` index.
+- CN Indexing-Related Changes
+  - Add and document the CN systemmetadata-trigger indexing flow, including new utilities to populate Solr from CN and reindex a supplied list of PIDs.
+  - Split CN indexing configuration into a dedicated config file and improve the logging and reconnect behavior of the indexing scripts.
+  - CN-related Solr schema and config changes
+
+### Security Upgrades:
+- Upgrade Solr to 9.10.1
+- Upgrade log4j-core to 2.25.3
+
+## Release Notes for helm chart 4.2.0
+
+**Release date: 2026-05-07**
+
+This chart deploys the new Metacat 3.4.0 release. The Metacat app version update is the only change to the chart.
+
+## Release Notes for helm chart 4.1.0
+
+**Release date: 2026-04-23**
+
+This is a chart-only release, with no changes to the Metacat codebase. The dataone-indexer sub-chart has been upgraded to version 2.1.0, which includes indexing-performance and robustness improvements (see [dataone-indexer Release Notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md#dataone-indexer-version-330--helm-chart-version-210) for details).
+
+In addition to the sub-chart version upgrade, this release removes the indexer values override: `dataone-indexer.solr.javaMem: "-Xms512m -Xmx2g"`, so that Solr will now use the indexer's default Java memory setting of `-XX:MaxRAMPercentage=50` (50% of the container memory limit). See the [dataone-indexer values.yaml documentation](https://github.com/DataONEorg/dataone-indexer/blob/22b9b98517e04e2370de83d682ad2964dce04c9d/helm/values.yaml#L503) for more details on Java memory settings for Solr.
 
 ## Release Notes for Metacat 3.3.0
 

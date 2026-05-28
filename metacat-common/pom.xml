@@ -4,12 +4,12 @@
     <groupId>edu.ucsb.nceas.metacat.common</groupId>
     <artifactId>metacat-common</artifactId>
     <packaging>jar</packaging>
-    <version>3.3.0</version>
+    <version>3.4.2</version>
     <name>metacat-common</name>
     <url>http://maven.apache.org</url>
     <properties>
         <d1_common_java_version>2.3.0</d1_common_java_version>
-        <solr_version>9.8.0</solr_version>
+        <solr_version>9.10.1</solr_version>
         <log4j.version>2.25.3</log4j.version>
     </properties>
     <repositories>
@@ -289,7 +289,7 @@
                     </goals>
                     <configuration>
                         <outputDirectory>target/solr-home</outputDirectory>
-                        <resources>          
+                        <resources>
                             <resource>
                                 <directory>src/main/resources/solr-home</directory>
                                 <filtering>false</filtering>

@@ -1,27 +1,27 @@
-DELETE FROM xml_catalog 
+DELETE FROM xml_catalog
       WHERE entry_type LIKE 'DTD'
         AND public_id LIKE '%@eml-version@%';
-DELETE FROM xml_catalog 
+DELETE FROM xml_catalog
       WHERE entry_type LIKE 'DTD'
         AND public_id LIKE '%@eml-beta4-version@%';
-DELETE FROM xml_catalog 
+DELETE FROM xml_catalog
       WHERE entry_type LIKE 'Schema'
         AND system_id LIKE '%eml%';
-DELETE FROM xml_catalog 
+DELETE FROM xml_catalog
       WHERE entry_type LIKE 'Schema'
         AND system_id LIKE '%/dataone/%';
-DELETE FROM xml_catalog 
+DELETE FROM xml_catalog
       WHERE entry_type LIKE 'Schema'
         AND system_id LIKE '%/dc/%';
-DELETE FROM xml_catalog 
+DELETE FROM xml_catalog
       WHERE entry_type LIKE 'Schema'
         AND system_id LIKE '%/dwc/%';
-DELETE FROM xml_catalog 
+DELETE FROM xml_catalog
       WHERE entry_type LIKE 'Schema'
-        AND system_id LIKE '%/dryad/%'; 
-DELETE FROM xml_catalog 
+        AND system_id LIKE '%/dryad/%';
+DELETE FROM xml_catalog
       WHERE entry_type LIKE 'Schema'
-        AND system_id LIKE '%/onedcx/%';                
+        AND system_id LIKE '%/onedcx/%';
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('DTD', '-//ecoinformatics.org//eml-access-@eml-version@//EN',
          '/dtd/eml-access-@eml-version@.dtd');
@@ -141,18 +141,18 @@ INSERT INTO xml_catalog (entry_type, public_id, system_id)
 
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://www.isotc211.org/2005/gmd', '/schema/isotc211/gmd/gmd.xsd');
-  
+
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://www.isotc211.org/2005/gmi', '/schema/isotc211/gmi/gmi.xsd');
-  
+
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://www.opengis.net/gml/3.2', '/schema/isotc211/gml321/gml.xsd');
 
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://www.opengis.net/gml', '/schema/isotc211/gml311/gml.xsd');
-  
+
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
-  VALUES ('Schema', 'http://www.isotc211.org/2005/gmx', '/schema/isotc211/gmx/gmx.xsd');  
+  VALUES ('Schema', 'http://www.isotc211.org/2005/gmx', '/schema/isotc211/gmx/gmx.xsd');
 
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://www.isotc211.org/2005/gsr', '/schema/isotc211/gsr/gsr.xsd');
@@ -162,14 +162,14 @@ INSERT INTO xml_catalog (entry_type, public_id, system_id)
 
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://www.isotc211.org/2005/gts', '/schema/isotc211/gts/gts.xsd');
-  
+
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://www.isotc211.org/2005/srv', '/schema/isotc211/srv/srv.xsd');
 
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://www.w3.org/1999/xlink', '/schema/isotc211/xlink/xlinks.xsd');
 
-INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) VALUES ('Schema', 'http://www.isotc211.org/2005/gmd', 'http://www.isotc211.org/2005/gmd-noaa', '/schema/isotc211-noaa/gmd/gmd.xsd'); 
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) VALUES ('Schema', 'http://www.isotc211.org/2005/gmd', 'http://www.isotc211.org/2005/gmd-noaa', '/schema/isotc211-noaa/gmd/gmd.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) VALUES ('Schema', 'http://www.isotc211.org/2005/gco', 'http://www.isotc211.org/2005/gmd-noaa', '/schema/isotc211-noaa/gco/gco.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) VALUES ('Schema', 'http://www.isotc211.org/2005/gmi', 'http://www.isotc211.org/2005/gmd-noaa', '/schema/isotc211-noaa/gmi/gmi.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) VALUES ('Schema', 'http://www.isotc211.org/2005/gmx', 'http://www.isotc211.org/2005/gmd-noaa', '/schema/isotc211-noaa/gmx/gmx.xsd');
@@ -185,31 +185,31 @@ INSERT INTO xml_catalog (entry_type, format_id, no_namespace_schema_location, sy
 INSERT INTO xml_catalog (entry_type, format_id, no_namespace_schema_location, system_id) VALUES ('NoNamespaceSchema', 'FGDC-STD-001-1998', 'http://www.fgdc.gov/metadata/fgdc-std-001-1998.xsd', '/schema/fgdc-std-001-1998/fgdc-std-001-1998.xsd');
 INSERT INTO xml_catalog (entry_type, format_id, no_namespace_schema_location, system_id) VALUES ('NoNamespaceSchema', 'FGDC-STD-001.1-1999', 'https://water.usgs.gov/GIS/metadata/usgswrd/fgdc-std-001-1998.xsd', '/schema/fgdc-bdp/fgdc-std-001.1-1999.xsd');
 
-INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id)
     SELECT 'Schema', 'http://www.isotc211.org/2005/gmd', 'http://www.isotc211.org/2005/gmd-pangaea', '/schema/isotc211-pangaea/gmd.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE format_id='http://www.isotc211.org/2005/gmd-pangaea' AND public_id='http://www.isotc211.org/2005/gmd');
 
-INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id)
     SELECT 'Schema', 'http://www.isotc211.org/2005/gss', 'http://www.isotc211.org/2005/gmd-pangaea', '/schema/isotc211-pangaea/gss.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE format_id='http://www.isotc211.org/2005/gmd-pangaea' AND public_id='http://www.isotc211.org/2005/gss');
 
-INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id)
     SELECT 'Schema', 'http://www.isotc211.org/2005/gsr', 'http://www.isotc211.org/2005/gmd-pangaea', '/schema/isotc211-pangaea/gsr.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE format_id='http://www.isotc211.org/2005/gmd-pangaea' AND public_id='http://www.isotc211.org/2005/gsr');
 
-INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id)
     SELECT 'Schema', 'http://www.isotc211.org/2005/gts', 'http://www.isotc211.org/2005/gmd-pangaea', '/schema/isotc211-pangaea/gts.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE format_id='http://www.isotc211.org/2005/gmd-pangaea' AND public_id='http://www.isotc211.org/2005/gts');
 
-INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id)
     SELECT 'Schema', 'http://www.isotc211.org/2005/gco', 'http://www.isotc211.org/2005/gmd-pangaea', '/schema/isotc211-pangaea/gco.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE format_id='http://www.isotc211.org/2005/gmd-pangaea' AND public_id='http://www.isotc211.org/2005/gco');
-    
-INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
+
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id)
     SELECT 'Schema', 'http://www.w3.org/1999/xlink', 'http://www.isotc211.org/2005/gmd-pangaea', '/schema/isotc211-pangaea/xlinks.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE format_id='http://www.isotc211.org/2005/gmd-pangaea' AND public_id='http://www.w3.org/1999/xlink');
-    
-INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
+
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id)
     SELECT 'Schema', 'http://www.opengis.net/gml', 'http://www.isotc211.org/2005/gmd-pangaea', '/schema/isotc211-pangaea/gml.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE format_id='http://www.isotc211.org/2005/gmd-pangaea' AND public_id='http://www.opengis.net/gml');
 
-INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id)
     SELECT 'Schema', 'http://datacite.org/schema/kernel-3','http://datacite.org/schema/kernel-3.0', '/schema/datacite-3.0/metadata.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE public_id='http://datacite.org/schema/kernel-3' AND format_id='http://datacite.org/schema/kernel-3.0');
 
-INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id)
     SELECT 'Schema', 'http://datacite.org/schema/kernel-3','http://datacite.org/schema/kernel-3.1', '/schema/datacite-3.1/metadata.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE public_id='http://datacite.org/schema/kernel-3' AND format_id='http://datacite.org/schema/kernel-3.1');
 
 INSERT INTO xml_catalog (entry_type, public_id, system_id) SELECT 'Schema', 'http://www.openarchives.org/OAI/2.0/oai_dc/', '/schema/oai_dc/oai_dc.xsd'  WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE public_id='http://www.openarchives.org/OAI/2.0/oai_dc/');
@@ -217,4 +217,4 @@ INSERT INTO xml_catalog (entry_type, public_id, system_id) SELECT 'Schema', 'htt
 INSERT INTO xml_catalog (entry_type, public_id, format_id) SELECT 'NonXML', 'science-on-schema.org/Dataset;ld+json', 'science-on-schema.org/Dataset;ld+json'  WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE public_id='science-on-schema.org/Dataset;ld+json');
 
 INSERT INTO version_history (version, status, date_created)
-  VALUES ('3.3.0',1,CURRENT_DATE);
+  VALUES ('3.4.2',1,CURRENT_DATE);

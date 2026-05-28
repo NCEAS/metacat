@@ -87,8 +87,10 @@ EXPOSE 5005
 
 # metadata
 LABEL org.opencontainers.image.title="Metacat"
+LABEL org.opencontainers.image.description="Repository software for preserving data and metadata, to help scientists find, understand and effectively use data sets managed by themselves or others"
 LABEL org.opencontainers.image.version=${MC_VERSION}
 LABEL org.opencontainers.image.source="https://github.com/NCEAS/metacat"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
 LABEL maintainer="NCEAS <https://github.com/NCEAS/metacat>"
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
