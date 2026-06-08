@@ -279,7 +279,7 @@ listed below.
   Metacat, and for PostgreSQL subchart.
   - Reverted based on feedback and helm conventions. Note that resources should still be
     overridden appropriately, for your own production needs.
-- Updates to the [helm/admin/MetacatQuickRef.md](./helm/admin/MetacatQuickRef.md) installation,
+- Updates to the [helm/admin/MetacatQuickRef.md](helm/docs/MetacatQuickRef.md) installation,
   upgrade, and migration checklist.
 - Reduce RabbitMQ startup time (see [dataone-indexer Issue #
   202](https://github.com/DataONEorg/dataone-indexer/issues/202)). Important: see [Chart Upgrade

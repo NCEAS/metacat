@@ -4,10 +4,10 @@ Metacat is repository software for preserving data and metadata (documentation a
 
 > [!IMPORTANT]
 > ### Before You Start:
-> 1. After you have read the details below, [this checklist](./admin/MetacatQuickRef.md) may be helpful in guiding you through the necessary installation steps.
+> 1. After you have read the details below, [this checklist](helm/docs/MetacatQuickRef.md) may be helpful in guiding you through the necessary installation steps.
 >
 >
-> 2. If you are considering **migrating an existing Metacat installation to Kubernetes**, note that ***before starting a migration, you must have a fully-functioning installation of Metacat version 2.19, running with PostgreSQL version 14. Migrating from other versions of Metacat and/or PostgreSQL is not supported.*** See [this checklist](./admin/MetacatQuickRef.md) for the necessary migration steps.
+> 2. If you are considering **migrating an existing Metacat installation to Kubernetes**, note that ***before starting a migration, you must have a fully-functioning installation of Metacat version 2.19, running with PostgreSQL version 14. Migrating from other versions of Metacat and/or PostgreSQL is not supported.*** See [this checklist](helm/docs/MetacatQuickRef.md) for the necessary migration steps.
 >
 >
 > 3. If you are upgrading from a previous Helm Chart major version (e.g. from chart v1.2.0 to chart v.2.0.0), first check the [Metacat Release Notes](../RELEASE-NOTES.md) to determine whether you will need to take specific actions before or during the upgrade (for example, if there is a change in the major version of the underlying **PostgreSQL** application). -- see the [Major Version Upgrades](#major-version-upgrades) section.
