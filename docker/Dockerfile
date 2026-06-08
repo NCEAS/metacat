@@ -2,10 +2,10 @@
 ARG ENVIRONMENT="prod"
 
 # The first stage is used to select the base image for production, based on the JRE
-FROM tomcat:9.0.112-jre17-temurin-noble AS prod-base
+FROM tomcat:9.0.118-jre17-temurin-noble AS prod-base
 
 # The second stage is used for testing, if needed, based on the JDK
-FROM tomcat:9.0.112-jdk17-temurin-noble AS test-base
+FROM tomcat:9.0.118-jdk17-temurin-noble AS test-base
 
 RUN    printf '\n* * * * * * * * * TEST BUILD * * * * * * * * *'      \
     && printf '\n* * * * * * * * * TEST BUILD * * * * * * * * *'      \
@@ -68,6 +68,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ## - Backslashes:
     &&  echo "org.apache.catalina.connector.CoyoteAdapter.ALLOW_BACKSLASH=true" \
                                       >> ${TC_HOME}/conf/catalina.properties
+
+## Redirect file-based logging to stdout for access logs
+COPY --chown=tomcat:tomcat tomcat.k8s.server.xml ${TC_HOME}/conf/server.xml
 
 ## Redirect file-based logging for all other logs
 COPY --chown=tomcat:tomcat tomcat.k8s.logging.properties ${TC_HOME}/conf/logging.properties
