@@ -2,10 +2,10 @@
 ARG ENVIRONMENT="prod"
 
 # The first stage is used to select the base image for production, based on the JRE
-FROM tomcat:9.0.112-jre17-temurin-noble AS prod-base
+FROM tomcat:9.0.118-jre17-temurin-noble AS prod-base
 
 # The second stage is used for testing, if needed, based on the JDK
-FROM tomcat:9.0.112-jdk17-temurin-noble AS test-base
+FROM tomcat:9.0.118-jdk17-temurin-noble AS test-base
 
 RUN    printf '\n* * * * * * * * * TEST BUILD * * * * * * * * *'      \
     && printf '\n* * * * * * * * * TEST BUILD * * * * * * * * *'      \
