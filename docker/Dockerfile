@@ -69,9 +69,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     &&  echo "org.apache.catalina.connector.CoyoteAdapter.ALLOW_BACKSLASH=true" \
                                       >> ${TC_HOME}/conf/catalina.properties
 
-## Redirect file-based logging to stdout for access logs
-COPY --chown=tomcat:tomcat tomcat.k8s.server.xml ${TC_HOME}/conf/server.xml
-
 ## Redirect file-based logging for all other logs
 COPY --chown=tomcat:tomcat tomcat.k8s.logging.properties ${TC_HOME}/conf/logging.properties
 
