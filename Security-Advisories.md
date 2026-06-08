@@ -65,7 +65,7 @@ If upgrading is not immediately feasible, deployments can be secured by applying
        sudo apachectl configtest
 
        # Restart service
-       sudo systemctl restart apache2 
+       sudo systemctl restart apache2
        ```
 
    NOTE: If not using Apache, then configure any upstream reverse proxy, load balancer, or network firewall to do the same.
