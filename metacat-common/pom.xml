@@ -10,7 +10,7 @@
     <properties>
         <d1_common_java_version>2.3.0</d1_common_java_version>
         <solr_version>9.10.1</solr_version>
-        <log4j.version>2.25.3</log4j.version>
+        <log4j.version>2.26.0</log4j.version>
     </properties>
     <repositories>
         <repository>
@@ -231,6 +231,11 @@
                     <artifactId>slf4j-api</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
