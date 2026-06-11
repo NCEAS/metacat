@@ -27,6 +27,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -63,7 +64,7 @@ public class QuotaServiceManager {
     public static final String DELETEMETHOD = "delete";
     public static final String PROPERTYNAMEOFPORTALNAMESPACE = "dataone.quotas.portal.namespaces";
     public static final String QUOTASUBJECTHEADER = "X-DataONE-Quota-Subject";
-    
+
     private static boolean storageEnabled = Settings.getConfiguration().getBoolean("dataone.quotas.storage.enabled", false);
     private static boolean portalEnabled = Settings.getConfiguration().getBoolean("dataone.quotas.portals.enabled", false);
     private static boolean replicationEnabled = Settings.getConfiguration().getBoolean("dataone.quotas.replication.enabled", false);
@@ -71,16 +72,16 @@ public class QuotaServiceManager {
     private static boolean enabled = false; //If any of above variables are enabled, this variable will be true.
     private static ExecutorService executor = null;
     private static Log logMetacat  = LogFactory.getLog(QuotaServiceManager.class);
-    
+
     private static QuotaServiceManager service = null;
     private static BookKeeperClient client = null;
     private List<String> portalNameSpaces = null;
     private static boolean timerStarted = false;
-    
+
     /**
      * Private default constructor. The instance will have a bookeeperClient if the quota service is enabled.
-     * @throws IOException 
-     * @throws ServiceFailure 
+     * @throws IOException
+     * @throws ServiceFailure
      */
     private QuotaServiceManager() throws ServiceFailure {
         if (enabled) {
@@ -89,7 +90,7 @@ public class QuotaServiceManager {
             portalNameSpaces = retrievePortalNameSpaces();
         }
     }
-    
+
     /**
      * Retrieve the name space list of portal objects from settings
      * @return  list of portal name space
@@ -97,12 +98,12 @@ public class QuotaServiceManager {
     static List<String> retrievePortalNameSpaces() {
         return Settings.getConfiguration().getList(PROPERTYNAMEOFPORTALNAMESPACE);
     }
-    
+
     /**
      * Get the singleton instance of the service
      * @return the quota service instance. The instance will have a bookeeperClient if the quota service is enabled.
-     * @throws IOException 
-     * @throws ServiceFailure 
+     * @throws IOException
+     * @throws ServiceFailure
      */
     public static QuotaServiceManager getInstance() throws ServiceFailure {
         enabled = storageEnabled || portalEnabled || replicationEnabled;
@@ -115,7 +116,7 @@ public class QuotaServiceManager {
         }
         return service;
     }
-    
+
     /**
      * Check if the quota service is enabled.
      * @return true if it is enabled; otherwise false.
@@ -155,8 +156,8 @@ public class QuotaServiceManager {
                 date.set(Calendar.MILLISECOND, 0);
                 startTime = date.getTime();
             }
-            SimpleDateFormat format = new SimpleDateFormat(); 
-            String date = format.format(startTime); 
+            SimpleDateFormat format = new SimpleDateFormat();
+            String date = format.format(startTime);
             logMetacat.info("QuotaServiceManager.startDailyCheck - the timer will start to check "
                             + " and report un-reported usages at "
                             + date + " at daily base. This message should only be shown once.");
@@ -167,18 +168,18 @@ public class QuotaServiceManager {
             timerStarted = true;
         }
     }
-    
+
     /**
      * Enforce quota service
      * @param quotaSubject  the subject of the quota which will be used
      * @param requestor  the subject of the user who requests the usage
      * @param sysmeta  the system metadata of the object which will use the quota
      * @param method  the method name which will call the createUsage method (create or update
-     * @throws InsufficientResources 
-     * @throws InvalidRequest 
-     * @throws ServiceFailure 
-     * @throws NotFound 
-     * @throws NotImplemented 
+     * @throws InsufficientResources
+     * @throws InvalidRequest
+     * @throws ServiceFailure
+     * @throws NotFound
+     * @throws NotImplemented
      */
     public void enforce(String quotaSubject, Subject requestor, SystemMetadata sysmeta,
                                             String method) throws InsufficientResources,
@@ -214,7 +215,7 @@ public class QuotaServiceManager {
         long end = System.currentTimeMillis();
         logMetacat.info("QuotaServiceManager.enforce - checking quota and reporting usage took " + (end-start)/1000 + " seconds.");
     }
-    
+
     /**
      * Enforce the portal quota checking
      * @param quotaSubject  the subject of a quota
@@ -229,7 +230,7 @@ public class QuotaServiceManager {
      * @throws InsufficientResources
      * @throws IOException
      * @throws NotImplemented
-     * @throws UnsupportedEncodingException 
+     * @throws UnsupportedEncodingException
      */
     private void enforcePortalQuota(String quotaSubject, Subject requestor,
                                         String instanceId, SystemMetadata sysmeta, String method)
@@ -304,7 +305,7 @@ public class QuotaServiceManager {
             return newDate;
         } catch (ParseException pe) {
             throw new HandlerException(
-                "QuotaServiceManager.combineDateAndGivenTime - " + "parsing error: "
+                "QuotaServiceManager.combineDateAndGivenTime - parsing error: "
                     + pe.getMessage());
         }
     }
@@ -317,8 +318,8 @@ public class QuotaServiceManager {
      * @throws ParseException
      */
     private static Date parseTime(String timeString) throws ParseException {
-        DateFormat format = DateFormat.getTimeInstance(DateFormat.SHORT);
-        Date time = format.parse(timeString);
+        SimpleDateFormat format = new SimpleDateFormat("h:mm a", Locale.US);
+        Date time = format.parse(timeString.replaceAll("[\\p{Z}\\s]", " ").trim());
         logMetacat.debug(
             "QuotaServiceManager.parseTime - Date string is after parse a time string "
                 + time.toString());
@@ -332,8 +333,8 @@ public class QuotaServiceManager {
      * @throws ParseException
      */
     private static Date parseDateTime(String timeString) throws ParseException {
-        DateFormat format = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.SHORT);
-        Date time = format.parse(timeString);
+        SimpleDateFormat format = new SimpleDateFormat("MMMM d, yyyy, h:mm a", Locale.US);
+        Date time = format.parse(timeString.replaceAll("[\\p{Z}\\s]", " ").trim());
         logMetacat.debug(
             "QuotaServiceManager.parseDateTime - Date string is after parse a time string "
                 + time.toString());
@@ -346,7 +347,7 @@ public class QuotaServiceManager {
      * @return the string presentation (long) of the Date object
      */
     private static String getDateString(Date now) {
-        DateFormat df = DateFormat.getDateInstance(DateFormat.LONG);
+        SimpleDateFormat df = new SimpleDateFormat("MMMM d, yyyy", Locale.US);
         String s = df.format(now);
         logMetacat.debug("QuotaServiceManager.getDateString - Today is " + s);
         return s;
@@ -358,7 +359,7 @@ public class QuotaServiceManager {
      * @return the string presentation (short) of the Date object
      */
     private static String getTimeString(Date now) {
-        DateFormat df = DateFormat.getTimeInstance(DateFormat.SHORT);
+        SimpleDateFormat df = new SimpleDateFormat("h:mm a", Locale.US);
         String s = df.format(now);
         logMetacat.debug("QuotaServiceManager.getTimeString - Time is " + s);
         return s;
