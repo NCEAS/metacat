@@ -39,9 +39,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -73,35 +70,16 @@ public class OstiDOIServiceIT {
     @Before
     public void setUp() throws Exception {
         d1NodeTest = new D1NodeServiceTest("initialize");
-        final String passwdMsg =
-                """
-                \n* * * * * * * * * * * * * * * * * * *
-                DOI CREDENTIALS NOT SET!
-                Test requires OSTI-specific values for
-                'guid.doi.username' & 'guid.doi.password'
-                in your test/test.properties file!
-                * * * * * * * * * * * * * * * * * * *
-                """;
         Properties testProperties = LeanTestUtils.getExpectedProperties();
-        String ostiName = testProperties.getProperty("guid.doi.username");
-        String ostiPass = testProperties.getProperty("guid.doi.password");
         String tokenPath = testProperties.getProperty(TOKEN_FILE_PATH_NAME);
         // We need to set up an env variable to pass the token to the osti-elink library
         String token = FileUtils.readFileToString(new File(tokenPath));
         environmentVariablesRule.set(TOKEN_ENV_NAME, token);
-        assertNotNull(passwdMsg, ostiName);
-        assertFalse(passwdMsg, ostiName.isBlank());
-        assertNotEquals(passwdMsg, "apitest", ostiName);
-        assertNotNull(passwdMsg, ostiPass);
-        assertFalse(passwdMsg, ostiPass.isBlank());
-
         withProperties.setProperty("guid.doi.enabled", "true");
         withProperties.setProperty("guid.doiservice.plugin.class",
                                                 "edu.ucsb.nceas.metacat.doi.osti.OstiDOIService");
         withProperties.setProperty("guid.doi.autoPublish", "false");
         withProperties.setProperty("guid.doi.enforcePublicReadableEntirePackage", "false");
-        withProperties.setProperty("guid.doi.username", ostiName);
-        withProperties.setProperty("guid.doi.password", ostiPass);
         closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
         request = (MockHttpServletRequest)d1NodeTest.getServletRequest();
         service = new OstiDOIService();
