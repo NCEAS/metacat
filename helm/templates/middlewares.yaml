@@ -1,0 +1,65 @@
+{{- if and (eq (include "metacat.ingress.type" .) "traefik")
+           (index .Values.metacat "dataone.certificate.fromHttpHeader.enabled") -}}
+## Only one middleware can be added to the ingress annotations. This middleware "chain" definition
+## chains together the other Traefik Middlewares below, so only this one needs to be referenced
+## in the ingress annotations.
+##
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Name }}-middlewares
+  namespace: {{ .Release.Namespace }}
+spec:
+  chain:
+    middlewares:
+      - name: {{ .Release.Name }}-passcert
+      - name: {{ .Release.Name }}-customheaders
+
+---
+
+## Traefik replacement for:
+## nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+##
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Name }}-passcert
+  namespace: {{ .Release.Namespace }}
+spec:
+  passTLSClientCert:
+    pem: true
+    info:
+      subject:
+        country: true
+        province: true
+        locality: true
+        organization: true
+        organizationalUnit: true
+        commonName: true
+        serialNumber: true
+        domainComponent: true
+
+---
+
+## Traefik replacement for:
+## nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+##
+{{- $apiVer := "v1" -}}
+{{- $xProxyKeyKey := "METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY" -}}
+{{- $secrets := (printf "%s-metacat-secrets" .Release.Name) -}}
+{{- $secretData := (lookup $apiVer "Secret" .Release.Namespace $secrets).data | default dict -}}
+{{- $xProxyKeyVal := ((get $secretData $xProxyKeyKey) | b64dec)
+    | default (printf "SECRETS: '%s'; KEY NOT FOUND: '%s'" $secrets $xProxyKeyKey) }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Name }}-customheaders
+  namespace: {{ .Release.Namespace }}
+spec:
+  headers:
+    customRequestHeaders:
+      X-Proxy-Key: {{ $xProxyKeyVal | quote }}
+      Server: traefik
+      Ssl-Client-Verify: ""          # overwrite to prevent client setting
+      Ssl-Client-Subject-Dn: ""      # overwrite to prevent client setting
+{{- end }}

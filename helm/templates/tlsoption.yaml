@@ -1,0 +1,16 @@
+{{- if eq (include "metacat.ingress.type" .) "traefik" -}}
+{{- if index .Values.metacat "dataone.certificate.fromHttpHeader.enabled" -}}
+## Traefik mutual TLS (mTLS) client auth settings
+##
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: {{ .Release.Name }}-mtls-policy
+  namespace: {{ .Release.Namespace }}
+spec:
+  clientAuth:
+    clientAuthType: VerifyClientCertIfGiven
+    secretNames:
+      - {{ .Values.ingress.d1CaCertSecretName }}
+{{- end }}
+{{- end }}

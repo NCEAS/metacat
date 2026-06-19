@@ -62,6 +62,24 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
+* Helper to determine which ingress (if any) is being used.
+* Returns one of "nginx", "traefik", "other", "disabled"
+*/}}
+{{- define "metacat.ingress.type" -}}
+{{- if .Values.ingress.enabled -}}
+    {{- if eq .Values.ingress.className "nginx" -}}
+        nginx
+    {{- else if eq .Values.ingress.className "traefik" -}}
+        traefik
+    {{- else -}}
+        other
+    {{- end -}}
+{{- else -}}
+    disabled
+{{- end -}}
+{{- end }}
+
+{{/*
 * If .Values.metacat.server.port is set explicitly, use it.
 Otherwise:
 * If using the ingress, set server.port correctly to 80 or 443, depending if TLS is set up
@@ -96,11 +114,11 @@ Otherwise:
 {{- end }}
 
 {{/*
-For DataONE mutual authentication with x509 certificates, add the following annotations to the
-nginx ingress. Note these certificates are NOT the same as the one used for TLS ("SSL") access
-via https
+For DataONE mutual authentication with x509 certificates and ingress-nginx, add the following
+nginx.ingress.kubernetes.io annotations. Note these certificates are NOT the same as the one
+used for TLS ("SSL") access via https
 */}}
-{{- define "dataone.mutual.auth.annotations" -}}
+{{- define "dataone.nginx.mtls.annotations" -}}
 {{- $caSecretName := .Values.ingress.d1CaCertSecretName -}}
 # Enable client certificate authentication
 nginx.ingress.kubernetes.io/auth-tls-verify-client: "optional_no_ca"
@@ -110,6 +128,31 @@ nginx.ingress.kubernetes.io/auth-tls-secret: "{{ .Release.Namespace }}/{{ $caSec
 nginx.ingress.kubernetes.io/auth-tls-verify-depth: "10"
 # Specify if certificates are passed to upstream server
 nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+{{- end }}
+
+{{/*
+For DataONE mutual authentication with x509 certificates and traefik ingress, add the following
+traefik.ingress.kubernetes.io annotations. Note these certificates are NOT the same as the one
+used for TLS ("SSL") access via https
+*/}}
+{{- define "dataone.traefik.mtls.annotations" -}}
+traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace }}-{{ .Release.Name }}-middlewares@kubernetescrd"
+traefik.ingress.kubernetes.io/router.tls.options: "{{ .Release.Namespace }}-{{ .Release.Name }}-mtls-policy@kubernetescrd"
+{{- end }}
+
+{{/*
+For DataONE mutual authentication with x509 certificates and ingress-nginx, add the following
+nginx.ingress.kubernetes.io/configuration-snippets. Note these certificates are NOT the same
+as the one used for TLS ("SSL") access via https
+*/}}
+{{- define "dataone.nginx.mtls.snippets" -}}
+{{- $apiVer := "v1" -}}
+{{- $xProxyKeyKey := "METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY" -}}
+{{- $secrets := (printf "%s-metacat-secrets" .Release.Name) -}}
+{{- $secretData := (lookup $apiVer "Secret" .Release.Namespace $secrets).data | default dict -}}
+{{- $xProxyKeyVal := ((get $secretData $xProxyKeyKey) | b64dec)
+  | default (printf "\"SECRETS: '%s'; KEY NOT FOUND: '%s'\"" $secrets $xProxyKeyKey) -}}
+more_set_input_headers "X-Proxy-Key: {{ $xProxyKeyVal }}";
 {{- end }}
 
 {{/*

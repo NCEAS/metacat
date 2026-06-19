@@ -684,7 +684,7 @@ ingress:
   ##        --namespace ingress-nginx --create-namespace      \
   ##        --set controller.allowSnippetAnnotations=true
   ##
-  className: "nginx"
+  className: "traefik"
 
   ## @param ingress.annotations [default: see values.yaml] `nginx.ingress.kubernetes.io` annotations
   ## These are mostly for enabling upload and download of large files and data packages, without
@@ -702,62 +702,7 @@ ingress:
   ## For other nginx annotation options, see:
   ## https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/
   ##
-  annotations:
-    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/client-body-buffer-size See docs:
-    ## https://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size
-    ##
-    nginx.ingress.kubernetes.io/client-body-buffer-size: "1m"
-
-    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/client_max_body_size See docs:
-    ## https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
-    ## Sets the maximum allowed size of the client request body. Setting to 0 disables checking of
-    ## client request body size
-    ##
-    nginx.ingress.kubernetes.io/client_max_body_size: "0"
-
-    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/send-timeout See docs:
-    ## https://nginx.org/en/docs/http/ngx_http_core_module.html#send_timeout
-    ## Sets a timeout for transmitting a response to the client. The timeout is set only between
-    ## two successive write operations, not for the transmission of the whole response. If the
-    ## client does not receive anything within this time, the connection is closed. Default is 60s,
-    ## but we set it to 3600 seconds to prevent 504 Gateway Time-out when downloading zip files of
-    ## huge datasets using bagit
-    ##
-    nginx.ingress.kubernetes.io/send-timeout: "3600"
-
-    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-body-size See docs:
-    ## https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/configmap.md#proxy-body-size
-    ## Sets the maximum allowed size of the client request body - similar to the nginx
-    ## client_max_body_size directive. Setting to 0 disables checking of client request body size
-    ##
-    nginx.ingress.kubernetes.io/proxy-body-size: "0"
-
-    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-read-timeout See docs:
-    ## https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout
-    ## default is 60 seconds, but we set it to 3600 seconds to prevent 504 Gateway Time-out when
-    ## downloading zip files of huge datasets using bagit
-    ##
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-
-    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-send-timeout See docs:
-    ## https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_send_timeout
-    ## The timeout is set only between two successive write operations, not for the transmission of
-    ## the whole request. We set it to 3600 seconds to prevent 504 Gateway Time-out when
-    ## downloading zip files of huge datasets using bagit
-    ##
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-
-    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-request-buffering See docs:
-    ## https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_request_buffering
-    ##
-    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
-
-    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-buffering See docs:
-    ## https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering
-    ## According to ingress-nginx docs, default is "off", but according to nginx docs, default is
-    ## "on", so we set it explicitly to "off", be sure
-    ##
-    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+  annotations: {}
 
   ## @param ingress.defaultBackend.enabled enable the optional defaultBackend
   ## ingress.defaultBackend (optional) default for any requests not matching defined paths
@@ -796,7 +741,7 @@ ingress:
   ## (For example only; note the last two rules are already automatically included as needed - see
   ## .Values.robots.* and .Values.metacat.sitemap.*)
   ##
-  rewriteRules: ""
+  rewriteRules: ""  # TODO: convert to traefik format & re-document
 
   ## @param ingress.configurationSnippet [default: see values.yaml] added to nginx ingress config...
   ## This block will be added to the ingress definition section, in addition to the rewrite rules:
@@ -808,6 +753,8 @@ ingress:
   ## Note that overriding this block will disable the default cors setup, unless
   ## you copy this into your override
   ##
+
+  # TODO: convert to traefik format & re-document
   configurationSnippet: |
     # Metacat Cors Setup
 
