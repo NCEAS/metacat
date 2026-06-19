@@ -54,9 +54,9 @@ import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SessionData;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 /**
- * 
+ *
  * Base class for handling D1 REST calls in Metacat
- * 
+ *
  * @author leinfelder
  */
 public class D1ResourceHandler {
@@ -311,12 +311,12 @@ public class D1ResourceHandler {
     /**
      * Parse string parameters from the mime multipart entity of the request.
      * Populates the multipartparams map
-     * 
+     *
      * @throws IOException
      * @throws FileUploadException
      * @throws Exception
      */
-    protected void collectMultipartParams() 
+    protected void collectMultipartParams()
         throws IOException, FileUploadException, Exception {
 
         File tmpDir = getTempDirectory();
@@ -326,7 +326,7 @@ public class D1ResourceHandler {
         logMetacat.debug("Parsing rights holder info from the mime multipart entity");
 
         // handle MMP inputs
-        MultipartRequestResolver mrr = 
+        MultipartRequestResolver mrr =
             new MultipartRequestResolver(tmpDir.getAbsolutePath(), MAX_UPLOAD_SIZE, 0);
 
         mr = mrr.resolveMultipart(request);
@@ -343,7 +343,7 @@ public class D1ResourceHandler {
      * @throws ServiceFailure
      * @throws InvalidRequest
      */
-    protected Map<String, File> collectMultipartFiles() 
+    protected Map<String, File> collectMultipartFiles()
         throws ServiceFailure, InvalidRequest {
 
         // Read the incoming data from its Mime Multipart encoding
@@ -352,14 +352,14 @@ public class D1ResourceHandler {
         // handle MMP inputs
         File tmpDir = getTempDirectory();
         logMetacat.debug("temp dir: " + tmpDir.getAbsolutePath());
-        MultipartRequestResolver mrr = 
+        MultipartRequestResolver mrr =
             new MultipartRequestResolver(tmpDir.getAbsolutePath(),  MAX_UPLOAD_SIZE, 0);
         MultipartRequest mr = null;
             try {
                   mr = mrr.resolveMultipart(request);
 
             } catch (Exception e) {
-                throw new ServiceFailure("1202", 
+                throw new ServiceFailure("1202",
                         "Could not resolve multipart files: " + e.getMessage());
             }
         logMetacat.debug("resolved multipart request");
@@ -443,8 +443,8 @@ public class D1ResourceHandler {
     }
 
         /**
-     *  copies request parameters to a hashtable which is given as argument to 
-     *  native metacathandler functions  
+     *  copies request parameters to a hashtable which is given as argument to
+     *  native metacathandler functions
      */
     protected void initParams() {
 
@@ -537,7 +537,7 @@ public class D1ResourceHandler {
         try {
             IOUtils.write(e.serialize(BaseException.FMT_XML), out, StandardCharsets.UTF_8);
         } catch (IOException e1) {
-            logMetacat.error("Error writing exception to stream. " 
+            logMetacat.error("Error writing exception to stream. "
                     + e1.getMessage());
         } finally {
             IOUtils.closeQuietly(out);
@@ -569,9 +569,9 @@ public class D1ResourceHandler {
     }
 
     /**
-     * Get the session from the header of the request.
-     * This mechanism is disabled by default due to network security conditions needed for it to be secure
-     *
+     * Used only in k8s environment
+     * Get the session from the header of the request. This mechanism is disabled by default due
+     * to network security conditions needed for it to be secure
      */
     protected void getSessionFromHeader() {
         if (enableSessionFromHeader) {
@@ -584,47 +584,83 @@ public class D1ResourceHandler {
             }
             String proxyKeyFromHttp = (String) request.getHeader("X-Proxy-Key");
             if (proxyKeyFromHttp == null || proxyKeyFromHttp.trim().equals("")) {
-                logMetacat.warn("The value of the header X-Proxy-Key is null or blank. "
-                                 + "So Metacat do NOT trust the request.");
+                logMetacat.warn("The value of the header X-Proxy-Key is null or blank, "
+                                 + "so Metacat does NOT trust the request.");
                 return;
             }
             if (!proxyKey.equals(proxyKeyFromHttp)) {
                 logMetacat.warn("The value of the header X-Proxy-Key does not match the one "
-                                + " stored in Metacat. So Metacat do NOT trust the request.");
+                                + " stored in Metacat, so Metacat does NOT trust the request.");
                 return;
             }
 
-            String verify = (String) request.getHeader("Ssl-Client-Verify");
-            logMetacat.info("D1ResourceHandler.getSessionFromHeader - the status of the ssl client "
-                            + "verification is " + verify);
-            if (verify != null && verify.equalsIgnoreCase("SUCCESS")) {
-                //Metacat only looks up the dn from the header when the ssl client was verified.
-                //We confirmed the client couldn't overwrite the value of the header Ssl-Client-Subject-Dn
-                String dn = (String) request.getHeader("Ssl-Client-Subject-Dn");
-                logMetacat.info("The ssl client was verified and the subject from the header is " + dn);
-                if (dn != null) {
-                    Subject subject = new Subject();
-                    subject .setValue(dn);
-                    session = new Session();
-                    session.setSubject(subject);
+            boolean isTraefik = ("traefik".equalsIgnoreCase(request.getHeader("Server")));
 
-                    SubjectInfo subjectInfo = null;
-                    try {
-                        subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
-                    } catch (Exception be) {
-                        logMetacat.warn("Can not get subject information for subject" + dn
-                                        + " since " + be.getMessage());
+            // Traefik uses this format for the header:
+            //   X-Forwarded-Tls-Client-Cert-Info:
+            //     Subject%3D%22DC%3Dorg%2CDC%3Ddataone%2CCN%3Durn%3Anode%3ATestBROOKELT%22
+            // (decoded, this is: Subject="DC=org,DC=dataone,CN=urn:node:TestBROOKELT")
+            //
+            // Nginx (and Coordinating Node) use this format, which is the reverse
+            //   Ssl-Client-Subject-Dn: CN=urn:node:TestBROOKELT,DC=dataone,DC=org
+            //
+            String dn = null;
+            if (isTraefik) {
+                // Traefik sets X-Forwarded-Tls-Client-Cert-Info to the cert Subject if client cert
+                // is verified successfully.
+                String subj = request.getHeader("X-Forwarded-Tls-Client-Cert-Info");
+                if (subj != null) {
+                    logMetacat.debug("Traefik: SSL client verified; encoded subject  is: " + subj);
+                    String decoded = URLDecoder.decode(subj, StandardCharsets.UTF_8);
+                    // (decoded format: Subject="DC=org,DC=dataone,CN=urn:node:TestBROOKELT")
+                    // Extract content between quotes after Subject="
+                    String inner = decoded.replaceAll(".*Subject=\"([^\"]*)\".*", "$1");
+                    String[] parts = inner.split(",");
+                    StringBuilder result = new StringBuilder();
+                    for (int i = parts.length - 1; i >= 0; i--) {
+                        if (!result.isEmpty()) result.append(",");
+                        result.append(parts[i]);
                     }
-                    if (subjectInfo == null) {
-                        subjectInfo = new SubjectInfo();
-                        Person person = new Person();
-                        person.setSubject(subject);
-                        person.setFamilyName("Unknown");
-                        person.addGivenName("Unknown");
-                        subjectInfo.setPersonList(Arrays.asList(person));
-                    }
-                    session.setSubjectInfo(subjectInfo);
+                    dn = result.toString();
+                    logMetacat.debug("Traefik: SSL client verified; processed subject is: " + dn);
+                } else {
+                    logMetacat.warn("Traefik SSL client verification FAILED; no Subject found");
+                    return;
                 }
+            } else {
+                // Nginx sets Ssl-Client-Verify to "SUCCESS" if client cert is verified successfully.
+                String verify = request.getHeader("Ssl-Client-Verify");
+                if ("SUCCESS".equalsIgnoreCase(verify)) {
+                    dn = (String) request.getHeader("Ssl-Client-Subject-Dn");
+                    logMetacat.debug("Nginx: SSL client verified; subject is " + dn);
+                } else {
+                    logMetacat.warn("Nginx SSL client verification FAILED; status is: " + verify);
+                    return;
+                }
+            }
+
+            if (dn != null && !dn.trim().equals("")) {
+                Subject subject = new Subject();
+                subject.setValue(dn);
+                session = new Session();
+                session.setSubject(subject);
+
+                SubjectInfo subjectInfo = null;
+                try {
+                    subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
+                } catch (Exception be) {
+                    logMetacat.warn("Can not get subject information for subject" + dn
+                                    + " since " + be.getMessage());
+                }
+                if (subjectInfo == null) {
+                    subjectInfo = new SubjectInfo();
+                    Person person = new Person();
+                    person.setSubject(subject);
+                    person.setFamilyName("Unknown");
+                    person.addGivenName("Unknown");
+                    subjectInfo.setPersonList(Arrays.asList(person));
+                }
+                session.setSubjectInfo(subjectInfo);
             }
         }
     }
