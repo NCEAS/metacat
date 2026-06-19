@@ -796,7 +796,7 @@
             <format property="NOW" pattern="MM/dd/yyyy hh:mm:ss aa"/>
         </tstamp>
     </target>
-    
+
     <target name="build-metacat" depends="war, dist-metacat-index, build-metacat-ui"
             description="Build Metacat, including indexer and UI">
     </target>
@@ -862,9 +862,9 @@
             <webinf dir="${war.webinf}"/>
         </war>
     </target>
-    
+
     <target name="warPrepare" depends="documentation,warPrepareNoDocs" />
-    
+
     <target name="warPrepareNoDocs" depends="jar,clientjar,harvesterjar,testPrepare">
         <property name="war.lib" value="${build.war}/lib"/>
         <property name="war.classes" value="${build.war}/classes"/>
@@ -965,12 +965,7 @@
         <copy todir="${war.webinf.scripts}" filtering="yes">
             <fileset dir="src/scripts"/>
         </copy>
-        <copy todir="${war.webinf.scripts}"
-              file="src/perl/Metacat/blib/lib/auto/Metacat/autosplit.ix"
-              failonerror="false"/>
-
         <copy file="src/perl/ldapweb.cgi" todir="${war.context.cgi}"/>
-
         <!-- registry cgi section -->
         <!-- TODO SCW: use relative paths to grab these instead of copying to tmp,
             used in readDocumentFromMetacat -->
