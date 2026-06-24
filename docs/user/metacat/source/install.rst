@@ -772,7 +772,7 @@ with Metacat's Authorization Configuration screen. Note that if you do not have
 Tomcat integrated with Apache you will probably have to type
 http://yourserver.yourdomain.com:8080/yourcontext/
 
-Upgrading to Metacat v3.0.0 or above
+Upgrading to Metacat v3.4.2 or above
 ....................................
 
 Starting Requirements:
