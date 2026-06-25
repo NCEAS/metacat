@@ -18,7 +18,7 @@ spec:
     {{- end }}
       - name: {{ .Release.Name }}-robots-redirect
     {{- range .Values.ingress.rewriteRules }}
-      - name: {{ .name }}
+      - name: {{ $.Release.Name }}-{{ .name }}
     {{- end }}
     {{- if $mtlsEnabled }}
       - name: {{ .Release.Name }}-passcert
@@ -31,11 +31,11 @@ spec:
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: sitemap-redirect
+  name: {{ .Release.Name }}-sitemap-redirect
 spec:
   redirectRegex:
-    regex: "^https?://[^/]+/(sitemap.+)"
-    replacement: "https://${host}/metacat/sitemaps/${1}"
+    regex: "^https?://([^/]+)/robots.txt"
+    replacement: "https://${1}/metacat/robots.txt"
     permanent: false
 {{- end }}
 
@@ -44,7 +44,7 @@ spec:
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: robots-redirect
+  name: {{ .Release.Name }}-robots-redirect
 spec:
   redirectRegex:
     regex: "^https?://[^/]+/robots.txt"
@@ -56,7 +56,7 @@ spec:
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: {{ .name }}
+  name: {{ $.Release.Name }}-{{ .name }}
 spec:
   redirectRegex:
     regex: {{ .regex | quote }}
