@@ -684,6 +684,7 @@ ingress:
   ##        --namespace ingress-nginx --create-namespace      \
   ##        --set controller.allowSnippetAnnotations=true
   ##
+#  className: "nginx"
   className: "traefik"
 
   ## @param ingress.annotations [default: see values.yaml] `nginx.ingress.kubernetes.io` annotations
@@ -723,12 +724,15 @@ ingress:
   defaultBackend:
     enabled: false
 
-  ## @param ingress.rewriteRules formatted text rewrite rules for the nginx ingress
-  ## These rules will be added to the ingress definition section:
+  ## @param ingress.rewriteRules IMPORTANT! Nginx & Traefik rewrite rule syntaxes differ; see below
+  ##
+  ## FOR INGRESS-NGINX (ingress.className: "nginx"), this should be a **SINGLE STRING** of formatted
+  ## text. Any nginx markup will work (header manipulation etc); you are not restricted to only
+  ## redirects. The snippet will be added to this ingress definition section:
   ## metadata:
   ##   annotations:
   ##     nginx.ingress.kubernetes.io/configuration-snippet: |
-  ##       (* * *  list of rewrite rules here  * * *)
+  ##       (* * *  rewrite rules here  * * *)
   ##
   ## Example syntax:
   ##     rewriteRules: |
@@ -738,10 +742,28 @@ ingress:
   ##       rewrite ^/(sitemap.+) /metacat/sitemaps/$1 redirect;
   ##       rewrite ^/robots.txt /metacat/robots.txt redirect;
   ##
-  ## (For example only; note the last two rules are already automatically included as needed - see
-  ## .Values.robots.* and .Values.metacat.sitemap.*)
+  ## FOR TRAEFIK PROXY (ingress.className: "traefik"), this should be a **YAML LIST** of rules, each
+  ## with a name, regex, replacement, and optional permanent flag (which defaults to "false"). These
+  ## rules will be added as traefik Middleware definitions in middlewares.yaml
   ##
-  rewriteRules: ""  # TODO: convert to traefik format & re-document
+  ## Example syntax:
+  ##     rewriteRules:
+  #        - name: evos-redirect
+  ##         regex: "^https://evos.nceas.ucsb.edu/(.*)"
+  ##         replacement: "https://goa.nceas.ucsb.edu/${1}"
+  ##         permanent: true
+  ##       - name: sitemap-redirect
+  #          regex: "^https?://[^1]+/(sitemap.+)"
+  #          replacement: "https://${host}/metacat/sitemaps/${1}"
+  #          permanent: false  # optional; defaults to "false"
+  #        - name: robots-redirect
+  #          regex: "^https?://[^1]+/robots.txt"
+  #          replacement: "https://${host}/metacat/robots.txt"
+  ##
+  ## (For example only; note the sitemap and robots.txt rules are already automatically included as
+  ## needed - see .Values.robots.* and .Values.metacat.sitemap.*)
+  ##
+  rewriteRules: []
 
   ## @param ingress.configurationSnippet [default: see values.yaml] added to nginx ingress config...
   ## This block will be added to the ingress definition section, in addition to the rewrite rules:

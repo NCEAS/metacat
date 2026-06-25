@@ -1,7 +1,20 @@
 {{- $ingresstype:=(include "metacat.ingress.type" .) -}}
-{{- if not eq $ingresstype "disabled" -}}
+{{- if not (eq $ingresstype "disabled") -}}
 {{- $isNginx := eq $ingresstype "nginx" -}}
 {{- $isTraefik := eq $ingresstype "traefik" -}}
+{{/* ==== Validate .Values.ingress input, since syntax differs bwtween nginx and Traefik ========= */}}
+{{- if .Values.ingress.rewriteRules }}
+{{- if kindIs "string" .Values.ingress.rewriteRules }}
+  {{- if not $isNginx }}
+    {{- fail "Values.ingress.rewriteRules must be **SINGLE STRING** of formatted nginx markup, not a yaml list" -}}
+  {{- end }}
+{{- else if (ne (len .Values.ingress.rules) 0) }}
+  {{- if not $isTraefik }}
+    {{- fail "Values.ingress.rewriteRules must be a yaml list of Middleware values, not a string" -}}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{/* ==== End validation ========================================================================= */}}
 {{- $fullName := include "metacat.fullname" . -}}
 {{- $serverName := ( include "metacat.server.name" . ) }}
 apiVersion: networking.k8s.io/v1
@@ -23,20 +36,18 @@ metadata:
       {{- end }}
     {{- end }}
 
+    ## TODO... ALL configuration-snippets, cors, rewrite rules etc all need conversion
     {{- if $isNginx }}
     nginx.ingress.kubernetes.io/configuration-snippet: |
     {{- if .Values.ingress.configurationSnippet }}
       {{- .Values.ingress.configurationSnippet | nindent 6 }}
     {{- end }}
-## TODO...
     {{- if $siteMapEnabled }}
       rewrite ^/(sitemap.+) /{{- index .Values.metacat "application.context" -}}
       /sitemaps/$1 redirect;
     {{- end }}
-## TODO...
       rewrite ^/robots.txt /{{- index .Values.metacat "application.context" -}}
       /robots.txt redirect;
-## TODO...
     {{- if .Values.ingress.rewriteRules }}
       {{- .Values.ingress.rewriteRules | nindent 6 }}
     {{- end }}
@@ -93,7 +104,6 @@ spec:
           - path: {{ $webroot }}/
             pathType: Prefix
             backend:
-              service:
               {{- omit .Values.global.metacatUiIngressBackend "enabled" | toYaml | nindent 14 }}
             {{- end }}
           {{- end }}

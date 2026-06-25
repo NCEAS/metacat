@@ -1,5 +1,6 @@
-{{- if and (eq (include "metacat.ingress.type" .) "traefik")
-           (index .Values.metacat "dataone.certificate.fromHttpHeader.enabled") -}}
+{{- if eq (include "metacat.ingress.type" .) "traefik"}}
+{{- $mtlsEnabled := index .Values.metacat "dataone.certificate.fromHttpHeader.enabled" -}}
+{{- $siteMapEnabled := index .Values.metacat "sitemap.enabled" }}
 ## Only one middleware can be added to the ingress annotations. This middleware "chain" definition
 ## chains together the other Traefik Middlewares below, so only this one needs to be referenced
 ## in the ingress annotations.
@@ -12,12 +13,60 @@ metadata:
 spec:
   chain:
     middlewares:
+    {{- if $siteMapEnabled }}
+      - name: {{ .Release.Name }}-sitemap-redirect
+    {{- end }}
+      - name: {{ .Release.Name }}-robots-redirect
+    {{- range .Values.ingress.rewriteRules }}
+      - name: {{ .name }}
+    {{- end }}
+    {{- if $mtlsEnabled }}
       - name: {{ .Release.Name }}-passcert
       - name: {{ .Release.Name }}-customheaders
+    {{- end }}
+
+{{- if $siteMapEnabled }}
+---
+# Source: metacat/templates/middlewares.yaml
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: sitemap-redirect
+spec:
+  redirectRegex:
+    regex: "^https?://[^/]+/(sitemap.+)"
+    replacement: "https://${host}/metacat/sitemaps/${1}"
+    permanent: false
+{{- end }}
 
 ---
+# Source: metacat/templates/middlewares.yaml
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: robots-redirect
+spec:
+  redirectRegex:
+    regex: "^https?://[^/]+/robots.txt"
+    replacement: "https://${host}/metacat/robots.txt"
+    permanent: false
 
-## Traefik replacement for:
+{{- range .Values.ingress.rewriteRules }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .name }}
+spec:
+  redirectRegex:
+    regex: {{ .regex | quote }}
+    replacement: {{ .replacement | quote }}
+    permanent: {{ default "false" .permanent }}
+{{- end }}
+
+{{- if $mtlsEnabled }}
+---
+## Traefik equivalent to Nginx:
 ## nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
 ##
 apiVersion: traefik.io/v1alpha1
@@ -38,10 +87,8 @@ spec:
         commonName: true
         serialNumber: true
         domainComponent: true
-
 ---
-
-## Traefik replacement for:
+## Traefik equivalent to Nginx:
 ## nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
 ##
 {{- $apiVer := "v1" -}}
@@ -62,4 +109,5 @@ spec:
       Server: traefik
       Ssl-Client-Verify: ""          # overwrite to prevent client setting
       Ssl-Client-Subject-Dn: ""      # overwrite to prevent client setting
+{{- end }}
 {{- end }}
