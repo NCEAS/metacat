@@ -684,7 +684,6 @@ ingress:
   ##        --namespace ingress-nginx --create-namespace      \
   ##        --set controller.allowSnippetAnnotations=true
   ##
-#  className: "nginx"
   className: "traefik"
 
   ## @param ingress.annotations [default: see values.yaml] `nginx.ingress.kubernetes.io` annotations
@@ -744,7 +743,7 @@ ingress:
   ##
   ## FOR TRAEFIK PROXY (ingress.className: "traefik"), this should be a **YAML LIST** of rules, each
   ## with a name, regex, replacement, and optional permanent flag (which defaults to "false"). These
-  ## rules will be added as traefik Middleware definitions in middlewares.yaml
+  ## rules will be added as traefik Middleware definitions in middleware-redirects.yaml
   ##
   ## Example syntax:
   ##     rewriteRules:
