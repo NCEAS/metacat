@@ -1,0 +1,37 @@
+{{- if eq (include "metacat.ingress.type" .) "traefik"}}
+##
+## This file contains "header" middleware definitions for Traefik.
+##
+## IMPORTANT: ADD THE NAMES OF ANY NEW MIDDLEWARES TO helm/templates/middleware-chain.yaml, OR THEY
+## WON'T BE LOADED!
+##
+---
+##
+## Headers to enable CORS functionality needed by Metacat
+##
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ $.Release.Name }}-cors-headers
+spec:
+  headers:
+    accessControlAllowOriginListRegex:
+      - ".*"
+    accessControlAllowCredentials: true
+    accessControlAllowMethods:
+      - POST
+      - PUT
+      - GET
+      - OPTIONS
+    accessControlAllowHeaders:
+      - DNT
+      - Keep-Alive
+      - User-Agent
+      - X-Requested-With
+      - If-Modified-Since
+      - Cache-Control
+      - Content-Type
+      - Range
+      - Authorization
+    accessControlMaxAge: 1728000
+  {{- end }}

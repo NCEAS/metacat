@@ -1,6 +1,4 @@
 {{- if eq (include "metacat.ingress.type" .) "traefik"}}
-{{- $siteMapEnabled := index .Values.metacat "sitemap.enabled" }}
-{{- $mtlsEnabled := index .Values.metacat "dataone.certificate.fromHttpHeader.enabled" -}}
 ##
 ## Only one middleware can be added to the ingress annotations. This middleware "chain" definition
 ## chains together all the other Traefik Middlewares, so only this one needs to be referenced
@@ -18,14 +16,15 @@ metadata:
 spec:
   chain:
     middlewares:
-    {{- if $siteMapEnabled }}
+      - name: {{ $.Release.Name }}-cors-headers
+      - name: {{ .Release.Name }}-robots-redirect
+    {{- if index .Values.metacat "sitemap.enabled" }}
       - name: {{ .Release.Name }}-sitemap-redirect
     {{- end }}
-      - name: {{ .Release.Name }}-robots-redirect
     {{- range .Values.ingress.rewriteRules }}
       - name: {{ $.Release.Name }}-{{ .name }}
     {{- end }}
-    {{- if $mtlsEnabled }}
+    {{- if index .Values.metacat "dataone.certificate.fromHttpHeader.enabled" }}
       - name: {{ .Release.Name }}-passcert
       - name: {{ .Release.Name }}-customheaders
     {{- end }}
