@@ -21,7 +21,7 @@ the latest version of Metacat must have the following software installed and run
 
     * In order to use the Metacat Registry (and for a more robust Web-serving environment in general), the Apache Web server should be installed with Tomcat and the two should be integrated. See the installing Apache for more information.
 
-  * `Java 21`_
+  * `Java 25`_
 
   * `RabbitMQ`_
 
@@ -37,7 +37,7 @@ the latest version of Metacat must have the following software installed and run
 
 .. _Apache HTTP Server: http://httpd.apache.org/
 
-.. _Java 21: https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html
+.. _Java 25: https://www.oracle.com/java/technologies/javase/jdk25-archive-downloads.html
 
 .. _RabbitMQ: https://www.rabbitmq.com/
 
@@ -61,7 +61,7 @@ For the impatient or those who have already installed Metacat and know what
 they are doing, here are the steps needed to install Metacat. Detailed
 instructions for each step are in the next section.
 
-  1. Download and install prerequisites (`Java 21`_, `Apache Tomcat`_, PostgreSQL_, `RabbitMQ`_, `Solr Server`_, `Apache HTTP Server`_)
+  1. Download and install prerequisites (`Java 25`_, `Apache Tomcat`_, PostgreSQL_, `RabbitMQ`_, `Solr Server`_, `Apache HTTP Server`_)
 
   2. Create a database in PostgreSQL named 'metacat' and authorize access to it in ``pb_hba.conf`` for the user 'metacat'
 
@@ -183,7 +183,7 @@ PostgreSQL, Ant (if installing from source), and Tomcat are installed and runnin
 We also highly recommend that you install Apache Web server, as it provides a more
 robust Web-serving environment and is required by some Metacat functionality.
 
-  * `Java 21`_
+  * `Java 25`_
 
   * `Apache Tomcat`_
 
@@ -197,9 +197,9 @@ robust Web-serving environment and is required by some Metacat functionality.
 
   * `Solr Server`_
 
-Java 21
+Java 25
 ......
-To run Metacat, you should use Java 21. Make sure that the JAVA_HOME
+To run Metacat, you should use Java 25. Make sure that the JAVA_HOME
 environment variable is properly set and that both ``java`` and ``javac``
 are on your PATH.
 
@@ -207,15 +207,15 @@ To install Java if you are running Ubuntu_/Debian, you can install using apt-get
 
   ::
 
-    sudo apt-get install openjdk-21-jdk
+    sudo apt-get install openjdk-25-jdk
 
-Then set Java 21 as the default
+Then set Java 25 as the default
 
   ::
 
     cd /usr/lib/jvm
     sudo rm -r default-java
-    sudo ln -s java-21-openjdk-amd64 default-java
+    sudo ln -s java-25-openjdk-amd64 default-java
 
 If you are not using Ubuntu_/Debian, you can get Java from the Oracle_ website and install using the RPM installer.
 
@@ -772,7 +772,7 @@ with Metacat's Authorization Configuration screen. Note that if you do not have
 Tomcat integrated with Apache you will probably have to type
 http://yourserver.yourdomain.com:8080/yourcontext/
 
-Upgrading to Metacat v3.0.0 or above
+Upgrading to Metacat v3.4.2 or above
 ....................................
 
 Starting Requirements:
@@ -784,7 +784,7 @@ Starting Requirements:
 
 .. _Metacat v2.19.0: https://github.com/NCEAS/metacat/releases/tag/2.19.0
 
-  * You must have Java 21 installed
+  * You must have Java 25 installed
 
     * If it is not installed, please install it and set it as the default version
 
@@ -792,13 +792,13 @@ Starting Requirements:
 
       ex. `sudo update-alternatives --config java` which will bring up a list of versions to select from
 
-  * If Tomcat uses the `default-java` directory, ensure that it points to Java 21
+  * If Tomcat uses the `default-java` directory, ensure that it points to Java 25
 
     ::
 
       cd /usr/lib/jvm
       sudo rm -r default-java
-      sudo ln -s java-21-openjdk-amd64 default-java
+      sudo ln -s java-25-openjdk-amd64 default-java
 
   * If Metacat is currently running:
 
