@@ -674,41 +674,37 @@ ingress:
   ## @param ingress.className ClassName of the ingress provider in your cluster
   ##  Inspect available classes in your cluster using:    $ kubectl get ingressclasses
   ##
-  ## className: "traefik" -- For Rancher Desktop (provided you have traefik enabled:
-  ##     'preferences' -> 'kubernetes' -> 'enable traefik')
-  ## className: "nginx" -- For production, or to use certificates locally. Also:
-  ## - disable traefik ('preferences' -> 'kubernetes' -> uncheck 'enable traefik')
-  ## - install nginx:
-  ##   $  helm upgrade --install ingress-nginx ingress-nginx  \
-  ##        --repo https://kubernetes.github.io/ingress-nginx \
-  ##        --namespace ingress-nginx --create-namespace      \
-  ##        --set controller.allowSnippetAnnotations=true
+  ## className: "traefik" -- For NCEAS development and production clusters, and for Rancher Desktop
+  ##          (provided you have traefik enabled: 'preferences' -> 'kubernetes' -> 'enable traefik')
+  ## className: "nginx" -- DEPRECATED - the ingress-nginx project is no longer actively maintained
   ##
   className: "traefik"
 
-  ## @param ingress.annotations [default: see values.yaml] `nginx.ingress.kubernetes.io` annotations
+  ## @param ingress.annotations traefik ingress annotations
+  ##
   ## These are mostly for enabling upload and download of large files and data packages, without
-  ## timeouts or disconnects.
+  ## timeouts or disconnects etc. The defaults shoudl be fine for most metacat installations.
   ##
   ## NOTE: You do NOT need to do anything here for DataONE mutual authentication with x509
   ## client-side certs, provided:
-  ## 1. you are using the Kubernetes open source community version of the nginx ingress
-  ##    (see https://github.com/kubernetes/ingress-nginx)
-  ## 2. you have set ingress.className to nginx, and
+  ## 1. you are using the Traefik ingress (see https://doc.traefik.io/traefik/)
+  ## 2. you have set ingress.className to traefik
   ## 3. you have set up ingress.tls correctly for https access, and
   ## 4. you have set the correct parameters in the metacat section
   ##    (see `metacat.dataone.certificate.fromHttpHeader.enabled`, above, for more details)
   ##
-  ## For other nginx annotation options, see:
-  ## https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/
+  ## For additional traefik annotation options, see:
+  ##   https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/ingress/#on-ingress
+  ##
+  ## (Nginx annotations (of the form 'nginx.ingress.kubernetes.io') are still supported for
+  ## backwards-compatibility, but note that ingress-nginx is no longer actively maintained)
   ##
   annotations: {}
 
-  ## @param ingress.defaultBackend.enabled enable the optional defaultBackend
-  ## ingress.defaultBackend (optional) default for any requests not matching defined paths
-  ## @param ingress.defaultBackend.enabled enable the optional defaultBackend
+  ## @param ingress.defaultBackend.enabled Enable the optional defaultBackend
   ## If none of the hosts or paths match the HTTP request in the Ingress objects, the traffic is
-  ## routed to your default backend. Not typically required, unless MetacatUI
+  ## routed to your default backend. Not typically required, unless MetacatUI is not at the root
+  ## of the site (e.g. https://arcticdata.io/catalog)
   ## Content included here under `defaultBackend` will be added to the ingress definition under
   ## 'spec.defaultBackend'; for example:
   ##
@@ -752,30 +748,32 @@ ingress:
   ##         replacement: "https://goa.nceas.ucsb.edu/${1}"
   ##         permanent: true
   ##       - name: sitemap-redirect
-  #          regex: "^https?://[^1]+/(sitemap.+)"
-  #          replacement: "https://${host}/metacat/sitemaps/${1}"
-  #          permanent: false  # optional; defaults to "false"
-  #        - name: robots-redirect
-  #          regex: "^https?://[^1]+/robots.txt"
-  #          replacement: "https://${host}/metacat/robots.txt"
+  ##         regex: "^https?://([^/]+)/(sitemap.+)"
+  ##         replacement: "https://${1}/metacat/sitemaps/${2}"
+  ##         permanent: false  # optional; defaults to "false"
+  ##       - name: robots-redirect
+  ##         regex: "^https?://([^/]+)/robots.txt"
+  ##         replacement: "https://${1}/metacat/robots.txt"
   ##
-  ## (For example only; note the sitemap and robots.txt rules are already automatically included as
-  ## needed - see .Values.robots.* and .Values.metacat.sitemap.*)
+  ## Traefik supports group cap[ture (${1}, ${2} etc.), but no other variables are available
+  ##
+  ## (NOTE: For example only; the sitemap and robots.txt rules are already automatically included as
+  ## needed - see .Values.metacat.sitemap.*)
   ##
   rewriteRules: []
 
-  ## @param ingress.configurationSnippet [default: see values.yaml] added to nginx ingress config...
+  ## @param ingress.configurationSnippet [NGINX ONLY] added to nginx ingress configuration-snippets
   ## This block will be added to the ingress definition section, in addition to the rewrite rules:
   ## metadata:
   ##   annotations:
   ##     nginx.ingress.kubernetes.io/configuration-snippet: |
   ##       (* * *  nginx.conf code block here  * * *)
   ##
-  ## Note that overriding this block will disable the default cors setup, unless
-  ## you copy this into your override
+  ## Note that overriding this block will disable the default cors setup, unless you copy this into
+  ## your override
   ##
-
-  # TODO: convert to traefik format & re-document
+  ## Ignored if ingress.className: "traefik"
+  ##
   configurationSnippet: |
     # Metacat Cors Setup
 
