@@ -762,47 +762,37 @@ ingress:
   ##
   rewriteRules: []
 
+  ## @param ingress.ipAllowList Access limited to these IP addresses/ranges. Empty = no restrictions
+  ## For more options on filtering, see the traefik docs for ipAllowList Middleware:
+  ## https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/ipallowlist/
+  ##
+  ## Example:
+  ## ipAllowList:
+  ##  - 128.111.61.0/24
+  ##  - 128.111.64.0/22
+  ##  - 128.111.85.0/24
+  ##
+  ipAllowList: []
+
+  ## @param ingress.corsEnabled Enable CORS headers for cross-origin requests. Defaults to true
+  ## This is required by Metacat for normal operation
+  ##
+  corsEnabled: true
+
   ## @param ingress.configurationSnippet [NGINX ONLY] added to nginx ingress configuration-snippets
   ## This block will be added to the ingress definition section, in addition to the rewrite rules:
   ## metadata:
   ##   annotations:
   ##     nginx.ingress.kubernetes.io/configuration-snippet: |
-  ##       (* * *  nginx.conf code block here  * * *)
+  ##       === nginx.conf code block defined in       ===
+  ##       === ingress.configurationSnippet goes here ===
   ##
-  ## Note that overriding this block will disable the default cors setup, unless you copy this into
-  ## your override
+  ## Note that you do NOT need to define cors setup here; that can be done simply by setting
+  ## ingress.corsEnabled: true
   ##
-  ## Ignored if ingress.className: "traefik"
+  ## (* * * Ignored if ingress.className: "traefik" * * *)
   ##
-  configurationSnippet: |
-    # Metacat Cors Setup
-
-    set $cors 'true';
-
-    if ($request_method = 'OPTIONS') {
-      set $cors ${cors}options;
-    }
-
-    if ($cors = "true") {
-      more_set_headers 'Access-Control-Allow-Origin: $http_origin';
-      more_set_headers 'Access-Control-Allow-Credentials: true';
-      more_set_headers 'Access-Control-Allow-Methods: POST, PUT, GET, OPTIONS';
-      more_set_headers 'Access-Control-Allow-Headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
-
-      more_set_headers 'Access-Control-Max-Age: 1728000';
-    }
-
-    if ($cors = "trueoptions") {
-      more_set_headers 'Access-Control-Allow-Origin: $http_origin';
-      more_set_headers 'Access-Control-Allow-Credentials: true';
-      more_set_headers 'Access-Control-Allow-Methods: POST, PUT, GET, OPTIONS';
-      more_set_headers 'Access-Control-Allow-Headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
-
-      more_set_headers 'Access-Control-Max-Age: 1728000';
-      more_set_headers 'Content-Type: text/plain charset=UTF-8';
-      more_set_headers 'Content-Length: 0';
-      return 204;
-    }
+  configurationSnippet: ""
 
   ## @param ingress.tls The TLS configuration
   ##
