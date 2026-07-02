@@ -11,12 +11,17 @@
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: {{ .Release.Name }}-middlewares
+  name: {{ .Release.Name }}-middleware-chain
   namespace: {{ .Release.Namespace }}
 spec:
   chain:
     middlewares:
+    {{- if .Values.ingress.ipAllowList }}
+      - name: {{ $.Release.Name }}-ip-allowlist
+    {{- end }}
+    {{- if .Values.ingress.corsEnabled }}
       - name: {{ $.Release.Name }}-cors-headers
+    {{- end }}
       - name: {{ .Release.Name }}-robots-redirect
     {{- if index .Values.metacat "sitemap.enabled" }}
       - name: {{ .Release.Name }}-sitemap-redirect
