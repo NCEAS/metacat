@@ -12,6 +12,7 @@ apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: {{ .Release.Name }}-robots-redirect
+  namespace: {{ .Release.Namespace }}
 spec:
   redirectRegex:
     regex: "^https?://([^/]+)/robots.txt"
@@ -28,6 +29,7 @@ apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: {{ .Release.Name }}-sitemap-redirect
+  namespace: {{ .Release.Namespace }}
 spec:
   redirectRegex:
     regex: "^https?://([^/]+)/(sitemap.+)"
@@ -44,6 +46,7 @@ apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: {{ $.Release.Name }}-{{ .name }}
+  namespace: {{ $.Release.Namespace }}
 spec:
   redirectRegex:
     regex: {{ .regex | quote }}
