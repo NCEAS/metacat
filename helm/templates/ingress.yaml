@@ -26,6 +26,10 @@ metadata:
   {{- $mutualAuth := index .Values.metacat "dataone.certificate.fromHttpHeader.enabled" -}}
   {{- $siteMapEnabled := index .Values.metacat "sitemap.enabled" }}
   annotations:
+    ### Delay Ingress creation until after Middlewares are created, otherwise errors are logged ###
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "3"
+    ### End Delay for Middlewares' creation ###
     {{- with .Values.ingress.annotations }}
       {{- toYaml . | nindent 4 }}
     {{- end -}}
@@ -35,12 +39,40 @@ metadata:
         {{- include "dataone.traefik.mtls.annotations" . | nindent 4 }}
       {{- end }}
     {{- end }}
-
-    ## TODO... ALL configuration-snippets, cors, rewrite rules etc all need conversion
     {{- if $isNginx }}
     nginx.ingress.kubernetes.io/configuration-snippet: |
     {{- if .Values.ingress.configurationSnippet }}
       {{- .Values.ingress.configurationSnippet | nindent 6 }}
+    {{- end }}
+    {{- if .Values.ingress.corsEnabled }}
+      # Metacat Cors Setup
+
+      set $cors 'true';
+
+      if ($request_method = 'OPTIONS') {
+        set $cors ${cors}options;
+      }
+
+      if ($cors = "true") {
+        more_set_headers 'Access-Control-Allow-Origin: $http_origin';
+        more_set_headers 'Access-Control-Allow-Credentials: true';
+        more_set_headers 'Access-Control-Allow-Methods: POST, PUT, GET, OPTIONS';
+        more_set_headers 'Access-Control-Allow-Headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
+
+        more_set_headers 'Access-Control-Max-Age: 1728000';
+      }
+
+      if ($cors = "trueoptions") {
+        more_set_headers 'Access-Control-Allow-Origin: $http_origin';
+        more_set_headers 'Access-Control-Allow-Credentials: true';
+        more_set_headers 'Access-Control-Allow-Methods: POST, PUT, GET, OPTIONS';
+        more_set_headers 'Access-Control-Allow-Headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
+
+        more_set_headers 'Access-Control-Max-Age: 1728000';
+        more_set_headers 'Content-Type: text/plain charset=UTF-8';
+        more_set_headers 'Content-Length: 0';
+        return 204;
+      }
     {{- end }}
     {{- if $siteMapEnabled }}
       rewrite ^/(sitemap.+) /{{- index .Values.metacat "application.context" -}}
