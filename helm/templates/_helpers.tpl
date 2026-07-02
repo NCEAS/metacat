@@ -136,8 +136,10 @@ traefik.ingress.kubernetes.io annotations. Note these certificates are NOT the s
 used for TLS ("SSL") access via https
 */}}
 {{- define "dataone.traefik.mtls.annotations" -}}
-traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace }}-{{ .Release.Name }}-middlewares@kubernetescrd"
-traefik.ingress.kubernetes.io/router.tls.options: "{{ .Release.Namespace }}-{{ .Release.Name }}-mtls-policy@kubernetescrd"
+traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace -}}
+    -{{ .Release.Name }}-middleware-chain@kubernetescrd"
+traefik.ingress.kubernetes.io/router.tls.options: "{{ .Release.Namespace -}}
+    -{{ .Release.Name }}-mtls-policy@kubernetescrd"
 {{- end }}
 
 {{/*
