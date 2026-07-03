@@ -26,14 +26,9 @@ metadata:
   {{- $mutualAuth := index .Values.metacat "dataone.certificate.fromHttpHeader.enabled" -}}
   {{- $siteMapEnabled := index .Values.metacat "sitemap.enabled" }}
   annotations:
-    ### Delay Ingress creation until after Middlewares are created, otherwise errors are logged ###
-    helm.sh/hook: post-install,post-upgrade
-    helm.sh/hook-weight: "3"
-    ### End Delay for Middlewares' creation ###
     {{- with .Values.ingress.annotations }}
       {{- toYaml . | nindent 4 }}
     {{- end -}}
-
     {{- if $isTraefik }}
       {{- if $mutualAuth }}
         {{- include "dataone.traefik.mtls.annotations" . | nindent 4 }}
