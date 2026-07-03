@@ -77,11 +77,19 @@ tomcat:
   jmxEnabled: true
 
 ingress:
+  className: "traefik"
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+  rewriteRules:
+    - name: test-redirect
+      regex: "^https://([^/]+)/remove-me/(.*)"
+      replacement: "https://${1}/${2}"
+      permanent: true
+
   tls:
     - hosts: [] # defaults to global.metacatExternalBaseUrl
-      secretName: ingress-nginx-tls-cert
+      secretName: ingress-tls-cert
 
 database:
   serviceName: mcdb-cnpg-rw
