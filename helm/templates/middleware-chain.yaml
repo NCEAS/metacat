@@ -16,6 +16,7 @@ metadata:
 spec:
   chain:
     middlewares:
+      - name: {{ $.Release.Name }}-security-headers
     {{- if .Values.ingress.ipAllowList }}
       - name: {{ $.Release.Name }}-ip-allowlist
     {{- end }}
@@ -29,8 +30,12 @@ spec:
     {{- range .Values.ingress.rewriteRules }}
       - name: {{ $.Release.Name }}-{{ .name }}
     {{- end }}
+    {{- range .Values.ingress.middlewareChainAdditions }}
+      - name: {{ . }}
+    {{- end }}
     {{- if index .Values.metacat "dataone.certificate.fromHttpHeader.enabled" }}
       - name: {{ .Release.Name }}-passcert
       - name: {{ .Release.Name }}-customheaders
     {{- end }}
+
 {{- end }}

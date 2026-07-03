@@ -698,8 +698,19 @@ ingress:
   ##
   ## (Nginx annotations (of the form 'nginx.ingress.kubernetes.io') are still supported for
   ## backwards-compatibility, but note that ingress-nginx is no longer actively maintained)
+  ## For ingress-nginx, override with the following:
   ##
+  #  annotations:    # DEPRECATED - ingress-nginx
+  #    nginx.ingress.kubernetes.io/client-body-buffer-size: 1m
+  #    nginx.ingress.kubernetes.io/client-max-body-size: "0"
+  #    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+  #    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+  #    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+  #    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+  #    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+  #    nginx.ingress.kubernetes.io/send-timeout: "3600"
   annotations: {}
+
 
   ## @param ingress.defaultBackend.enabled Enable the optional defaultBackend
   ## If none of the hosts or paths match the HTTP request in the Ingress objects, the traffic is
@@ -755,8 +766,9 @@ ingress:
   ##         regex: "^https?://([^/]+)/robots.txt"
   ##         replacement: "https://${1}/metacat/robots.txt"
   ##
-  ## Traefik supports group cap[ture (${1}, ${2} etc.), but no other variables are available
-  ##
+  ## Traefik supports regex capture groups using the syntax ( ), which can be back-referenced using
+  ## the syntax ${1}, ${2}, etc. However, no server variables are available (like nginx's ${host},
+  ## ${request_uri}, etc.)
   ## (NOTE: For example only; the sitemap and robots.txt rules are already automatically included as
   ## needed - see .Values.metacat.sitemap.*)
   ##
@@ -779,16 +791,40 @@ ingress:
   ##
   corsEnabled: true
 
-  ## @param ingress.configurationSnippet [NGINX ONLY] added to nginx ingress configuration-snippets
-  ## This block will be added to the ingress definition section, in addition to the rewrite rules:
+  ## @param ingress.middlewareChainAdditions [array] Optional list of traefik Middlewares to add
+  ## to the Middleware Chain definition (see helm/templates/middleware-chain.yaml).
+  ## IMPORTANT: Adding values here will simply add them to the list of middlewares included in
+  ## the chain (and this loaded by the ingress). You still need to create the actual middlewares
+  ## that are referenced by these names!
+  ##
+  ## For example, if you have created a custom Middleware definition, named like this:
+  ##
+  ## apiVersion: traefik.io/v1alpha1
+  ## kind: Middleware
+  ## metadata:
+  ##   name: myrelease-my-custom-thing
+  ##   namespace: mynamespace
+  ## spec:
+  ##   # ...etc
+  ##
+  ## Then set:
+  ## middlewareChainAdditions:
+  ##   - myrelease-my-custom-thing
+  ##
+  middlewareChainAdditions: []
+
+  ## @param ingress.configurationSnippet [NGINX ONLY] additional nginx configuration-snippets
+  ## This block will be added verbatim to the ingress definition section, in addition to any
+  ## existing rewrite rules (see ingress.rewriteRules).
+  ## NOTE: you do NOT need to define CORS setup here; that can be done simply by setting
+  ## 'ingress.corsEnabled': true. Similarly, sitemap rewrite rules are also automatically added, if
+  ## you set 'metacat.sitemap.enabled: true'
+  ##
+  ## Example:
   ## metadata:
   ##   annotations:
   ##     nginx.ingress.kubernetes.io/configuration-snippet: |
-  ##       === nginx.conf code block defined in       ===
-  ##       === ingress.configurationSnippet goes here ===
-  ##
-  ## Note that you do NOT need to define cors setup here; that can be done simply by setting
-  ## ingress.corsEnabled: true
+  ##       more_set_input_headers "X-MyCustom-Header: myvalue-here";
   ##
   ## (* * * Ignored if ingress.className: "traefik" * * *)
   ##
