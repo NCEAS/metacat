@@ -31,4 +31,23 @@ spec:
       - Authorization
     accessControlMaxAge: 1728000
   {{- end }}
-  {{- end }}
+---
+##
+## Security-related headers
+##
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ $.Release.Name }}-security-headers
+  namespace: {{ .Release.Namespace }}
+spec:
+  headers:
+    customResponseHeaders:
+      ## disallow showing in someone else's iframe:
+      X-Frame-Options: SAMEORIGIN
+
+    ## strict-transport-security: max-age=31536000; includeSubDomains:
+    forceSTSHeader: true
+    stsSeconds: 31536000
+    stsIncludeSubdomains: true
+{{- end }}
