@@ -33,6 +33,7 @@ import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
 
@@ -53,6 +54,7 @@ import edu.ucsb.nceas.metacat.storage.ObjectInfo;
 public class StreamingMultipartRequestResolver extends MultipartRequestResolver {
     public static final String SYSMETA = "sysmeta";
     private static Log log = LogFactory.getLog(StreamingMultipartRequestResolver.class);
+    private Session session;
     private ServletFileUpload upload;
     private SystemMetadata sysMeta;
     private static boolean deleteOnExit =
@@ -63,13 +65,16 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
      * @param tmpUploadDir  the directory will temporarily host the stored files from the file parts
      *                       in the http multiparts request.
      * @param maxUploadSize  the threshold size of files which can be allowed to upload
+     * @param session  the session with the object info calls the resolve action
      */
-    public StreamingMultipartRequestResolver(String tmpUploadDir, int maxUploadSize) {
+    public StreamingMultipartRequestResolver(String tmpUploadDir, int maxUploadSize,
+                                             Session session) {
         super(tmpUploadDir, maxUploadSize);
         // Create a new file upload handler
         this.upload = new ServletFileUpload();
         // Set overall request size constraint
         this.upload.setSizeMax(maxUploadSize);
+        this.session = session;
     }
 
     @Override
@@ -100,6 +105,10 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                                         new MultipartRequestWithSysmeta(request, mpFiles, mpParams);
         if (!isMultipartContent(request)) {
             return multipartRequest;
+        }
+        if (session == null) {
+            throw new InvalidRequest("0000",
+                "Session is required for MultipartRequestResolver to resolve the multiParts.");
         }
         long start = 0;
         long end = 0;

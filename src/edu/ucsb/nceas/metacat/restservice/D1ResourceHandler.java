@@ -435,7 +435,8 @@ public class D1ResourceHandler {
         File tmpDir = getTempDirectory();
         logMetacat.debug("temp dir: " + tmpDir.getAbsolutePath());
         StreamingMultipartRequestResolver resolver =
-                   new StreamingMultipartRequestResolver(tmpDir.getAbsolutePath(), MAX_UPLOAD_SIZE);
+                   new StreamingMultipartRequestResolver(tmpDir.getAbsolutePath(),
+                                                         MAX_UPLOAD_SIZE, session);
         MultipartRequestWithSysmeta mq = null;
         mq = (MultipartRequestWithSysmeta)resolver.resolveMultipart(request);
         multipartparams = mq.getMultipartParameters();
