@@ -640,7 +640,7 @@ public class D1ResourceHandler {
                 }
             }
 
-            if (dn != null && !dn.trim().isBlank()) {
+            if (dn != null && !dn.isBlank()) {
                 Subject subject = new Subject();
                 subject.setValue(dn);
                 session = new Session();
