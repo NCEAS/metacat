@@ -154,7 +154,11 @@ as the one used for TLS ("SSL") access via https
 {{- $secretData := (lookup $apiVer "Secret" .Release.Namespace $secrets).data | default dict -}}
 {{- $xProxyKeyVal := ((get $secretData $xProxyKeyKey) | b64dec)
   | default (printf "\"SECRETS: '%s'; KEY NOT FOUND: '%s'\"" $secrets $xProxyKeyKey) -}}
+{{/*Strip any client-supplied versions of trusted headers before setting our own,*/}}
+{{/*so a client cannot spoof mTLS/proxy-auth headers directly.*/}}
+more_clear_input_headers "X-Forwarded-Tls-Client-Cert-Info";
 more_set_input_headers "X-Proxy-Key: {{ $xProxyKeyVal }}";
+more_set_input_headers "Server: nginx";
 {{- end }}
 
 {{/*

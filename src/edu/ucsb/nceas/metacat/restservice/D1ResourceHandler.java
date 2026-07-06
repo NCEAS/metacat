@@ -17,6 +17,8 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -115,6 +117,8 @@ public class D1ResourceHandler {
 
     // D1 certificate-based authentication
     protected Session session;
+    private static final Pattern VALID_DN_PATTERN =
+        Pattern.compile("^CN=urn:node:[A-Za-z0-9_]+(,DC=[A-Za-z0-9]+)*$");
 
     /**Initializes new instance by setting servlet context,request and response
      * @param request  the request that the handler will handle
@@ -573,18 +577,24 @@ public class D1ResourceHandler {
      * Used only in k8s environment
      * Get the session from the header of the request. This mechanism is disabled by default due
      * to network security conditions needed for it to be secure
+     *
+     * SECURITY REQUIREMENT: The reverse proxy (Nginx/Traefik) MUST strip any client-supplied
+     * "X-Proxy-Key", "X-Forwarded-Tls-Client-Cert-Info", "Ssl-Client-Verify",
+     * "Ssl-Client-Subject-Dn", and "Server" headers from inbound requests before setting its own
+     * trusted values. Metacat must also be unreachable directly (only via the proxy), or this
+     * mechanism can be bypassed.
      */
     protected void getSessionFromHeader() {
         if (enableSessionFromHeader) {
             logMetacat.debug("In the route to get the session from a http header");
             //check the shared key between Metacat and the http server:
-            if (proxyKey == null || proxyKey.trim().equals("")) {
+            if (proxyKey == null || proxyKey.isBlank()) {
                 logMetacat.warn("Metacat is not configured to handle the feature passing "
                                 + " the certificate by headers since the proxy key is blank");
                 return;
             }
             String proxyKeyFromHttp = (String) request.getHeader("X-Proxy-Key");
-            if (proxyKeyFromHttp == null || proxyKeyFromHttp.trim().equals("")) {
+            if (proxyKeyFromHttp == null || proxyKeyFromHttp.isBlank()) {
                 logMetacat.warn("The value of the header X-Proxy-Key is null or blank, "
                                  + "so Metacat does NOT trust the request.");
                 return;
@@ -595,6 +605,7 @@ public class D1ResourceHandler {
                 return;
             }
 
+            // Traefik sets "Server: traefik" header, which would overwrite a spoofed server header
             boolean isTraefik = ("traefik".equalsIgnoreCase(request.getHeader("Server")));
 
             // Traefik uses this format for the header:
@@ -615,7 +626,13 @@ public class D1ResourceHandler {
                     String decoded = URLDecoder.decode(subj, StandardCharsets.UTF_8);
                     // (decoded format: Subject="DC=org,DC=dataone,CN=urn:node:TestBROOKELT")
                     // Extract content between quotes after Subject="
-                    String inner = decoded.replaceAll(".*Subject=\"([^\"]*)\".*", "$1");
+                    Matcher m = Pattern.compile("^Subject=\"([^\"]*)\"$").matcher(decoded);
+                    if (!m.matches()) {
+                        logMetacat.warn(
+                            "Traefik subject header did not match expected format: " + decoded);
+                        return;
+                    }
+                    String inner = m.group(1);
                     String[] parts = inner.split(",");
                     StringBuilder result = new StringBuilder();
                     for (int i = parts.length - 1; i >= 0; i--) {
@@ -640,7 +657,7 @@ public class D1ResourceHandler {
                 }
             }
 
-            if (dn != null && !dn.isBlank()) {
+            if (dn != null && !dn.isBlank() && VALID_DN_PATTERN.matcher(dn).matches()) {
                 Subject subject = new Subject();
                 subject.setValue(dn);
                 session = new Session();
@@ -650,7 +667,7 @@ public class D1ResourceHandler {
                 try {
                     subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
                 } catch (Exception be) {
-                    logMetacat.warn("Can not get subject information for subject" + dn
+                    logMetacat.warn("Can not get subject information for subject " + dn
                                     + " since " + be.getMessage());
                 }
                 if (subjectInfo == null) {
@@ -662,6 +679,11 @@ public class D1ResourceHandler {
                     subjectInfo.setPersonList(Arrays.asList(person));
                 }
                 session.setSubjectInfo(subjectInfo);
+                logMetacat.info("Header-based session established for subject '" + dn
+                                    + "' from remote address " + request.getRemoteAddr());
+            } else if (!VALID_DN_PATTERN.matcher(dn).matches()) {
+                logMetacat.warn(
+                    "Rejected header-based auth; DN does not match expected pattern: " + dn);
             }
         }
     }

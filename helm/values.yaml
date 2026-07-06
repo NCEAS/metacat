@@ -678,12 +678,9 @@ ingress:
   ##          (provided you have traefik enabled: 'preferences' -> 'kubernetes' -> 'enable traefik')
   ## className: "nginx" -- DEPRECATED - the ingress-nginx project is no longer actively maintained
   ##
-  className: "traefik"
+  className: "nginx"
 
-  ## @param ingress.annotations traefik ingress annotations
-  ##
-  ## These are mostly for enabling upload and download of large files and data packages, without
-  ## timeouts or disconnects etc. The defaults shoudl be fine for most metacat installations.
+  ## @param ingress.annotations Optional additional ingress annotations (typically not needed)
   ##
   ## NOTE: You do NOT need to do anything here for DataONE mutual authentication with x509
   ## client-side certs, provided:
@@ -698,19 +695,19 @@ ingress:
   ##
   ## (Nginx annotations (of the form 'nginx.ingress.kubernetes.io') are still supported for
   ## backwards-compatibility, but note that ingress-nginx is no longer actively maintained)
-  ## For ingress-nginx, override with the following:
+  ## For ingress-nginx, the following settings are automatically added, and cannot be overridden:
   ##
-  #  annotations:    # DEPRECATED - ingress-nginx
-  #    nginx.ingress.kubernetes.io/client-body-buffer-size: 1m
-  #    nginx.ingress.kubernetes.io/client-max-body-size: "0"
-  #    nginx.ingress.kubernetes.io/proxy-body-size: "0"
-  #    nginx.ingress.kubernetes.io/proxy-buffering: "off"
-  #    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-  #    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
-  #    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-  #    nginx.ingress.kubernetes.io/send-timeout: "3600"
+  ##  annotations:    # DEPRECATED - automatically added for ingress-nginx:
+  ##    nginx.ingress.kubernetes.io/client-body-buffer-size: 1m
+  ##    nginx.ingress.kubernetes.io/client-max-body-size: "0"
+  ##    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+  ##    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+  ##    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+  ##    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+  ##    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+  ##    nginx.ingress.kubernetes.io/send-timeout: "3600"
+  ##
   annotations: {}
-
 
   ## @param ingress.defaultBackend.enabled Enable the optional defaultBackend
   ## If none of the hosts or paths match the HTTP request in the Ingress objects, the traffic is
