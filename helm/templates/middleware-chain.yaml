@@ -34,8 +34,11 @@ spec:
       - name: {{ . }}
     {{- end }}
     {{- if index .Values.metacat "dataone.certificate.fromHttpHeader.enabled" }}
-      - name: {{ .Release.Name }}-passcert
+      ## "customheaders" MUST run before "passcert" so that any client-spoofed cert headers are
+      ## stripped first, and only overwritten with real values if Traefik verifies an actual
+      ## mTLS client certificate.
       - name: {{ .Release.Name }}-customheaders
+      - name: {{ .Release.Name }}-passcert
     {{- end }}
 
 {{- end }}

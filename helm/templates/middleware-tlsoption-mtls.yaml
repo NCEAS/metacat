@@ -48,9 +48,16 @@ spec:
         serialNumber: true
         domainComponent: true
 ---
-## This Middleware adds the X-Proxy-Key header to the request, and prevents clients spoofing the
-## Ssl-Client-Verify or Ssl-Client-Subject-Dn headers. It's the Traefik equivalent of Nginx snippet:
+## This Middleware is the Traefik equivalent of Nginx snippet:
 ## nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+##
+## It also adds the X-Proxy-Key header to the request, and prevents clients spoofing the
+## Ssl-Client-Verify, Ssl-Client-Subject-Dn, X-Forwarded-Tls-Client-Cert, or
+## X-Forwarded-Tls-Client-Cert-Info headers.
+##
+## IMPORTANT: this middleware MUST run BEFORE the "-passcert" middleware in the chain (see
+## middleware-chain.yaml), so that any client-spoofed cert headers are stripped first, and then
+## only overwritten by "-passcert" if Traefik itself verified a real mTLS client certificate.
 ##
 {{- $apiVer := "v1" -}}
 {{- $xProxyKeyKey := "METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY" -}}
@@ -68,7 +75,9 @@ spec:
     customRequestHeaders:
       X-Proxy-Key: {{ $xProxyKeyVal | quote }}
       Server: traefik
-      Ssl-Client-Verify: ""          # overwrite to prevent client setting
-      Ssl-Client-Subject-Dn: ""      # overwrite to prevent client setting
+      Ssl-Client-Verify: ""                     # overwrite to prevent client setting
+      Ssl-Client-Subject-Dn: ""                 # overwrite to prevent client setting
+      X-Forwarded-Tls-Client-Cert: ""           # overwrite to prevent client setting
+      X-Forwarded-Tls-Client-Cert-Info: ""      # overwrite to prevent client setting
 {{- end }}
 {{- end }}
