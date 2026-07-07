@@ -1,8 +1,8 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 3.4.2 Release
+Version: 3.5.0 Release
 - See [Release Notes](RELEASE-NOTES.md)
-- DOI: [doi:10.18739/A2DF6K55B](https://doi.org/10.18739/A2DF6K55B)
+- DOI: [doi:10.18739/A2HX15T0B](https://doi.org/10.18739/A2HX15T0B)
 
 Send feedback and bugs to: 
 
@@ -52,13 +52,12 @@ for the next release.
 
 Cite this software as:
 
-> Jing Tao, Matthew Brooke, Dou Mok, Ian Nesbitt, Matthew B. Jones. 2025. Metacat: Data Preservation and Discovery System (3.4.2). Arctic Data Center. Software. [doi:10.18739/A2DF6K55B](https://doi.org/10.18739/A2DF6K55B)
+> Jing Tao, Matthew Brooke, Ian Nesbitt, Matthew B. Jones. 2026. Metacat: Data Preservation and Discovery System (3.5.0). Arctic Data Center. Software. [doi:10.18739/A2HX15T0B](https://doi.org/10.18739/A2HX15T0B)
 
 ## Current Contributors
 
 - Jing Tao (tao@nceas.ucsb.edu) [ORCID: 0000-0002-1209-5268](https://orcid.org/0000-0002-1209-5268)
 - Matthew Brooke (brooke@nceas.ucsb.edu) [ORCID: 0000-0002-1472-913X](https://orcid.org/0000-0002-1472-913X)
-- Dou Mok (mok@nceas.ucsb.edu) [ORCID: 0000-0002-6076-8092](https://orcid.org/0000-0002-6076-8092)
 - Ian Nesbitt (nesbitt@nceas.ucsb.edu): [ORCID: 0000-0001-5828-6070](https://orcid.org/0000-0001-5828-6070)
 - Matthew B. Jones (jones@nceas.ucsb.edu): [ORCID: 0000-0003-0077-4738](https://orcid.org/0000-0003-0077-4738)
 
@@ -85,6 +84,7 @@ Cite this software as:
 - Peter Slaughter (slaughter@nceas.ucsb.edu)
 - Rob Nahf (rnahf@epscor.unm.edu)
 - Matthew Brooke (brooke@nceas.ucsb.edu)
+- Dou Mok (mok@nceas.ucsb.edu)
 
 ### Patch contributors
 - Andrea Chadden (chadden@nceas.ucsb.edu)
