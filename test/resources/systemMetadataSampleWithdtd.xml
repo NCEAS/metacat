@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE systemMetadata [
+        <!ENTITY xxe "John">
+]>
+<ns3:systemMetadata xmlns:ns3="http://ns.dataone.org/service/types/v1">
+    <serialVersion>159</serialVersion>
+    <identifier>urn:uuid:a8ae2e3f-2488-4c19-8c3a-58574cb401de</identifier>
+    <formatId>application/vnd.ms-excel</formatId>
+    <size>4139493</size>
+    <checksum algorithm="SHA-256">c311ce98661593fae72aa08bfe053faf76a97993b9b3540ab538bd7cebd98fae</checksum>
+    <submitter>&xxe;</submitter>
+    <rightsHolder>CN=arctic-data-admins,DC=dataone,DC=org</rightsHolder>
+    <accessPolicy>
+        <allow>
+            <subject>CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org</subject>
+            <permission>read</permission>
+            <permission>write</permission>
+            <permission>changePermission</permission>
+        </allow>
+        <allow>
+            <subject>CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org</subject>
+            <permission>write</permission>
+        </allow>
+        <allow>
+            <subject>public</subject>
+            <permission>read</permission>
+        </allow>
+    </accessPolicy>
+    <replicationPolicy replicationAllowed="true" numberReplicas="3"/>
+    <archived>false</archived>
+    <dateUploaded>2016-03-15T23:04:35.072+00:00</dateUploaded>
+    <dateSysMetadataModified>2016-03-15T23:04:35.072+00:00</dateSysMetadataModified>
+    <originMemberNode>urn:node:mnTestKNB</originMemberNode>
+    <authoritativeMemberNode>urn:node:mnTestKNB</authoritativeMemberNode>
+    <replica>
+        <replicaMemberNode>urn:node:mnDemo9</replicaMemberNode>
+        <replicationStatus>invalidated</replicationStatus>
+        <replicaVerified>2021-07-25T10:03:00.145+00:00</replicaVerified>
+    </replica>
+    <replica>
+        <replicaMemberNode>urn:node:mnTestKNB</replicaMemberNode>
+        <replicationStatus>completed</replicationStatus>
+        <replicaVerified>2021-08-04T14:57:54.242+00:00</replicaVerified>
+    </replica>
+    <fileName>usco95.xls</fileName>
+</ns3:systemMetadata>

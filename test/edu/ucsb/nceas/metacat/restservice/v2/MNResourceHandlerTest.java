@@ -1,10 +1,19 @@
 package edu.ucsb.nceas.metacat.restservice.v2;
 
+import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
+import edu.ucsb.nceas.metacat.restservice.multipart.WrappingServletInputStream;
+import org.apache.http.HttpEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.ByteArrayBody;
+import org.apache.http.entity.mime.content.StringBody;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.apache.wicket.protocol.http.mock.MockHttpServletResponse;
 import org.apache.wicket.protocol.http.mock.MockHttpSession;
 import org.apache.wicket.protocol.http.mock.MockServletContext;
 import org.dataone.client.v2.formats.ObjectFormatCache;
+import org.dataone.portal.PortalCertificateManager;
 import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
@@ -22,13 +31,17 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Vector;
 
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 
 
@@ -50,12 +63,16 @@ public class MNResourceHandlerTest {
     protected static final byte DELETE = 4;
     /**HTTP Verb HEAD*/
     protected static final byte HEAD = 5;
+    public static final String OBJECT_FILE_PATH = "test/resources/eml-error-2.2.0.xml";
+    public static final String SYSMETA_FILE_PATH =
+        "test/resources/systemMetadataSampleWithdtd.xml";
 
     protected MockHttpServletRequest request;
     protected MockHttpServletResponse response;
     protected MockServletContext context;
     protected MNResourceHandler resourceHandler;
     protected MNodeService mockMNodeService;
+    protected static String contentType;
 
 
     protected static final String PATH = "/";
@@ -450,6 +467,93 @@ public class MNResourceHandlerTest {
     }
 
     /**
+     * Test the post object method. There is a DTD part in the system metadata file. But the
+     * TypeUnmarshaller should ingore it.
+     * @throws Exception
+     */
+    @Test
+    public void testPostObjectWithDTDinSysMeta() throws Exception {
+        String id = "testPostObjectWithDTDinSysMeta" + System.currentTimeMillis();
+        Identifier expectedId = new Identifier();
+        expectedId.setValue(id);
+        Session expectedSession = Mockito.mock(Session.class);
+
+        ServletInputStream objectInputStream =
+            getObjAndSysMetaStream(id, OBJECT_FILE_PATH, SYSMETA_FILE_PATH);
+        request =
+            new MockHttpServletRequest(null, new MockHttpSession(context), context) {
+                @Override
+                public String getContentType() {
+                    return contentType;
+                }
+                @Override
+                public ServletInputStream getInputStream() {
+                    return objectInputStream;
+                }
+            };
+        request.setURL("/object");
+        response = new MockHttpServletResponse(request);
+        try (MockedStatic<MNodeService> mNodeStaticMock = Mockito.mockStatic(MNodeService.class)) {
+            MNodeService mockMNodeService = Mockito.mock(MNodeService.class);
+            Mockito.when(mockMNodeService.create(
+                    Mockito.any(),
+                    Mockito.any(),
+                    Mockito.isNull(),
+                    Mockito.any()))
+                .thenReturn(expectedId);
+            mNodeStaticMock.when(() -> MNodeService.getInstance(Mockito.any()))
+                .thenReturn(mockMNodeService);
+            try (MockedStatic<PortalCertificateManager> pcmStaticMock =
+                     Mockito.mockStatic(PortalCertificateManager.class)) {
+                PortalCertificateManager mockPCM =
+                    Mockito.mock(PortalCertificateManager.class);
+                Mockito.when(mockPCM.getSession(Mockito.any()))
+                    .thenReturn(expectedSession);
+                pcmStaticMock.when(PortalCertificateManager::getInstance)
+                    .thenReturn(mockPCM);
+                // Execute code under test
+                resourceHandler = new MNResourceHandler(request, response);
+                resourceHandler.handle(POST);
+                // The object must never be created
+                Mockito.verify(mockMNodeService, Mockito.never())
+                    .create(
+                        Mockito.any(),
+                        Mockito.any(),
+                        Mockito.any(),
+                        Mockito.any());
+            }
+        }
+    }
+
+
+    /**
+     * Generate a ServletInputStream object which contains pid, sysmeta and object multip-part.
+     */
+    public static ServletInputStream getObjAndSysMetaStream(String id, String objectFilePath,
+                                                        String sysMetaFilepath) throws Exception {
+        Identifier guid = new Identifier();
+        guid.setValue(id);
+        byte[] fileContent = Files.readAllBytes((new File(objectFilePath)).toPath());
+        byte[] sysContent = Files.readAllBytes((new File(sysMetaFilepath)).toPath());
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+        StringBody pidBody = new StringBody(guid.getValue(), ContentType.MULTIPART_FORM_DATA);
+        builder.addPart("pid", pidBody);
+        ByteArrayBody sysmetaBody = new ByteArrayBody(sysContent, "sysmetametadata.xml");
+        builder.addPart(StreamingMultipartRequestResolver.SYSMETA, sysmetaBody);
+        ByteArrayBody objectBody = new ByteArrayBody(fileContent, objectFilePath);
+        builder.addPart("object", objectBody);
+        HttpEntity entity = builder.build();
+        contentType = entity.getContentType().getValue();
+        // Serialize request body
+        ByteArrayOutputStream requestContent = new ByteArrayOutputStream();
+        entity.writeTo(requestContent);
+        ByteArrayInputStream requestInput = new ByteArrayInputStream(requestContent.toByteArray());
+        ServletInputStream objectInputStream = new WrappingServletInputStream(requestInput);
+        return objectInputStream;
+    }
+
+    /**
      * Refresh the resource handler with a new request url
      * @param url  the new url will be used in the resource handler
      */
@@ -458,5 +562,14 @@ public class MNResourceHandlerTest {
         response = new MockHttpServletResponse(request);
         request.setURL(url);
         resourceHandler = new MNResourceHandler(request, response);
+    }
+
+    /**
+     * Get the content type for the multiple part request.
+     * The getObjAndSysMetaStream method be called before calling this method.
+     * @return the contentType
+     */
+    public static String getContentType() {
+        return contentType;
     }
 }
