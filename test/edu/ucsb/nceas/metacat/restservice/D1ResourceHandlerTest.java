@@ -1,13 +1,28 @@
 package edu.ucsb.nceas.metacat.restservice;
 
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.restservice.v2.MNResourceHandler;
+import edu.ucsb.nceas.metacat.restservice.v2.MNResourceHandlerTest;
+import org.apache.wicket.protocol.http.mock.MockServletContext;
+import org.dataone.exceptions.MarshallingException;
+import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
+import org.apache.wicket.protocol.http.mock.MockHttpServletResponse;
+import org.apache.wicket.protocol.http.mock.MockHttpSession;
+import org.dataone.portal.PortalCertificateManager;
+import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.Session;
+
 import edu.ucsb.nceas.LeanTestUtils;
 import org.dataone.client.v2.itk.D1Client;
-import org.dataone.service.types.v1.Session;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import javax.servlet.ServletInputStream;
+
+import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -15,6 +30,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.when;
+
 
 /**
  * Unit tests for D1ResourceHandler
@@ -199,6 +215,73 @@ public class D1ResourceHandlerTest {
                 handler.getSessionFromHeader();
                 assertNull("Expected malformed Subject header to be rejected: " + subject,
                            handler.session);
+            }
+        }
+    }
+
+    /**
+     * Test the collectObjectFiles method. There is a DTD part in the system metadata file. But the
+     * TypeUnmarshaller should ingore it.
+     * @throws Exception
+     */
+    @Test
+    public void collectObjectFiles_withDtdInSysMeta() throws Exception {
+        String id = "testCollectObjectFilesWithDTDinSysMeta" + System.currentTimeMillis();
+        Identifier expectedId = new Identifier();
+        expectedId.setValue(id);
+        Session expectedSession = Mockito.mock(Session.class);
+        ServletInputStream objectInputStream =
+            MNResourceHandlerTest.getObjAndSysMetaStream(
+                id, MNResourceHandlerTest.OBJECT_FILE_PATH,
+                MNResourceHandlerTest.SYSMETA_FILE_PATH);
+        MockServletContext context = new MockServletContext(null, "/");
+        MockHttpServletRequest request =
+            new MockHttpServletRequest(null, new MockHttpSession(context), context) {
+                @Override
+                public String getContentType() {
+                    return MNResourceHandlerTest.getContentType();
+                }
+                @Override
+                public ServletInputStream getInputStream() {
+                    return objectInputStream;
+                }
+            };
+        request.setURL("/object");
+        MockHttpServletResponse response = new MockHttpServletResponse(request);
+        try (MockedStatic<MNodeService> mNodeStaticMock = Mockito.mockStatic(MNodeService.class)) {
+            MNodeService mockMNodeService = Mockito.mock(MNodeService.class);
+            Mockito.when(mockMNodeService.create(
+                    Mockito.any(),
+                    Mockito.any(),
+                    Mockito.isNull(),
+                    Mockito.any()))
+                .thenReturn(expectedId);
+            mNodeStaticMock.when(() -> MNodeService.getInstance(Mockito.any()))
+                .thenReturn(mockMNodeService);
+            try (MockedStatic<PortalCertificateManager> pcmStaticMock =
+                     Mockito.mockStatic(PortalCertificateManager.class)) {
+                PortalCertificateManager mockPCM =
+                    Mockito.mock(PortalCertificateManager.class);
+                Mockito.when(mockPCM.getSession(Mockito.any()))
+                    .thenReturn(expectedSession);
+                pcmStaticMock.when(PortalCertificateManager::getInstance)
+                    .thenReturn(mockPCM);
+                // Execute code under test
+                MNResourceHandler resourceHandler = new MNResourceHandler(request, response);
+                resourceHandler.session = expectedSession;
+                MarshallingException
+                    exception = assertThrows(
+                    MarshallingException.class,
+                    () -> resourceHandler.collectObjectFiles()
+                );
+                assertTrue(exception.getCause()
+                               instanceof javax.xml.bind.UnmarshalException);
+                Throwable root = exception;
+                while (root.getCause() != null) {
+                    root = root.getCause();
+                }
+                assertTrue(root instanceof com.ctc.wstx.exc.WstxParsingException);
+                assertTrue(root.getMessage().contains("Undeclared general entity"));
             }
         }
     }
