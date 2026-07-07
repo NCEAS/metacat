@@ -64,7 +64,6 @@ Cite this software as:
 ## Previous Contributors
 
 - Chad Berkley (berkley@nceas.ucsb.edu)
-- Jing Tao (tao@nceas.ucsb.edu)
 - Jivka Bojilova (bojilova@nceas.ucsb.edu)
 - Dan Higgins (higgins@nceas.ucsb.edu)
 - Saurabh Garg (sgarg@nceas.ucsb.edu)
@@ -83,7 +82,6 @@ Cite this software as:
 - Lauren Walker (walker@nceas.ucsb.edu)
 - Peter Slaughter (slaughter@nceas.ucsb.edu)
 - Rob Nahf (rnahf@epscor.unm.edu)
-- Matthew Brooke (brooke@nceas.ucsb.edu)
 - Dou Mok (mok@nceas.ucsb.edu)
 
 ### Patch contributors
