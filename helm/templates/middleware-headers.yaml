@@ -1,0 +1,53 @@
+{{- if eq (include "metacat.ingress.type" .) "traefik"}}
+{{- if .Values.ingress.corsEnabled }}
+##
+## This file contains Traefik "headers" Middleware definitions to enable CORS functionality needed
+## by Metacat
+##
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ $.Release.Name }}-cors-headers
+  namespace: {{ .Release.Namespace }}
+spec:
+  headers:
+    accessControlAllowOriginListRegex:
+      - ".*"
+    accessControlAllowCredentials: true
+    accessControlAllowMethods:
+      - POST
+      - PUT
+      - GET
+      - OPTIONS
+    accessControlAllowHeaders:
+      - DNT
+      - Keep-Alive
+      - User-Agent
+      - X-Requested-With
+      - If-Modified-Since
+      - Cache-Control
+      - Content-Type
+      - Range
+      - Authorization
+    accessControlMaxAge: 1728000
+  {{- end }}
+---
+##
+## Security-related headers
+##
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ $.Release.Name }}-security-headers
+  namespace: {{ .Release.Namespace }}
+spec:
+  headers:
+    customResponseHeaders:
+      ## disallow showing in someone else's iframe:
+      X-Frame-Options: SAMEORIGIN
+
+    ## strict-transport-security: max-age=31536000; includeSubDomains:
+    forceSTSHeader: true
+    stsSeconds: 31536000
+    stsIncludeSubdomains: true
+{{- end }}

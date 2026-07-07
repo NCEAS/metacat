@@ -63,8 +63,8 @@ public class MNResourceHandlerTest {
     protected static final byte DELETE = 4;
     /**HTTP Verb HEAD*/
     protected static final byte HEAD = 5;
-    protected static final String OBJECT_FILE_PATH = "test/resources/eml-error-2.2.0.xml";
-    protected static final String SYSMETA_FILE_PATH =
+    public static final String OBJECT_FILE_PATH = "test/resources/eml-error-2.2.0.xml";
+    public static final String SYSMETA_FILE_PATH =
         "test/resources/systemMetadataSampleWithdtd.xml";
 
     protected MockHttpServletRequest request;
@@ -72,7 +72,7 @@ public class MNResourceHandlerTest {
     protected MockServletContext context;
     protected MNResourceHandler resourceHandler;
     protected MNodeService mockMNodeService;
-    protected String contentType;
+    protected static String contentType;
 
 
     protected static final String PATH = "/";
@@ -529,7 +529,7 @@ public class MNResourceHandlerTest {
     /**
      * Generate a ServletInputStream object which contains pid, sysmeta and object multip-part.
      */
-    protected ServletInputStream getObjAndSysMetaStream(String id, String objectFilePath,
+    public static ServletInputStream getObjAndSysMetaStream(String id, String objectFilePath,
                                                         String sysMetaFilepath) throws Exception {
         Identifier guid = new Identifier();
         guid.setValue(id);
@@ -562,5 +562,14 @@ public class MNResourceHandlerTest {
         response = new MockHttpServletResponse(request);
         request.setURL(url);
         resourceHandler = new MNResourceHandler(request, response);
+    }
+
+    /**
+     * Get the content type for the multiple part request.
+     * The getObjAndSysMetaStream method be called before calling this method.
+     * @return the contentType
+     */
+    public static String getContentType() {
+        return contentType;
     }
 }

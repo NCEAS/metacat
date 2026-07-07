@@ -52,6 +52,7 @@ public class StreamingMultipartRequestResolverTest {
 
     private static String objectFile = "test/eml-2.2.0.xml";
     D1NodeServiceTest d1NodeServiceTest;
+    Session session;
 
     /**
      * Establish a testing framework by initializing appropriate objects
@@ -60,6 +61,7 @@ public class StreamingMultipartRequestResolverTest {
     public void setUp() throws Exception {
         d1NodeServiceTest = new D1NodeServiceTest("initialize");
         d1NodeServiceTest.setUp();
+        session = new Session();
     }
 
     /**
@@ -113,7 +115,7 @@ public class StreamingMultipartRequestResolverTest {
         Mockito.when(request.getContentType()).thenReturn(entity.getContentType().getValue());
         Mockito.when(request.getInputStream()).thenReturn(objectInputStream);
         StreamingMultipartRequestResolver resolver =
-            new StreamingMultipartRequestResolver("build", 10000000);
+            new StreamingMultipartRequestResolver("build", 10000000, session);
         MultipartRequest result = resolver.resolveMultipart(request);
         MultipartRequestWithSysmeta resultWithSysmeta = (MultipartRequestWithSysmeta) result;
         org.dataone.service.types.v1.SystemMetadata parsedSys =
@@ -200,7 +202,7 @@ public class StreamingMultipartRequestResolverTest {
         Mockito.when(request.getContentType()).thenReturn(entity.getContentType().getValue());
         Mockito.when(request.getInputStream()).thenReturn(objectInputStream);
         StreamingMultipartRequestResolver resolver =
-            new StreamingMultipartRequestResolver("build", 10000000);
+            new StreamingMultipartRequestResolver("build", 10000000, session);
         MultipartRequest result = resolver.resolveMultipart(request);
         MultipartRequestWithSysmeta resultWithSysmeta = (MultipartRequestWithSysmeta) result;
         org.dataone.service.types.v1.SystemMetadata parsedSys =
@@ -286,7 +288,7 @@ public class StreamingMultipartRequestResolverTest {
         Mockito.when(request.getContentType()).thenReturn(entity.getContentType().getValue());
         Mockito.when(request.getInputStream()).thenReturn(objectInputStream);
         StreamingMultipartRequestResolver resolver =
-            new StreamingMultipartRequestResolver("build", 10000000);
+            new StreamingMultipartRequestResolver("build", 10000000, session);
         MultipartRequest result = resolver.resolveMultipart(request);
         MultipartRequestWithSysmeta resultWithSysmeta = (MultipartRequestWithSysmeta) result;
         org.dataone.service.types.v1.SystemMetadata parsedSysmeta =
