@@ -225,7 +225,7 @@ public class D1ResourceHandlerTest {
      * @throws Exception
      */
     @Test
-    public void testCollectObjectFilesWithDTDinSysMeta() throws Exception {
+    public void collectObjectFiles_withDtdInSysMeta() throws Exception {
         String id = "testCollectObjectFilesWithDTDinSysMeta" + System.currentTimeMillis();
         Identifier expectedId = new Identifier();
         expectedId.setValue(id);
