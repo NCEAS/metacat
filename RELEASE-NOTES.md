@@ -1,6 +1,12 @@
 # Metacat Release Notes
 
 > [!IMPORTANT]
+> **Security Updates**
+> - Only the most recent product release is supported for security fixes.
+> - Security fixes are not backported to older releases.
+> - Users should upgrade to the latest release to receive security updates.
+> See [Supported Versions](SECURITY.md#supported-versions) for details.
+>
 > **Helm Charts:**
 > 1. If you are upgrading from a helm chart version earlier than 2.1.0, please see the [Upgrade Notes](#chart-upgrade-notes) below. Failure to do so may result in loss of data!
 > 2. We are continuing to move away from using Bitnami helm charts for production dependencies. The Metacat chart now assumes you will provide your own instances of PostgreSQL and RabbitMQ, which are no longer included as sub-charts. You are free to choose any method of deploying these dependencies; we have had success with:
