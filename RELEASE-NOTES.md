@@ -20,7 +20,6 @@
 Metacat 3.5.0 is a minor release that upgrades the codebase to compile and run under Java 25 (upgraded from Java 17), and includes updates to the following dependencies:
 
 > [!WARNING]
->
 > We strongly advise all users to upgrade to this version as soon as possible, since it addresses a critical security vulnerability in one of its dependency libraries (`d1_common_java`), which affects all previous metacat versions.
 
 - Upgrade d1_libclient_java to 2.4.0 and d1_common_java to 2.5.0
@@ -29,6 +28,10 @@ Metacat 3.5.0 is a minor release that upgrades the codebase to compile and run u
 - Upgrade log4j to 2.26.0
 - Update Docker base image to `tomcat:9.0.118-jre25-temurin-noble`
 - Update bundled MetacatUI to version 2.37.0
+
+> [!TIP]
+> If you are running Solr under Java 25 or above, and Solr fails to start up correctly, add the line
+> `SOLR_SECURITY_MANAGER_ENABLED=false` to the file `/etc/default/solr.in.sh`
 
 ## Release Notes for Helm Chart 4.3.0
 
