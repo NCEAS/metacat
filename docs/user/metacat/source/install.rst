@@ -537,33 +537,35 @@ the Solr Debian packages that come with the Ubuntu operating system are obsolete
 to install the binary packages by yourself. This section provides guidance on how to setup Solr to run
 in production on \*nix platforms, such as Ubuntu.
 
-We strongly recommend installing the ``Solr 9.8.*`` series.
+We strongly recommend installing the latest version from the ``Solr 9.*.*`` series (Metacat has not
+been tested with ``Solr version 10.0.0`` or above - use at your own risk).
+
 You can download the binary releases at from `solr's download page`_ or use ``wget``:
 
 .. _solr's download page:  https://solr.apache.org/downloads.html#solr-8112
 
   ::
 
-    wget https://archive.apache.org/dist/solr/solr/9.8.0/solr-9.8.0.tgz
+    wget https://archive.apache.org/dist/solr/solr/<version>/solr-<version>.tgz
 
 1. Go to the directory which contains the Solr release file and extract the installation script
-   file by typing (assuming the downloaded file is solr-9.8.0.tgz):
+   file by typing (assuming the downloaded file is solr-<version>.tgz):
 
   ::
 
-    tar xzf solr-9.8.0.tgz solr-9.8.0/bin/install_solr_service.sh --strip-components=2
+    tar xzf solr-<version>.tgz solr-<version>/bin/install_solr_service.sh --strip-components=2
 
 2. Install Solr as the root user:
 
   ::
 
-    sudo bash ./install_solr_service.sh solr-9.8.0.tgz
+    sudo bash ./install_solr_service.sh solr-<version>.tgz
 
-If you upgrade Solr from an old 8.* version to 9.8.0, you may run this command instead:
+If you upgrade Solr from an old 8.*.* version to 9.*.*, you may run this command instead:
 
   ::
 
-    sudo bash ./install_solr_service.sh solr-9.8.0.tgz -f
+    sudo bash ./install_solr_service.sh solr-<version>.tgz -f
 
 3. Ensure the Solr defaults file is group writable:
 
@@ -585,7 +587,8 @@ If you upgrade Solr from an old 8.* version to 9.8.0, you may run this command i
 
 6. Add New Allowed Solr Path and Solr Home
 
-Add a new line for the ``SOLR_OPTS`` variable in the environment specific include file (e.g. ``/etc/default/solr.in.sh``) with the path to Metacat:
+  Add a new line for the ``SOLR_OPTS`` variable in the environment specific include file (e.g.
+  ``/etc/default/solr.in.sh``) with the path to Metacat:
 
   ::
 
@@ -593,7 +596,15 @@ Add a new line for the ``SOLR_OPTS`` variable in the environment specific includ
 
   **Note:** The path to Metacat must be a real path, it CANNOT be a symlink.
 
-7. Increase Memory
+
+7. If you are running Solr under Java 25 or above, and Solr fails to start up correctly, add this line to ``/etc/default/solr.in.sh``:
+
+  ::
+
+    SOLR_SECURITY_MANAGER_ENABLED=false
+
+
+8. Increase Memory
 
 Note: If you are upgrading the Solr server and you might already run this command during the previous installation, you may skip this step.
 
@@ -604,7 +615,7 @@ By default, Solr sets the maximum Java heap size to 512M (-Xmx512m). Values betw
 
     SOLR_JAVA_MEM="-Xms2g -Xmx2g"
 
-8. Tomcat and Solr User Management
+9. Tomcat and Solr User Management
 
 Note: If you are upgrading the Solr server and you have already run this command during the previous installation, you may skip this step.
 
@@ -616,14 +627,14 @@ Add the ``tomcat`` user to the ``solr`` group and the ``solr`` user to ``tomcat`
     sudo usermod -a -G solr tomcat
     sudo usermod -a -G tomcat solr
 
-9. Restart the Solr server to make the new group setting effective (:note2:`Important`)
+10. Restart the Solr server to make the new group setting effective (:note2:`Important`)
 
   ::
 
     sudo service solr stop
     sudo service solr start
 
-10. Check that the ``tomcat`` user and ``solr`` user are members of the appropriate groups with:
+11. Check that the ``tomcat`` user and ``solr`` user are members of the appropriate groups with:
 
   ::
 
@@ -720,7 +731,7 @@ To upgrade an existing binary Metacat installation follow the steps in this
 section. The steps for upgrading Metacat from source are the same as the
 instructions for installing from source:
 
- **Note: Please first upgrade to Metacat v2.19.0 before proceeding to Metacat v3.0.0 or above**
+ **Note: Please first upgrade to Metacat v2.19.0 before proceeding to Metacat v3.5.0 or above**
 
 1. Download and extract the new version of Metacat. For more information about downloading and extracting Metacat, please see Downloading Metacat.
 
@@ -772,13 +783,13 @@ with Metacat's Authorization Configuration screen. Note that if you do not have
 Tomcat integrated with Apache you will probably have to type
 http://yourserver.yourdomain.com:8080/yourcontext/
 
-Upgrading to Metacat v3.4.2 or above
+Upgrading to Metacat v3.5.0 or above
 ....................................
 
 Starting Requirements:
 
   * Your existing Metacat installation must already have been successfully upgraded to
-    `Metacat v2.19.0`_ before you can begin upgrading to v3.0.0 or above.
+    `Metacat v2.19.0`_ before you can begin upgrading to v3.5.0 or above.
 
     * If not, please upgrade to `Metacat v2.19.0`_ first, before proceeding.
 
@@ -814,13 +825,15 @@ Starting Requirements:
 
       ex. `sudo systemctl stop solr`
 
-1. Download/upgrade your solr version to 9.8.0
+1. Download/upgrade to the latest ``9.*.*`` version of solr
 
-  * The solr schema and configuration changed significantly between Metacat v2.19.x and v3.0.0.
+  * The solr schema and configuration changed significantly between Metacat v2.19.x and v3.5.0.
 
     * Please back up your current solr-home (directory) and then remove all of its contents.
 
     * Reminder: **Your solr-home (directory) must exist and be empty before proceeding.**
+
+    * Metacat has not been tested with Solr version ``10.0.0`` or newer - use at your own risk.
 
   * Ensure that `/etc/default/solr.in.sh` is group writable
 
@@ -836,6 +849,14 @@ Starting Requirements:
 
     **Note:** As of solr v9.*, a security requirement was introduced and the usage of a wildcard ``*``
     in the allowPaths property has been deprecated.
+
+  * If you are running Solr under Java 25 or above, and Solr fails to start up correctly, add this
+    line to ``/etc/default/solr.in.sh``:
+
+    ::
+
+      SOLR_SECURITY_MANAGER_ENABLED=false
+
 
   * Optionally, add/adjust memory settings to:
 
@@ -856,7 +877,7 @@ Starting Requirements:
     sudo apt install rabbitmq-server
     sudo systemctl restart rabbitmq-server
 
-4. You are now ready to install Metacat v3.0.0 or above
+4. You are now ready to install Metacat v3.5.0 or above
 
   * Additional notes:
 
@@ -871,7 +892,7 @@ Starting Requirements:
   * **Reminder**:
 
     * Data from existing or previous solr installations are incompatible with the  new schema and
-      configuration for Metacat v3.0.0 and above.
+      configuration for Metacat v3.5.0 and above.
     * During the Metacat configuration process, confirm the path to your solr-home directory and
       **ensure that the directory is empty**.
     * **After upgrading and configuring Metacat, re-index all objects (an example is below for your
