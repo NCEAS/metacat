@@ -18,6 +18,7 @@ Metacat 3.5.0 is a minor release that upgrades the codebase to compile and run u
 - Upgrade Apache Wicket-core to 9.23.0
 - Upgrade log4j to 2.26.0
 - Update Docker base image to `tomcat:9.0.118-jre25-temurin-noble`
+- Update bundled MetacatUI to version 2.37.0
 
 ## Release Notes for Helm Chart 4.3.0
 
@@ -37,6 +38,7 @@ In addition to deploying the above changes for Metacat version 3.5.0, this chart
   - Please also see this HOWTO for the adaptations required when converting from Nginx to Traefik: [traefik-HOWTO.md](https://github.com/DataONEorg/k8s-cluster/blob/main/control-plane/ingress/traefik/traefik-HOWTO.md)
 - Updated [helm/examples/values-dev-cluster-example.yaml](helm/examples/values-dev-cluster-example.yaml), showing example values overrides for configuring traefik, including ingress className and an example rewrite rule
 - Upgraded `dataone-indexer` sub-chart to version 2.2.0
+- Upgraded `metacatui` sub-chart to version 1.0.14
 - Updated documentation, now located in a new `helm/docs` directory
 - Added [`helm/admin/whoami-debug.yaml`](./helm/admin/whoami-debug.yaml) - a YAML definition for a lightweight container that echoes back the details of every request it receives from the ingress (including all headers), for testing and debugging purposes
 
