@@ -788,7 +788,7 @@ ingress:
   ##
   corsEnabled: true
 
-  ## @param ingress.middlewareChainAdditions [array] Optional list of traefik Middlewares to add
+  ## @param ingress.middlewareChainAdditions Optional list of traefik Middlewares to be added
   ## to the Middleware Chain definition (see helm/templates/middleware-chain.yaml).
   ## IMPORTANT: Adding values here will simply add them to the list of middlewares included in
   ## the chain (and this loaded by the ingress). You still need to create the actual middlewares
@@ -810,7 +810,7 @@ ingress:
   ##
   middlewareChainAdditions: []
 
-  ## @param ingress.configurationSnippet [NGINX ONLY] additional nginx configuration-snippets
+  ## @param ingress.configurationSnippet (NGINX ONLY; DEPRECATED) additional nginx config snippets
   ## This block will be added verbatim to the ingress definition section, in addition to any
   ## existing rewrite rules (see ingress.rewriteRules).
   ## NOTE: you do NOT need to define CORS setup here; that can be done simply by setting

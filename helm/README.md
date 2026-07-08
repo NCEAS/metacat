@@ -21,8 +21,8 @@ Metacat is repository software for preserving data and metadata (documentation a
 
 ## Table of Contents -- [Metacat Helm Chart](#metacat-helm-chart)
 - [Introduction](#introduction)
-- [TL;DR](#tldr)
 - [Prerequisites](#prerequisites)
+- [TL;DR](#tldr)
 - [Installing the Chart](#installing-the-chart)
 - [Uninstalling the Chart](#uninstalling-the-chart)
 - [Major Version Upgrades](#major-version-upgrades)
@@ -48,12 +48,21 @@ Metacat is repository software for preserving data and metadata (documentation a
 
 This chart deploys a [Metacat](https://github.com/NCEAS/metacat) deployment on a [Kubernetes](https://kubernetes.io) cluster, using the [Helm](https://helm.sh) package manager.
 
+## Prerequisites
+
+- Kubernetes 1.26+
+- Helm 3.18.6+
+- A pre-existing PostgreSQL database. We recommend using the [CloudNative PG Operator v1.27.0+](https://cloudnative-pg.io/) - see [Appendix 5](#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg), although any suitable PostgreSQL database may be used (deployed either within or outside your Kubernetes cluster).
+- The [Traefik Proxy Ingress controller](https://doc.traefik.io/traefik/) (preferred), or the Kubernetes open source community version of the [nginx ingress controller](https://kubernetes.github.io/ingress-nginx/) (DEPRECATED, since this is no longer maintained. See the [Networking section](#networking-and-certificates), below.
+- The [RabbitMQ Cluster Operator](https://www.rabbitmq.com/kubernetes/operator/operator-overview) installed on your Kubernetes cluster. Alternatively, metacat can be configured to use your existing RabbitMQ instance; see [Appendix 6](#appendix-6-the-rabbitmq-cluster-operator).
+
 ## TL;DR
 
-> [!NOTE]
-> This chart assumes you have a pre-existing PostgreSQL database (deployed either within or outside your Kubernetes cluster) and the RabbitMQ Cluster Operator pre-installed - see [Appendix 5](#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg) and [Appendix 6](#appendix-6-the-rabbitmq-cluster-operator) for details.
+1. You should not need to edit much in [values.yaml](./values.yaml), but you can look at the contents of the values override files (like the ones in the [./examples directory](./examples)), to see which settings typically need to be overridden (e.g. your postrgeSQL connection params, plus any values that contain the release name). Save your settings in a yaml file, e.g: `/path/to/your/values-overrides.yaml`.
 
-1. You should not need to edit much in [values.yaml](./values.yaml), but you can look at the contents of the values override files (like the ones in the [./examples directory](./examples)), to see which settings typically need to be overridden (e.g. your postrgeSQL connection params, plus any values that contain the release name). Save your settings in a yaml file, e.g: `/path/to/your/values-overrides.yaml`
+> [!IMPORTANT]
+> If you are using `traefik` ingress, it is necessary to override `ingress.className` to `traefik`. The default is currently `nginx` for backwards compatibility reasons, but that default will change as we phase out support for ingress-nginx, which is no longer maintained.
+
 2. Add your credentials to [./admin/secrets.yaml](helm/admin/secret--metacat.yaml), and add to cluster:
 
     ```shell
@@ -75,14 +84,6 @@ access the application via http://your-host-name/metacat.
 
 Read on for more in-depth information about the various installation and configuration options that
 are available...
-
-## Prerequisites
-
-- Kubernetes 1.26+
-- Helm 3.18.6+
-- A pre-existing PostgreSQL database. We recommend using the [CloudNative PG Operator v1.27.0+](https://cloudnative-pg.io/), although any suitable PostgreSQL database may be used (deployed either within or outside your Kubernetes cluster).
-- The Kubernetes open source community version of [the nginx ingress controller](https://kubernetes.github.io/ingress-nginx/) (see the [Networking section](#networking-and-certificates), below).
-- The [RabbitMQ Cluster Operator](https://www.rabbitmq.com/kubernetes/operator/operator-overview) installed on your Kubernetes cluster. Alternatively, metacat can be configured to use your existing RabbitMQ instance; see [Appendix 6](#appendix-6-the-rabbitmq-cluster-operator).
 
 ## Installing the Chart
 
@@ -113,6 +114,9 @@ Parameters may also be provided on the command line to override those in [values
 helm install myrelease oci://ghcr.io/nceas/charts/metacat --version [version-here]  \
                         --set database.existingSecret=myrelease-secrets
 ```
+
+> [!IMPORTANT]
+> If you are using `traefik` ingress (highly recommended), it is necessary to override `ingress.className` to `traefik`. The default is currently `nginx` for backwards compatibility reasons, but that default will change as we phase out support for ingress-nginx, which is no longer maintained.
 
 ## Uninstalling the Chart
 
@@ -265,37 +269,39 @@ These scenarios will be covered in future releases. In the meantime, please refe
 
 ### Networking & Monitoring
 
-| Name                              | Description                                                              | Value                            |
-| --------------------------------- | ------------------------------------------------------------------------ | -------------------------------- |
-| `ingress.enabled`                 | Enable or disable the ingress                                            | `true`                           |
-| `ingress.className`               | ClassName of the ingress provider in your cluster                        | `nginx`                          |
-| `ingress.annotations`             | `nginx.ingress.kubernetes.io` annotations                                | `see values.yaml`                |
-| `ingress.defaultBackend.enabled`  | enable the optional defaultBackend                                       | `false`                          |
-| `ingress.defaultBackend.enabled`  | enable the optional defaultBackend                                       | `false`                          |
-| `ingress.rewriteRules`            | formatted text rewrite rules for the nginx ingress                       | `""`                             |
-| `ingress.configurationSnippet`    | added to nginx ingress config...                                         | `see values.yaml`                |
-| `ingress.tls`                     | The TLS configuration                                                    | `[]`                             |
-| `ingress.rules`                   | The Ingress rules can be defined here or left blank to be auto-populated | `[]`                             |
-| `ingress.d1CaCertSecretName`      | Name of Secret containing DataONE CA certificate chain                   | `d1-ca-chain`                    |
-| `service.enabled`                 | Enable another optional service in addition to headless svc              | `false`                          |
-| `service.type`                    | Kubernetes Service type. Defaults to ClusterIP if not set                | `LoadBalancer`                   |
-| `service.clusterIP`               | IP address of the service. Auto-generated if not set                     | `""`                             |
-| `service.ports`                   | The port(s) to be exposed                                                | `[]`                             |
-| `startupProbe.enabled`            | Enable startupProbe for the Metacat container                            | `true`                           |
-| `startupProbe.httpGet.path`       | The url path to probe during startup                                     | `/metacat/d1/mn/v2/monitor/ping` |
-| `startupProbe.httpGet.port`       | The named containerPort to probe                                         | `metacat-web`                    |
-| `startupProbe.successThreshold`   | Min consecutive successes for probe to be successful                     | `1`                              |
-| `startupProbe.failureThreshold`   | No. of consecutive failures before the container restarted               | `30`                             |
-| `startupProbe.periodSeconds`      | Interval (in seconds) between startup checks                             | `10`                             |
-| `startupProbe.timeoutSeconds`     | Timeout (in seconds) for each startup check                              | `5`                              |
-| `livenessProbe.enabled`           | Enable livenessProbe for Metacat container                               | `false`                          |
-| `readinessProbe.enabled`          | Enable readinessProbe for Metacat container                              | `true`                           |
-| `readinessProbe.httpGet.path`     | The url path to probe.                                                   | `/metacat/d1/mn/v2/monitor/ping` |
-| `readinessProbe.httpGet.port`     | The named containerPort to probe                                         | `metacat-web`                    |
-| `readinessProbe.periodSeconds`    | Period seconds for readinessProbe                                        | `15`                             |
-| `readinessProbe.timeoutSeconds`   | Timeout seconds for readinessProbe                                       | `10`                             |
-| `readinessProbe.successThreshold` | Min consecutive successes for probe to be successful                     | `1`                              |
-| `readinessProbe.failureThreshold` | No. consecutive failures before container marked unhealthy               | `6`                              |
+| Name                               | Description                                                              | Value                            |
+| ---------------------------------- | ------------------------------------------------------------------------ | -------------------------------- |
+| `ingress.enabled`                  | Enable or disable the ingress                                            | `true`                           |
+| `ingress.className`                | ClassName of the ingress provider in your cluster                        | `nginx`                          |
+| `ingress.annotations`              | Optional additional ingress annotations (typically not needed)           | `{}`                             |
+| `ingress.defaultBackend.enabled`   | Enable the optional defaultBackend                                       | `false`                          |
+| `ingress.rewriteRules`             | IMPORTANT! Nginx & Traefik rewrite rule syntaxes differ; see below       | `[]`                             |
+| `ingress.ipAllowList`              | Access limited to these IP addresses/ranges. Empty = no restrictions     | `[]`                             |
+| `ingress.corsEnabled`              | Enable CORS headers for cross-origin requests. Defaults to true          | `true`                           |
+| `ingress.middlewareChainAdditions` | Optional list of traefik Middlewares to be added                         | `[]`                             |
+| `ingress.configurationSnippet`     | (NGINX ONLY; DEPRECATED) additional nginx config snippets                | `""`                             |
+| `ingress.tls`                      | The TLS configuration                                                    | `[]`                             |
+| `ingress.rules`                    | The Ingress rules can be defined here or left blank to be auto-populated | `[]`                             |
+| `ingress.d1CaCertSecretName`       | Name of Secret containing DataONE CA certificate chain                   | `d1-ca-chain`                    |
+| `service.enabled`                  | Enable another optional service in addition to headless svc              | `false`                          |
+| `service.type`                     | Kubernetes Service type. Defaults to ClusterIP if not set                | `LoadBalancer`                   |
+| `service.clusterIP`                | IP address of the service. Auto-generated if not set                     | `""`                             |
+| `service.ports`                    | The port(s) to be exposed                                                | `[]`                             |
+| `startupProbe.enabled`             | Enable startupProbe for the Metacat container                            | `true`                           |
+| `startupProbe.httpGet.path`        | The url path to probe during startup                                     | `/metacat/d1/mn/v2/monitor/ping` |
+| `startupProbe.httpGet.port`        | The named containerPort to probe                                         | `metacat-web`                    |
+| `startupProbe.successThreshold`    | Min consecutive successes for probe to be successful                     | `1`                              |
+| `startupProbe.failureThreshold`    | No. of consecutive failures before the container restarted               | `30`                             |
+| `startupProbe.periodSeconds`       | Interval (in seconds) between startup checks                             | `10`                             |
+| `startupProbe.timeoutSeconds`      | Timeout (in seconds) for each startup check                              | `5`                              |
+| `livenessProbe.enabled`            | Enable livenessProbe for Metacat container                               | `false`                          |
+| `readinessProbe.enabled`           | Enable readinessProbe for Metacat container                              | `true`                           |
+| `readinessProbe.httpGet.path`      | The url path to probe.                                                   | `/metacat/d1/mn/v2/monitor/ping` |
+| `readinessProbe.httpGet.port`      | The named containerPort to probe                                         | `metacat-web`                    |
+| `readinessProbe.periodSeconds`     | Period seconds for readinessProbe                                        | `15`                             |
+| `readinessProbe.timeoutSeconds`    | Timeout seconds for readinessProbe                                       | `10`                             |
+| `readinessProbe.successThreshold`  | Min consecutive successes for probe to be successful                     | `1`                              |
+| `readinessProbe.failureThreshold`  | No. consecutive failures before container marked unhealthy               | `6`                              |
 
 ### PostgreSQL Database Connection Parameters
 
@@ -328,7 +334,6 @@ These scenarios will be covered in future releases. In the meantime, please refe
 | `dataone-indexer.idxworker.rabbitmqSecret`                   | (OPTIONAL) location of rmq username+password          | `""`                                  |
 | `dataone-indexer.rabbitmq.enabled`                           | Enable rabbitmq provisioning in the indexer sub-chart | `true`                                |
 | `dataone-indexer.rabbitmq.replicaCount`                      | Total rabbitmq pods (always use an odd number)        | `1`                                   |
-| `dataone-indexer.solr.javaMem`                               | Java memory options to pass to the Solr container     | `-Xms512m -Xmx2g`                     |
 | `dataone-indexer.solr.customCollection`                      | name of the solr collection to use                    | `metacat-index`                       |
 | `dataone-indexer.solr.coreNames`                             | Solr core names to be created                         | `["metacat-core"]`                    |
 | `dataone-indexer.solr.persistence.size`                      | solr Persistent Volume size                           | `100Gi`                               |
@@ -378,16 +383,7 @@ By default, the chart will install an [Ingress](https://kubernetes.io/docs/conce
 > [!TIP]
 >If you have admin access, you can inspect available Ingress classes in your cluster using: `$ kubectl get ingressclasses`
 >
-> We strongly recommend that you use the Kubernetes open source community version of [the nginx ingress controller](https://kubernetes.github.io/ingress-nginx/). You can install it as follows:
-
-```shell
-$  helm upgrade --install ingress-nginx ingress-nginx \
-                --repo https://kubernetes.github.io/ingress-nginx \
-                --namespace ingress-nginx --create-namespace
-```
-
-Note that there are significant differences between the community version of [the nginx ingress controller](https://kubernetes.github.io/ingress-nginx/) and the one provided by the NGINX company. This helm chart relies on the functionality of the community version; full functionality may not be available if you choose an alternative.
-
+> We strongly recommend that you use the [Traefik Proxy Ingress controller](https://doc.traefik.io/traefik/). (The Kubernetes open source community version of [the nginx ingress controller](https://kubernetes.github.io/ingress-nginx/) is supported for now, but that project has reached end of life. Support is therefore deprecated in the metacat chart and will be removed in a future version.)
 
 ### Setting up a TLS Certificate for HTTPS Traffic
 
@@ -417,14 +413,14 @@ ingress:
 > ingress:
 >   annotations:
 >     cert-manager.io/cluster-issuer: "letsencrypt-prod"
->   className: "nginx"
+>   className: "traefik"
 >   tls:
 >     - hosts:
 >         - knb-dev.test.dataone.org
->       secretName: ingress-nginx-tls-cert
+>       secretName: ingress-tls-cert
 > ```
 >
-> ...and a tls cert will be created and applied automatically, matching the hostname defined in the `tls:` section. It will be created in a new secret: `ingress-nginx-tls-cert`, in the ingress' namespace
+> ...and a tls cert will be created and applied automatically, matching the hostname defined in the `tls:` section. It will be created in a new secret: `ingress-tls-cert`, in the ingress' namespace
 
 
 ### Setting up Certificates for DataONE Replication
@@ -434,7 +430,7 @@ For full details on becoming part of the DataONE network, see the [Metacat Admin
 DataONE Replication relies on mutual authentication with x509 client-side certs. As a DataONE Member Node (MN) or Coordinating Node (CN), your metacat instance will act as both a server and as a client, at different times during the replication process. It is therefore necessary to configure certificates and settings for both these roles.
 
 #### Prerequisites
-1. First make sure you have the Kubernetes version of the [nginx ingress installed](#networking-and-certificates)
+1. First make sure you have the [Traefik Proxy Ingress controller](https://doc.traefik.io/traefik/) installed (or the DEPRECATED Kubernetes version of ingress-nginx) - see [Networking and Certificates](#networking-and-certificates)
 2. Ensure [HTTPS access is set up](#setting-up-a-tls-certificate-for-https-traffic) and working correctly. This allows other nodes, acting as "clients" to verify your server's identity during mutual authentication.
 3. Download a copy of the **DataONE Certificate Authority (CA) certificate chain**. This enables your node (when acting as server) to verify that other nodes' client certificates were signed by the DataONE Certificate Authority.
    1. DataONE **Production** CA Chain: [DataONEProdCAChain.crt](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONEProdCAChain.crt)
@@ -466,7 +462,7 @@ DataONE Replication relies on mutual authentication with x509 client-side certs.
 
     ```yaml
     ingress:
-      className: "nginx"
+      className: "traefik"
       d1CaCertSecretName: d1-ca-chain
     ```
 2. Enable the shared secret header
@@ -489,9 +485,6 @@ See [Appendix 3](#appendix-3-troubleshooting-mutual-authentication) for help wit
 
 > [!NOTE]
 > For development and testing purposes only!**
->
-> Also see the [Kubernetes nginx
-> documentation](https://kubernetes.github.io/ingress-nginx/user-guide/tls)
 
 You can create your own self-signed certificate as follows:
 
@@ -519,8 +512,6 @@ Whatever hostname you are using, don't forget to set the `global.metacatExternal
 
 > [!NOTE]
 > For development and testing purposes only!**
->
-> Also see the [Kubernetes nginx documentation](https://kubernetes.github.io/ingress-nginx/examples/PREREQUISITES/#client-certificate-authentication)
 
 Assuming you already have a [server certificate installed](#setting-up-a-tls-certificate-for-https-traffic) (either signed by a trusted CA or [self-signed](#appendix-1-self-signing-tls-certificates-for-https-traffic) for development & testing), you can create your own self-signed Mutual Auth Client certificate and CA certificate as follows:
 
@@ -549,7 +540,7 @@ Assuming you already have a [server certificate installed](#setting-up-a-tls-cer
 
 If you're having trouble getting Mutual Authentication working, you can run metacat in debug mode and view the logs (see [Appendix 4](#appendix-4-debugging-and-logging) for details).
 
-If you see the message: `X-Proxy-Key is null or blank`, it means the nginx ingress has not been set up correctly (see [Setting up Certificates for DataONE Replication](#setting-up-certificates-for-dataone-replication)).
+If you see the message: `X-Proxy-Key is null or blank`, it means the ingress has not been set up correctly (see [Setting up Certificates for DataONE Replication](#setting-up-certificates-for-dataone-replication)).
 
 You can check the configuration as follows:
 
@@ -562,27 +553,80 @@ You can check the configuration as follows:
     ...and ensure the output contains these lines:
 
     ```yaml
-      metadata:
-        annotations:
+    metadata:
+      annotations:
         # NOTE: more lines above, omitted for clarity
-          nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
-          nginx.ingress.kubernetes.io/auth-tls-secret: default/d1-ca-chain
-        ## NOTE: above may differ for you. Format is: <namespace>/<ingress.d1CaCertSecretName>
-          nginx.ingress.kubernetes.io/auth-tls-verify-client: optional_no_ca
-          nginx.ingress.kubernetes.io/auth-tls-verify-depth: "10"
-          nginx.ingress.kubernetes.io/configuration-snippet: |
-            more_set_input_headers "X-Proxy-Key: <your-secret-here>";
+        traefik.ingress.kubernetes.io/router.middlewares: <namespace>-<release>-middleware-chain@kubernetescrd
+        traefik.ingress.kubernetes.io/router.tls.options: <namespace>-<release>-mtls-policy@kubernetescrd
     ```
+
+    Then check the following files exist:
+
+    ```shell
+    $ kubectl get Middleware
+    NAME                          AGE
+    # others omitted for clarity
+    <release>-middleware-chain    4d21h
+    <release>-passcert            4d21h
+    <release>-customheaders       4d21h
+
+    $ $ kubectl get TLSOptions
+    NAME                          AGE
+    <release>-mtls-policy         4d21h
+    ```
+
+    ...and ensure that the `<release>-middleware-chain` contains the following:
+
+    ```yaml
+    $ kubectl get Middleware -oyaml <release>-middleware-chain
+    # lines omitted for clarity
+    spec:
+      chain:
+        middlewares:
+          - name: <release>-passcert
+          - name: <release>-customheaders
+          # lines omitted for clarity
+    ```
+
+   ...and `<release>-customheaders` contains the following:
+
+    ```yaml
+    $ kubectl get Middleware -oyaml <release>-customheaders
+    # lines omitted for clarity
+    spec:
+      headers:
+        customRequestHeaders:
+          Server: traefik
+          # lines omitted for clarity
+          X-Proxy-Key: <your-secret-here>
+    ```
+
 > [!NOTE]
 > `<your-secret-here>` is the plaintext value associated with the key `METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY` in your secret `<releaseName>-metacat-secrets` -- ensure it has been set correctly!
 
-- If you don't see these, or they are incorrect, check values.yaml for:
+> [!TIP]
+> If you are still using the DEPRECATED ingress-nginx, you should see these annotations in the ingress definition:
+> ```yaml
+> metadata:
+>   annotations:
+>   # NOTE: more lines above, omitted for clarity
+>     nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+>     nginx.ingress.kubernetes.io/auth-tls-secret: default/d1-ca-chain
+>   ## NOTE: above may differ for you. Format is: <namespace>/<ingress.d1CaCertSecretName>
+>     nginx.ingress.kubernetes.io/auth-tls-verify-client: optional_no_ca
+>     nginx.ingress.kubernetes.io/auth-tls-verify-depth: "10"
+>     nginx.ingress.kubernetes.io/configuration-snippet: |
+> more_set_input_headers "X-Proxy-Key: <your-secret-here>";
+> ```
+
+  - If you don't see these, or they are incorrect, check values.yaml for:
 
     ```yaml
       metacat:
         dataone.certificate.fromHttpHeader.enabled: true    # must be true for mutual auth to work!
 
       ingress:
+        className: traefik
         tls:    # needs to have been set up properly [see ref 1]
 
         d1CaCertSecretName:  # needs to match the secret name holding your ca cert chain [see ref 2]
@@ -590,11 +634,15 @@ You can check the configuration as follows:
     - *[[ref 1]](#setting-up-a-tls-certificate-for-https-traffic)*
     - *[[ref 2]](#install-the-ca-chain)*
 
-2. If you have access to the correct namespace, you can also view the nginx ingress logs using:
+2. If you have access to the correct namespace, you can also view the ingress logs using:
 
     ```shell
-    NS=ingress-nginx    # this is the ingress controller's namespace. Typically ingress-nginx
-    kubectl logs -n ${NS} -f $(kc get pods -n ${NS} | grep "nginx" | awk '{print $1}')
+    NS=traefik    # this is the ingress controller's namespace.
+    kubectl logs -n ${NS} -f $(kc get pods -n ${NS} | grep "traefik" | awk '{print $1}')
+
+    # ...or for DEPRECATED ingress-nginx, use:
+    NS=ingress-nginx
+    # ...and use the same command as above, but replace "traefik" with "nginx"
     ```
 
 ## Appendix 4: Debugging and Logging
