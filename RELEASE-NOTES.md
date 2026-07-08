@@ -30,12 +30,14 @@ Metacat Helm Chart 4.3.0 is a minor release that includes adding support for Tra
 > We strongly recommend that you use the [Traefik Proxy Ingress controller](https://doc.traefik.io/traefik/) instead. Ingress-nginx is still supported for now in the metacat helm chart, but is DEPRECATED, and will be removed in the near future.
 >
 > **PLEASE NOTE:**
-> 1. This chart IS backwards-compatible with chart-4.2.2 installations that use ingress-nginx. This WILL change in the near future.
+> 1. This chart IS backwards-compatible with chart-4.2.2 installations that use ingress-nginx. This WILL change in the near future
 > 2. To use with traefik instead (highly recommended), you must explicitly override `.ingress.className: traefik` for now (but traefik will become the default soon)
 
-- Add support for Traefik proxy Ingress, in addition to ingress-nginx. This is backwards compatible with existing Nginx installations for now. To use traefik, please set `ingress.className: traefik`, since `nginx` is still the default, for now
+- Added support for Traefik proxy Ingress, in addition to ingress-nginx. This is backwards compatible with existing Nginx installations for now. To use traefik, please set `ingress.className: traefik`, since `nginx` is still the default, for now
   - Please also see this HOWTO for the adaptations required when converting from Nginx to Traefik: [traefik-HOWTO.md](https://github.com/DataONEorg/k8s-cluster/blob/main/control-plane/ingress/traefik/traefik-HOWTO.md)
+- Updated [helm/examples/values-dev-cluster-example.yaml](helm/examples/values-dev-cluster-example.yaml), showing example values overrides for configuring traefik, including ingress className and an example rewrite rule
 - Updated documentation, now located in a new `helm/docs` directory
+- Added [`helm/admin/whoami-debug.yaml`](./helm/admin/whoami-debug.yaml) - a YAML definition for a lightweight container that echoes back the details of every request it receives from the ingress (including all headers), for testing and debugging purposes
 
 ## Release Notes for Metacat 3.4.2
 
