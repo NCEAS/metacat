@@ -3,7 +3,7 @@
 
 ## GHSA-57g5-qq6w-7jr8: Metacat acts as unintended proxy to backend Apache SOLR engine
 
-- CVE-PENDING
+- CVE-2026-50022
 - Severity: Moderate
 - Affected versions: <= 3.4.1
 - Patched versions: >= 3.4.2
@@ -65,7 +65,7 @@ If upgrading is not immediately feasible, deployments can be secured by applying
        sudo apachectl configtest
 
        # Restart service
-       sudo systemctl restart apache2 
+       sudo systemctl restart apache2
        ```
 
    NOTE: If not using Apache, then configure any upstream reverse proxy, load balancer, or network firewall to do the same.

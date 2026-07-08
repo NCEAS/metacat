@@ -18,13 +18,13 @@ cleanup() {
 
 if [ $# -ne 2 ]; then
     echo "Usage: $0 <start-time>"
-    echo "       where <start-time> is the time an hour or more before the previous rsync,"
+    echo "       where <start-time> is the UTC time an hour or more before the previous rsync,"
     echo "              in the format: yyyy-mm-dd HH:MM:SS (with a space; e.g. 2024-11-01 14:01:00)"
     exit 1
 fi
 
 start_time="$1 $2"
-release_name=$(helm ls | grep "metacat" | awk  '{print $1}')
+release_name=$(helm ls | grep "metacat-" | awk  '{print $1}')
 rls_count=$(echo ${release_name} | wc -w)
 
 if [ "${rls_count}" -ne "1" ]; then
@@ -59,7 +59,9 @@ echo
 echo "Results will be saved to ${result_file}. Enter to continue or Ctrl+C to abort..."
 read
 
-kubectl exec ${release_name}-postgresql-0 -- bash -c "psql -U metacat << EOF
+cnpg_pod=$(kubectl get pod -oname | grep cnpg | head -1)
+
+kubectl exec $cnpg_pod -- bash -c "psql -U metacat << EOF
   SELECT guid FROM systemmetadata WHERE date_modified > '${start_time}';
 EOF" | sed '1,2d;$d' | sed '$d'  >  ${result_file}
 # sed removes first 2 rows: "guid" and "----", and the last 2 rows: "(n rows)" and <blank>

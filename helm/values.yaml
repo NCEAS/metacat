@@ -674,96 +674,45 @@ ingress:
   ## @param ingress.className ClassName of the ingress provider in your cluster
   ##  Inspect available classes in your cluster using:    $ kubectl get ingressclasses
   ##
-  ## className: "traefik" -- For Rancher Desktop (provided you have traefik enabled:
-  ##     'preferences' -> 'kubernetes' -> 'enable traefik')
-  ## className: "nginx" -- For production, or to use certificates locally. Also:
-  ## - disable traefik ('preferences' -> 'kubernetes' -> uncheck 'enable traefik')
-  ## - install nginx:
-  ##   $  helm upgrade --install ingress-nginx ingress-nginx  \
-  ##        --repo https://kubernetes.github.io/ingress-nginx \
-  ##        --namespace ingress-nginx --create-namespace      \
-  ##        --set controller.allowSnippetAnnotations=true
+  ## className: "traefik" -- For NCEAS development and production clusters, and for Rancher Desktop
+  ##          (provided you have traefik enabled: 'preferences' -> 'kubernetes' -> 'enable traefik')
+  ## className: "nginx" -- DEPRECATED - the ingress-nginx project is no longer actively maintained
   ##
   className: "nginx"
 
-  ## @param ingress.annotations [default: see values.yaml] `nginx.ingress.kubernetes.io` annotations
-  ## These are mostly for enabling upload and download of large files and data packages, without
-  ## timeouts or disconnects.
+  ## @param ingress.annotations Optional additional ingress annotations (typically not needed)
   ##
   ## NOTE: You do NOT need to do anything here for DataONE mutual authentication with x509
   ## client-side certs, provided:
-  ## 1. you are using the Kubernetes open source community version of the nginx ingress
-  ##    (see https://github.com/kubernetes/ingress-nginx)
-  ## 2. you have set ingress.className to nginx, and
+  ## 1. you are using the Traefik ingress (see https://doc.traefik.io/traefik/)
+  ## 2. you have set ingress.className to traefik
   ## 3. you have set up ingress.tls correctly for https access, and
   ## 4. you have set the correct parameters in the metacat section
   ##    (see `metacat.dataone.certificate.fromHttpHeader.enabled`, above, for more details)
   ##
-  ## For other nginx annotation options, see:
-  ## https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/
+  ## For additional traefik annotation options, see:
+  ##   https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/ingress/#on-ingress
   ##
-  annotations:
-    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/client-body-buffer-size See docs:
-    ## https://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size
-    ##
-    nginx.ingress.kubernetes.io/client-body-buffer-size: "1m"
+  ## (Nginx annotations (of the form 'nginx.ingress.kubernetes.io') are still supported for
+  ## backwards-compatibility, but note that ingress-nginx is no longer actively maintained)
+  ## For ingress-nginx, the following settings are automatically added, and cannot be overridden:
+  ##
+  ##  annotations:    # DEPRECATED - automatically added for ingress-nginx:
+  ##    nginx.ingress.kubernetes.io/client-body-buffer-size: 1m
+  ##    nginx.ingress.kubernetes.io/client-max-body-size: "0"
+  ##    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+  ##    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+  ##    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+  ##    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+  ##    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+  ##    nginx.ingress.kubernetes.io/send-timeout: "3600"
+  ##
+  annotations: {}
 
-    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/client_max_body_size See docs:
-    ## https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
-    ## Sets the maximum allowed size of the client request body. Setting to 0 disables checking of
-    ## client request body size
-    ##
-    nginx.ingress.kubernetes.io/client_max_body_size: "0"
-
-    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/send-timeout See docs:
-    ## https://nginx.org/en/docs/http/ngx_http_core_module.html#send_timeout
-    ## Sets a timeout for transmitting a response to the client. The timeout is set only between
-    ## two successive write operations, not for the transmission of the whole response. If the
-    ## client does not receive anything within this time, the connection is closed. Default is 60s,
-    ## but we set it to 3600 seconds to prevent 504 Gateway Time-out when downloading zip files of
-    ## huge datasets using bagit
-    ##
-    nginx.ingress.kubernetes.io/send-timeout: "3600"
-
-    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-body-size See docs:
-    ## https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/configmap.md#proxy-body-size
-    ## Sets the maximum allowed size of the client request body - similar to the nginx
-    ## client_max_body_size directive. Setting to 0 disables checking of client request body size
-    ##
-    nginx.ingress.kubernetes.io/proxy-body-size: "0"
-
-    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-read-timeout See docs:
-    ## https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout
-    ## default is 60 seconds, but we set it to 3600 seconds to prevent 504 Gateway Time-out when
-    ## downloading zip files of huge datasets using bagit
-    ##
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-
-    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-send-timeout See docs:
-    ## https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_send_timeout
-    ## The timeout is set only between two successive write operations, not for the transmission of
-    ## the whole request. We set it to 3600 seconds to prevent 504 Gateway Time-out when
-    ## downloading zip files of huge datasets using bagit
-    ##
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-
-    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-request-buffering See docs:
-    ## https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_request_buffering
-    ##
-    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
-
-    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-buffering See docs:
-    ## https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering
-    ## According to ingress-nginx docs, default is "off", but according to nginx docs, default is
-    ## "on", so we set it explicitly to "off", be sure
-    ##
-    nginx.ingress.kubernetes.io/proxy-buffering: "off"
-
-  ## @param ingress.defaultBackend.enabled enable the optional defaultBackend
-  ## ingress.defaultBackend (optional) default for any requests not matching defined paths
-  ## @param ingress.defaultBackend.enabled enable the optional defaultBackend
+  ## @param ingress.defaultBackend.enabled Enable the optional defaultBackend
   ## If none of the hosts or paths match the HTTP request in the Ingress objects, the traffic is
-  ## routed to your default backend. Not typically required, unless MetacatUI
+  ## routed to your default backend. Not typically required, unless MetacatUI is not at the root
+  ## of the site (e.g. https://arcticdata.io/catalog)
   ## Content included here under `defaultBackend` will be added to the ingress definition under
   ## 'spec.defaultBackend'; for example:
   ##
@@ -778,12 +727,15 @@ ingress:
   defaultBackend:
     enabled: false
 
-  ## @param ingress.rewriteRules formatted text rewrite rules for the nginx ingress
-  ## These rules will be added to the ingress definition section:
+  ## @param ingress.rewriteRules IMPORTANT! Nginx & Traefik rewrite rule syntaxes differ; see below
+  ##
+  ## FOR INGRESS-NGINX (ingress.className: "nginx"), this should be a **SINGLE STRING** of formatted
+  ## text. Any nginx markup will work (header manipulation etc); you are not restricted to only
+  ## redirects. The snippet will be added to this ingress definition section:
   ## metadata:
   ##   annotations:
   ##     nginx.ingress.kubernetes.io/configuration-snippet: |
-  ##       (* * *  list of rewrite rules here  * * *)
+  ##       (* * *  rewrite rules here  * * *)
   ##
   ## Example syntax:
   ##     rewriteRules: |
@@ -793,50 +745,87 @@ ingress:
   ##       rewrite ^/(sitemap.+) /metacat/sitemaps/$1 redirect;
   ##       rewrite ^/robots.txt /metacat/robots.txt redirect;
   ##
-  ## (For example only; note the last two rules are already automatically included as needed - see
-  ## .Values.robots.* and .Values.metacat.sitemap.*)
+  ## FOR TRAEFIK PROXY (ingress.className: "traefik"), this should be a **YAML LIST** of rules, each
+  ## with a name, regex, replacement, and optional permanent flag (which defaults to "false"). These
+  ## rules will be added as traefik Middleware definitions in middleware-redirects.yaml
   ##
-  rewriteRules: ""
+  ## Example syntax:
+  ##     rewriteRules:
+  #        - name: evos-redirect
+  ##         regex: "^https://evos.nceas.ucsb.edu/(.*)"
+  ##         replacement: "https://goa.nceas.ucsb.edu/${1}"
+  ##         permanent: true
+  ##       - name: sitemap-redirect
+  ##         regex: "^https?://([^/]+)/(sitemap.+)"
+  ##         replacement: "https://${1}/metacat/sitemaps/${2}"
+  ##         permanent: false  # optional; defaults to "false"
+  ##       - name: robots-redirect
+  ##         regex: "^https?://([^/]+)/robots.txt"
+  ##         replacement: "https://${1}/metacat/robots.txt"
+  ##
+  ## Traefik supports regex capture groups using the syntax ( ), which can be back-referenced using
+  ## the syntax ${1}, ${2}, etc. However, no server variables are available (like nginx's ${host},
+  ## ${request_uri}, etc.)
+  ## (NOTE: For example only; the sitemap and robots.txt rules are already automatically included as
+  ## needed - see .Values.metacat.sitemap.*)
+  ##
+  rewriteRules: []
 
-  ## @param ingress.configurationSnippet [default: see values.yaml] added to nginx ingress config...
-  ## This block will be added to the ingress definition section, in addition to the rewrite rules:
+  ## @param ingress.ipAllowList Access limited to these IP addresses/ranges. Empty = no restrictions
+  ## For more options on filtering, see the traefik docs for ipAllowList Middleware:
+  ## https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/ipallowlist/
+  ##
+  ## Example:
+  ## ipAllowList:
+  ##  - 128.111.61.0/24
+  ##  - 128.111.64.0/22
+  ##  - 128.111.85.0/24
+  ##
+  ipAllowList: []
+
+  ## @param ingress.corsEnabled Enable CORS headers for cross-origin requests. Defaults to true
+  ## This is required by Metacat for normal operation
+  ##
+  corsEnabled: true
+
+  ## @param ingress.middlewareChainAdditions Optional list of traefik Middlewares to be added
+  ## to the Middleware Chain definition (see helm/templates/middleware-chain.yaml).
+  ## IMPORTANT: Adding values here will simply add them to the list of middlewares included in
+  ## the chain (and this loaded by the ingress). You still need to create the actual middlewares
+  ## that are referenced by these names!
+  ##
+  ## For example, if you have created a custom Middleware definition, named like this:
+  ##
+  ## apiVersion: traefik.io/v1alpha1
+  ## kind: Middleware
+  ## metadata:
+  ##   name: myrelease-my-custom-thing
+  ##   namespace: mynamespace
+  ## spec:
+  ##   # ...etc
+  ##
+  ## Then set:
+  ## middlewareChainAdditions:
+  ##   - myrelease-my-custom-thing
+  ##
+  middlewareChainAdditions: []
+
+  ## @param ingress.configurationSnippet (NGINX ONLY; DEPRECATED) additional nginx config snippets
+  ## This block will be added verbatim to the ingress definition section, in addition to any
+  ## existing rewrite rules (see ingress.rewriteRules).
+  ## NOTE: you do NOT need to define CORS setup here; that can be done simply by setting
+  ## 'ingress.corsEnabled': true. Similarly, sitemap rewrite rules are also automatically added, if
+  ## you set 'metacat.sitemap.enabled: true'
+  ##
+  ## Example:
   ## metadata:
   ##   annotations:
   ##     nginx.ingress.kubernetes.io/configuration-snippet: |
-  ##       (* * *  nginx.conf code block here  * * *)
+  ##       more_set_input_headers "X-MyCustom-Header: myvalue-here";
   ##
-  ## Note that overriding this block will disable the default cors setup, unless
-  ## you copy this into your override
+  ## (* * * Ignored if ingress.className: "traefik" * * *)
   ##
-  configurationSnippet: |
-    # Metacat Cors Setup
-
-    set $cors 'true';
-
-    if ($request_method = 'OPTIONS') {
-      set $cors ${cors}options;
-    }
-
-    if ($cors = "true") {
-      more_set_headers 'Access-Control-Allow-Origin: $http_origin';
-      more_set_headers 'Access-Control-Allow-Credentials: true';
-      more_set_headers 'Access-Control-Allow-Methods: POST, PUT, GET, OPTIONS';
-      more_set_headers 'Access-Control-Allow-Headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
-
-      more_set_headers 'Access-Control-Max-Age: 1728000';
-    }
-
-    if ($cors = "trueoptions") {
-      more_set_headers 'Access-Control-Allow-Origin: $http_origin';
-      more_set_headers 'Access-Control-Allow-Credentials: true';
-      more_set_headers 'Access-Control-Allow-Methods: POST, PUT, GET, OPTIONS';
-      more_set_headers 'Access-Control-Allow-Headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
-
-      more_set_headers 'Access-Control-Max-Age: 1728000';
-      more_set_headers 'Content-Type: text/plain charset=UTF-8';
-      more_set_headers 'Content-Length: 0';
-      return 204;
-    }
+  configurationSnippet: ""
 
   ## @param ingress.tls The TLS configuration
   ##

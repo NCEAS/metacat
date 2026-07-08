@@ -1742,7 +1742,7 @@ public class QuotaServiceManagerIT {
         String givenTime = "11:59 PM";
         Date date = QuotaServiceManager.combineDateAndGivenTime(new Date(), givenTime);
         DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.SHORT);
-        String s = df.format(date);
+        String s = df.format(date).replaceAll("[\\p{Z}\\s]", " ");
         assertTrue("The final time string (after transformed by the method "
                      + " combineDateAndGivenTime) " + s
                      + " doesn't have the given time " + givenTime, s.contains(givenTime));
@@ -1756,7 +1756,7 @@ public class QuotaServiceManagerIT {
         String beforeShortTime = shortTime.format(before);
         String combineStr = tomorrow + " " + beforeShortTime;
         Date date1 = QuotaServiceManager.combineDateAndGivenTime(testDateNow, beforeShortTime);
-        s = df.format(date1);
+        s = df.format(date1).replaceAll("[\\p{Z}\\s]", " ");
         assertTrue("The time parsed string " + s + " should be " + combineStr,
                     s.equals(combineStr));
 
@@ -1766,7 +1766,7 @@ public class QuotaServiceManagerIT {
         String afterShortTime = shortTime.format(after);
         combineStr = today + " " + afterShortTime;
         date1 = QuotaServiceManager.combineDateAndGivenTime(testDateNow, afterShortTime);
-        s = df.format(date1);
+        s = df.format(date1).replaceAll("[\\p{Z}\\s]", " ");
         assertTrue("The parsed time string " + s + " should be " + combineStr,
                 s.equals(combineStr));
     }

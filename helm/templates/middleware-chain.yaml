@@ -1,0 +1,44 @@
+{{- if eq (include "metacat.ingress.type" .) "traefik"}}
+##
+## Only one middleware can be added to the ingress annotations. This middleware "chain" definition
+## chains together all the other Traefik Middlewares, so only this one needs to be referenced
+## in the ingress annotations.
+##
+## * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+## IMPORTANT: ADD THE NAMES OF ANY NEW MIDDLEWARES TO THIS TEMPLATE, OR THEY WON'T BE LOADED!
+## * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+##
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Name }}-middleware-chain
+  namespace: {{ .Release.Namespace }}
+spec:
+  chain:
+    middlewares:
+      - name: {{ $.Release.Name }}-security-headers
+    {{- if .Values.ingress.ipAllowList }}
+      - name: {{ $.Release.Name }}-ip-allowlist
+    {{- end }}
+    {{- if .Values.ingress.corsEnabled }}
+      - name: {{ $.Release.Name }}-cors-headers
+    {{- end }}
+      - name: {{ .Release.Name }}-robots-redirect
+    {{- if index .Values.metacat "sitemap.enabled" }}
+      - name: {{ .Release.Name }}-sitemap-redirect
+    {{- end }}
+    {{- range .Values.ingress.rewriteRules }}
+      - name: {{ $.Release.Name }}-{{ .name }}
+    {{- end }}
+    {{- range .Values.ingress.middlewareChainAdditions }}
+      - name: {{ . }}
+    {{- end }}
+    {{- if index .Values.metacat "dataone.certificate.fromHttpHeader.enabled" }}
+      ## "customheaders" MUST run before "passcert" so that any client-spoofed cert headers are
+      ## stripped first, and only overwritten with real values if Traefik verifies an actual
+      ## mTLS client certificate.
+      - name: {{ .Release.Name }}-customheaders
+      - name: {{ .Release.Name }}-passcert
+    {{- end }}
+
+{{- end }}

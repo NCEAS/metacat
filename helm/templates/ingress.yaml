@@ -1,13 +1,23 @@
-{{- if .Values.ingress.enabled -}}
-{{- $fullName := include "metacat.fullname" . -}}
-{{ $serverName := ( include "metacat.server.name" . ) }}
-{{- if and .Values.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
-  {{- if not (hasKey .Values.ingress.annotations "kubernetes.io/ingress.class") }}
-  {{- $_ := set .Values.ingress.annotations "kubernetes.io/ingress.class" .Values.ingress.className}}
+{{- $ingresstype:=(include "metacat.ingress.type" .) -}}
+{{- if not (eq $ingresstype "disabled") -}}
+{{- $isNginx := eq $ingresstype "nginx" -}}
+{{- $isTraefik := eq $ingresstype "traefik" -}}
+{{/* ==== Validate .Values.ingress input, since syntax differs bwtween nginx and Traefik ========= */}}
+{{- if .Values.ingress.rewriteRules }}
+{{- if kindIs "string" .Values.ingress.rewriteRules }}
+  {{- if not $isNginx }}
+    {{- fail "Values.ingress.rewriteRules must be **SINGLE STRING** of formatted nginx markup, not a yaml list" -}}
+  {{- end }}
+{{- else if (ne (len .Values.ingress.rules) 0) }}
+  {{- if not $isTraefik }}
+    {{- fail "Values.ingress.rewriteRules must be a yaml list of Middleware values, not a string" -}}
   {{- end }}
 {{- end }}
-{{- $apiVer := "v1" }}
-apiVersion: networking.k8s.io/{{ $apiVer }}
+{{- end }}
+{{/* ==== End validation ========================================================================= */}}
+{{- $fullName := include "metacat.fullname" . -}}
+{{- $serverName := ( include "metacat.server.name" . ) }}
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ $fullName }}
@@ -19,21 +29,53 @@ metadata:
     {{- with .Values.ingress.annotations }}
       {{- toYaml . | nindent 4 }}
     {{- end -}}
-    {{- if $mutualAuth -}}
-      {{- include "dataone.mutual.auth.annotations" . | nindent 4 }}
+    {{- if $isTraefik }}
+      {{- if $mutualAuth }}
+        {{- include "dataone.traefik.mtls.annotations" . | nindent 4 }}
+      {{- end }}
     {{- end }}
+    {{- if $isNginx }}
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 1m
+    nginx.ingress.kubernetes.io/client-max-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/send-timeout: "3600"
     nginx.ingress.kubernetes.io/configuration-snippet: |
     {{- if .Values.ingress.configurationSnippet }}
       {{- .Values.ingress.configurationSnippet | nindent 6 }}
     {{- end }}
-    {{- if $mutualAuth -}}
-      {{- $xProxyKeyKey := "METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY" -}}
-      {{- $secrets := (printf "%s-metacat-secrets" .Release.Name) -}}
-      {{- $secretData := (lookup $apiVer "Secret" .Release.Namespace $secrets).data
-          | default dict -}}
-      {{- $xProxyKeyVal := ((get $secretData $xProxyKeyKey) | b64dec)
-          | default (printf "\"SECRETS: '%s'; KEY NOT FOUND: '%s'\"" $secrets $xProxyKeyKey)}}
-      more_set_input_headers "X-Proxy-Key: {{ $xProxyKeyVal }}";
+    {{- if .Values.ingress.corsEnabled }}
+      # Metacat Cors Setup
+
+      set $cors 'true';
+
+      if ($request_method = 'OPTIONS') {
+        set $cors ${cors}options;
+      }
+
+      if ($cors = "true") {
+        more_set_headers 'Access-Control-Allow-Origin: $http_origin';
+        more_set_headers 'Access-Control-Allow-Credentials: true';
+        more_set_headers 'Access-Control-Allow-Methods: POST, PUT, GET, OPTIONS';
+        more_set_headers 'Access-Control-Allow-Headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
+
+        more_set_headers 'Access-Control-Max-Age: 1728000';
+      }
+
+      if ($cors = "trueoptions") {
+        more_set_headers 'Access-Control-Allow-Origin: $http_origin';
+        more_set_headers 'Access-Control-Allow-Credentials: true';
+        more_set_headers 'Access-Control-Allow-Methods: POST, PUT, GET, OPTIONS';
+        more_set_headers 'Access-Control-Allow-Headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
+
+        more_set_headers 'Access-Control-Max-Age: 1728000';
+        more_set_headers 'Content-Type: text/plain charset=UTF-8';
+        more_set_headers 'Content-Length: 0';
+        return 204;
+      }
     {{- end }}
     {{- if $siteMapEnabled }}
       rewrite ^/(sitemap.+) /{{- index .Values.metacat "application.context" -}}
@@ -44,6 +86,11 @@ metadata:
     {{- if .Values.ingress.rewriteRules }}
       {{- .Values.ingress.rewriteRules | nindent 6 }}
     {{- end }}
+    {{- if $mutualAuth -}}
+      {{- include "dataone.nginx.mtls.snippets" . | nindent 6 }}
+      {{- include "dataone.nginx.mtls.annotations" . | nindent 4 }}
+    {{- end }}
+    {{- end }}
 spec:
   {{- if .Values.ingress.defaultBackend.enabled }}
   defaultBackend:
@@ -53,15 +100,15 @@ spec:
   {{- if .Values.ingress.tls }}
   tls:
   {{- range .Values.ingress.tls }}
-  - hosts:
+    - hosts:
     {{- if eq (len .hosts) 0 }}
-      - {{ $serverName }}
+        - {{ $serverName }}
     {{- else }}
       {{- range .hosts }}
-      - {{ . | quote }}
+        - {{ . | quote }}
       {{- end }}
     {{- end }}
-    secretName: {{ required ".Values.ingress.tls.secretName REQUIRED" .secretName }}
+      secretName: {{ required ".Values.ingress.tls.secretName REQUIRED" .secretName }}
   {{- end }}
   {{- end }}
   rules:
@@ -95,5 +142,5 @@ spec:
               {{- omit .Values.global.metacatUiIngressBackend "enabled" | toYaml | nindent 14 }}
             {{- end }}
           {{- end }}
-  {{- end }}
+{{- end }}
 {{- end }}

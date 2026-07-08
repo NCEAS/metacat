@@ -1,0 +1,56 @@
+{{- if eq (include "metacat.ingress.type" .) "traefik"}}
+##
+## This file contains "redirect" middleware definitions for Traefik.
+##
+## IMPORTANT: ADD THE NAMES OF ANY NEW MIDDLEWARES TO helm/templates/middleware-chain.yaml, OR THEY
+## WON'T BE LOADED!
+##
+---
+## Redirect robots.txt requests to the correct location on metacat.
+##
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Name }}-robots-redirect
+  namespace: {{ .Release.Namespace }}
+spec:
+  redirectRegex:
+    regex: "^https?://([^/]+)/robots.txt"
+    replacement: "https://${1}/metacat/robots.txt"
+    permanent: false
+
+{{- if index .Values.metacat "sitemap.enabled" }}
+---
+##
+## Redirect sitemap requests to the correct location on metacat.
+## Ignored unless .Values.metacat.sitemap.enabled: true
+##
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Name }}-sitemap-redirect
+  namespace: {{ .Release.Namespace }}
+spec:
+  redirectRegex:
+    regex: "^https?://([^/]+)/(sitemap.+)"
+    replacement: "https://${1}/metacat/sitemaps/${2}"
+    permanent: false
+{{- end }}
+
+{{- range .Values.ingress.rewriteRules }}
+---
+##
+## Pull any custom redirects from .Values.ingress.rewriteRules
+##
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ $.Release.Name }}-{{ .name }}
+  namespace: {{ $.Release.Namespace }}
+spec:
+  redirectRegex:
+    regex: {{ .regex | quote }}
+    replacement: {{ .replacement | quote }}
+    permanent: {{ default "false" .permanent }}
+{{- end }}
+{{- end }}

@@ -6,6 +6,7 @@ set -e
 TAG=""
 DEFAULT_TAG="DEVELOP"
 TEST_TAG="TEST"
+DEFAULT_ARCH="linux/amd64"
 DEVTOOLS=false
 ENVIRONMENT='prod'
 DEV_BUILD_OPTS=""
@@ -20,7 +21,7 @@ fi
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 [-t <TAG>] [-v <VERSION>] [--devtools]"
+    echo "Usage: $0 [-t <TAG>] [-v <VERSION>] [-p <PLATFORM>] [--devtools]"
     echo
     echo "where:  -t <TAG>  is the image tag (typically the metacat version being released)."
     echo "                  (Defaults to $DEFAULT_TAG if the -t option is omitted.)"
@@ -31,6 +32,10 @@ usage() {
     echo
     echo "        -v <VERSION> is the metacat build version number (https://semver.org/ format)"
     echo "                  (Defaults to $DEFAULT_MC_VERSION if the -v option is omitted.)"
+    echo
+    echo "        -p <PLATFORM> is the architecture to build for (e.g. linux/amd64 for linux k8s"
+    echo "                  clusters, or linux/arm64 for Mac)."
+    echo "                  (Defaults to $DEFAULT_ARCH if the -p option is omitted.)"
     echo
     echo "        --devtools is FOR DEV/DEBUGGING ONLY - NOT FOR PRODUCTION USE!"
     devtools-info
@@ -55,8 +60,9 @@ testmode-info() {
 }
 
 # Parse command-line arguments
-while getopts ":t:v:-:" opt; do
+while getopts ":p:t:v:-:" opt; do
     case "$opt" in
+    p) ARCH="$OPTARG" ;;
     t) TAG="$OPTARG" ;;
     v) MC_VERSION="$OPTARG" ;;
     -)
@@ -108,6 +114,19 @@ else
     echo "No Tagname provided. Defaulting to: $DEFAULT_TAG"
 fi
 
+if [[ -n $ARCH ]]; then
+    echo -n "Requested Platform Architecture: ${ARCH}"
+    if [[ "$ARCH" != "linux/amd64" ]] && [[ "$ARCH" != "linux/arm64" ]]; then
+      echo " * * * UNRECOGNIZED! * * *  -  Defaulting to $DEFAULT_ARCH"
+      ARCH="$DEFAULT_ARCH"
+    else
+      echo "..."
+    fi
+else
+    echo "No Platform Architecture provided. Defaulting to: $DEFAULT_ARCH"
+    ARCH=$DEFAULT_ARCH
+fi
+
 if [[ $DEVTOOLS == true ]]; then
     echo "Devtools enabled"
     DEV_BUILD_OPTS="--no-cache --progress=plain"
@@ -128,19 +147,22 @@ fi
 
 echo
 echo "* * *  Starting docker image build: $(date), using:"
-echo "  TAG:                  $TAG"
-echo "  VERSION:              $MC_VERSION"
-echo "  BINARY DISTRIBUTION:  $DISTBIN"
-echo "  ENVIRONMENT?          $ENVIRONMENT"
+echo "  TAG:                    $TAG"
+echo "  VERSION:                $MC_VERSION"
+echo "  BINARY DISTRIBUTION:    $DISTBIN"
+echo "  PLATFORM ARCHITECTURE:  $ARCH"
+echo "  ENVIRONMENT:            $ENVIRONMENT"
 if [[ $ENVIRONMENT == "test" ]]; then
-    echo "  SOURCE DISTRIBUTION:  $DISTSRC"
+    echo "  SOURCE DISTRIBUTION:    $DISTSRC"
 fi
-echo "  DEVTOOLS:             $DEVTOOLS"
+echo "  DEVTOOLS:               $DEVTOOLS"
 if [[ -n $DEV_BUILD_OPTS ]]; then
-    echo "  BUILDING OPTIONS:  $DEV_BUILD_OPTS"
+    echo "  BUILDING OPTIONS:       $DEV_BUILD_OPTS"
 fi
 
-docker image build $DEV_BUILD_OPTS \
+docker buildx build $DEV_BUILD_OPTS \
+    --file      Dockerfile \
+    --platform  $ARCH \
     --tag ghcr.io/nceas/metacat:"$TAG" \
     --build-arg MC_VERSION="$MC_VERSION" \
     --build-arg ENVIRONMENT="$ENVIRONMENT" \
