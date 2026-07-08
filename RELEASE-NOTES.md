@@ -13,6 +13,10 @@
 
 Metacat 3.5.0 is a minor release that upgrades the codebase to compile and run under Java 25 (upgraded from Java 17), and includes updates to the following dependencies:
 
+> [!WARNING]
+>
+> We strongly advise all users to upgrade to this version as soon as possible, since it addresses a critical security vulnerability in one of its dependency libraries (`d1_common_java`), which affects all previous metacat versions.
+
 - Upgrade d1_libclient_java to 2.4.0 and d1_common_java to 2.5.0
 - Upgrade PlantUML to 1.2026.6
 - Upgrade Apache Wicket-core to 9.23.0
