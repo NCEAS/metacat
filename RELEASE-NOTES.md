@@ -7,6 +7,35 @@
 >    - CloudNative PG Operator to deploy your PostgreSQL cluster - see [Appendix 5 of the helm/README.md](./helm/README.md#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg)
 >    - RabbitMQ Cluster Operator to deploy your RabbitMQ cluster - see [Appendix 6 of the helm/README.md](./helm/README.md#appendix-6-the-rabbitmq-cluster-operator)
 
+## Release Notes for Metacat 3.5.0
+
+**Release date: 2026-07-08**
+
+Metacat 3.5.0 is a minor release that upgrades the codebase to compile and run under Java 25 (upgraded from Java 17), and includes updates to the following dependencies:
+
+- Upgrade d1_libclient_java to 2.4.0 and d1_common_java to 2.5.0
+- Upgrade PlantUML to 1.2026.6
+- Upgrade Apache Wicket-core to 9.23.0
+- Upgrade log4j to 2.26.0
+- Update Docker base image to `tomcat:9.0.118-jre25-temurin-noble`
+
+## Release Notes for Helm Chart 4.3.0
+
+**Release date: 2026-07-08**
+
+Metacat Helm Chart 4.3.0 is a minor release that includes adding support for Traefik Proxy Ingress.
+
+> [!IMPORTANT]
+> The Kubernetes open source community version of `ingress-nginx` is [no longer maintained, effective March 2026](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/).
+> We strongly recommend that you use the [Traefik Proxy Ingress controller](https://doc.traefik.io/traefik/) instead. Ingress-nginx is still supported for now in the metacat helm chart, but is DEPRECATED, and will be removed in the near future.
+>
+> **PLEASE NOTE:**
+> 1. This chart IS backwards-compatible with chart-4.2.2 installations that use ingress-nginx. This WILL change in the near future.
+> 2. To use with traefik instead (highly recommended), you must explicitly override `.ingress.className: traefik` for now (but traefik will become the default soon)
+
+- Add support for Traefik proxy Ingress, in addition to ingress-nginx. This is backwards compatible with existing Nginx installations for now. To use traefik, please set `ingress.className: traefik`, since `nginx` is still the default, for now
+  - Please also see this HOWTO for the adaptations required when converting from Nginx to Traefik: [traefik-HOWTO.md](https://github.com/DataONEorg/k8s-cluster/blob/main/control-plane/ingress/traefik/traefik-HOWTO.md)
+- Updated documentation, now located in a new `helm/docs` directory
 
 ## Release Notes for Metacat 3.4.2
 
