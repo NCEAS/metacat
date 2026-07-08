@@ -9,7 +9,7 @@
 
 ## Release Notes for Metacat 3.5.0
 
-**Release date: 2026-07-08**
+**Release date: 2026-07-09**
 
 Metacat 3.5.0 is a minor release that upgrades the codebase to compile and run under Java 25 (upgraded from Java 17), and includes updates to the following dependencies:
 
@@ -21,9 +21,9 @@ Metacat 3.5.0 is a minor release that upgrades the codebase to compile and run u
 
 ## Release Notes for Helm Chart 4.3.0
 
-**Release date: 2026-07-08**
+**Release date: 2026-07-09**
 
-Metacat Helm Chart 4.3.0 is a minor release that includes adding support for Traefik Proxy Ingress.
+In addition to deploying the above changes for Metacat version 3.5.0, this chart release includes adding support for Traefik Proxy Ingress.
 
 > [!IMPORTANT]
 > The Kubernetes open source community version of `ingress-nginx` is [no longer maintained, effective March 2026](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/).
@@ -36,6 +36,7 @@ Metacat Helm Chart 4.3.0 is a minor release that includes adding support for Tra
 - Added support for Traefik proxy Ingress, in addition to ingress-nginx. This is backwards compatible with existing Nginx installations for now. To use traefik, please set `ingress.className: traefik`, since `nginx` is still the default, for now
   - Please also see this HOWTO for the adaptations required when converting from Nginx to Traefik: [traefik-HOWTO.md](https://github.com/DataONEorg/k8s-cluster/blob/main/control-plane/ingress/traefik/traefik-HOWTO.md)
 - Updated [helm/examples/values-dev-cluster-example.yaml](helm/examples/values-dev-cluster-example.yaml), showing example values overrides for configuring traefik, including ingress className and an example rewrite rule
+- Upgraded `dataone-indexer` sub-chart to version 2.2.0
 - Updated documentation, now located in a new `helm/docs` directory
 - Added [`helm/admin/whoami-debug.yaml`](./helm/admin/whoami-debug.yaml) - a YAML definition for a lightweight container that echoes back the details of every request it receives from the ingress (including all headers), for testing and debugging purposes
 
