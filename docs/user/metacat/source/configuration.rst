@@ -204,7 +204,13 @@ The Storage Conversion will start automatically, immediately after the database 
 finished. The Storage Conversion converts the existing file storage format to the new DataONE
 hashstore format, which introduces significant performance enhancements for managing large
 datasets. The Storage Conversion may take a long time to complete, depending on the number and
-size of the files in your repository. Again, you may refresh the page to see updates:
+size of the files in your repository.
+
+ **CAUTION** hashstore upgrade creates hard links to the same inodes that are linked by the original
+ files. It will therefore fail unless ``/var/metacat/hashstore`` is on the same filesystem as both
+ ``/var/metacat/data`` and ``/var/metacat/documents``
+
+Again, you may refresh the page to see updates:
 
 .. figure:: images/screenshots/image018b_storage_in_progress.png
    :align: center
