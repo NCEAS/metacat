@@ -1534,7 +1534,7 @@ public class MNResourceHandler extends D1ResourceHandler {
             String errorMessage = "Couldn't get the package of " + pid + " since " + e.getMessage();
             logMetacat.error(errorMessage);
             // Error message will be sent as a zip file
-            fileNameRoot = "error-" + fileNameRoot;
+            fileNameRoot = "error_" + fileNameRoot;
             fileName = fileNameRoot + ".zip";
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             try (ZipOutputStream zos = new ZipOutputStream(baos)) {
