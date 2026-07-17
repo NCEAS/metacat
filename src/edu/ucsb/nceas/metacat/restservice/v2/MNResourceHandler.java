@@ -1,11 +1,14 @@
 package edu.ucsb.nceas.metacat.restservice.v2;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -16,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -1520,28 +1525,44 @@ public class MNResourceHandler extends D1ResourceHandler {
             formatId.setValue(format);
         }
         InputStream is = null;
+        //Use the pid as the file name prefix, replacing all non-word characters
+        String fileNameRoot = pid.replaceAll("\\W", "_");
+        String fileName = fileNameRoot + ".zip";
         try {
-            is = MNodeService.getInstance(request).getPackage(session, formatId , id);
-
-            //Use the pid as the file name prefix, replacing all non-word characters
-            String filename = pid.replaceAll("\\W", "_") + ".zip";
-
-            response.setHeader("Content-Disposition", ATTACHMENT + "; filename=\"" + filename+"\"");
-            response.setContentType("application/zip");
-            response.setStatus(200);
-            OutputStream out = response.getOutputStream();
-
-            // write it to the output stream
-            IOUtils.copyLarge(is, out);
-            IOUtils.closeQuietly(out);
-            long end = System.currentTimeMillis();
-            logMetacat.info(Settings.PERFORMANCELOG + pid
-                                    + Settings.PERFORMANCELOG_GET_PACKAGE_METHOD
-                                    + " Total getPackage method"
-                                    + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
-
+            is = MNodeService.getInstance(request).getPackage(session, formatId, id);
+        } catch (Exception e) {
+            String errorMessage = "Couldn't get the package of " + pid + " since " + e.getMessage();
+            logMetacat.error(errorMessage);
+            // Error message will be sent as a zip file
+            fileNameRoot = "error-" + fileNameRoot;
+            fileName = fileNameRoot + ".zip";
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+                ZipEntry entry = new ZipEntry(fileNameRoot + ".txt");
+                zos.putNextEntry(entry);
+                zos.write(errorMessage.getBytes(StandardCharsets.UTF_8));
+                zos.closeEntry();
+            }
+            is = new ByteArrayInputStream(baos.toByteArray());
         } finally {
-            IOUtils.closeQuietly(is);
+            try {
+                response.setHeader(
+                    "Content-Disposition", ATTACHMENT + "; filename=\"" + fileName + "\"");
+                response.setContentType("application/zip");
+                response.setStatus(200);
+                try (OutputStream out = response.getOutputStream()) {
+                    // write it to the output stream
+                    IOUtils.copyLarge(is, out);
+                    out.flush();
+                }
+                long end = System.currentTimeMillis();
+                logMetacat.info(
+                    Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_GET_PACKAGE_METHOD
+                        + " Total getPackage method" + Settings.PERFORMANCELOG_DURATION
+                        + (end - start) / 1000);
+            } finally {
+                IOUtils.closeQuietly(is);
+            }
         }
    }
 
