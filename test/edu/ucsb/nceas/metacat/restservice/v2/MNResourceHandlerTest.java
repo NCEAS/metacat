@@ -538,8 +538,13 @@ public class MNResourceHandlerTest {
         Identifier guid = new Identifier();
         guid.setValue("testGetPackageFailed_" + System.currentTimeMillis());
         String error = "Not found " + guid.getValue();
-        request = new MockHttpServletRequest(null, new MockHttpSession(context), context);
-        request.setURL("packages/application%2Fbagit-1.0/" + guid.getValue());
+        request = Mockito.spy(new MockHttpServletRequest(
+                null,
+                new MockHttpSession(context),
+                context));
+        Mockito.doReturn("/packages/application%2Fbagit-1.0/" + guid.getValue())
+            .when(request)
+            .getPathInfo();
         response = new MockHttpServletResponse(request);
         try (MockedStatic<MNodeService> staticMock = Mockito.mockStatic(MNodeService.class)) {
             MNodeService mockMNodeService = Mockito.mock(MNodeService.class);
@@ -566,9 +571,7 @@ public class MNResourceHandlerTest {
                      new ZipInputStream(new ByteArrayInputStream(zipBytes))) {
                 ZipEntry entry = zis.getNextEntry();
                 assertNotNull(entry);
-                assertTrue(entry.getName().startsWith("error_"));
-                assertTrue(entry.getName().contains(guid.getValue()));
-                assertTrue(entry.getName().endsWith(".txt"));
+                assertEquals("error_" + guid.getValue() + ".txt", entry.getName());
                 String content = IOUtils.toString(zis, StandardCharsets.UTF_8);
                 assertTrue(content.contains(guid.getValue()));
                 assertTrue(content.contains(error));
