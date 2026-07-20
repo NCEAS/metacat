@@ -1,16 +1,40 @@
 package edu.ucsb.nceas.metacat.restservice.v2;
 
+import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import org.apache.commons.io.IOUtils;
+import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
+import org.apache.wicket.protocol.http.mock.MockHttpServletResponse;
+import org.apache.wicket.protocol.http.mock.MockHttpSession;
 import org.dataone.client.rest.DefaultHttpMultipartRestClient;
+import org.dataone.client.v2.formats.ObjectFormatCache;
+import org.dataone.configuration.Settings;
 import org.dataone.mimemultipart.SimpleMultipartEntity;
+import org.dataone.ore.ResourceMapFactory;
+import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v2.SystemMetadata;
+import org.dspace.foresite.ResourceMap;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -35,6 +59,16 @@ public class MNResourceHandlerIT extends MNResourceHandlerTest {
     private final static String qt_NOT_ALLOWED = "qt is not allowed";
     private final static String ENCODED_qt = "%71%74";
     private final static String SOLR_PATH = "/d1/mn/v2/query/solr";
+
+    private D1NodeServiceTest d1NodeTest = null;
+
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        d1NodeTest = new D1NodeServiceTest("initialize");
+        Settings.getConfiguration().clearProperty("D1Client.CN_URL");
+        Settings.getConfiguration().addProperty("D1Client.CN_URL", "https://cn.dataone.org/cn");
+    }
 
 
     /**
@@ -132,6 +166,113 @@ public class MNResourceHandlerIT extends MNResourceHandlerTest {
         assertTrue(resultStr.contains(CHECKSUM));
         assertTrue(resultStr.contains(ENCODED_qt));
         assertFalse(resultStr.contains(SOLRCONFIG_PART_CONTENT));
+    }
+
+
+    /**
+     * Test the package API
+     */
+    @Test
+    public void testGetPackage() throws Exception {
+        // construct the ORE package
+        Identifier resourceMapId = new Identifier();
+        //resourceMapId.setValue("doi://1234/AA/map.1.1");
+        resourceMapId.setValue("testGetOREPackage-" + System.currentTimeMillis());
+        Identifier metadataId = new Identifier();
+        metadataId.setValue("doi://1234/AA/meta.1." + System.currentTimeMillis());
+        List<Identifier> dataIds = new ArrayList<>();
+        Identifier dataId = new Identifier();
+        dataId.setValue("doi://1234/AA/data.1." + System.currentTimeMillis());
+        Identifier dataId2 = new Identifier();
+        dataId2.setValue("doi://1234/AA/data.2." + System.currentTimeMillis());
+        dataIds.add(dataId);
+        dataIds.add(dataId2);
+        Map<Identifier, List<Identifier>> idMap = new HashMap<>();
+        idMap.put(metadataId, dataIds);
+        ResourceMapFactory rmf = ResourceMapFactory.getInstance();
+        ResourceMap resourceMap = rmf.createResourceMap(resourceMapId, idMap);
+        assertNotNull(resourceMap);
+        String rdfXml = ResourceMapFactory.getInstance().serializeResourceMap(resourceMap);
+        assertNotNull(rdfXml);
+
+        Session session = d1NodeTest.getTestSession();
+        InputStream object = null;
+        SystemMetadata sysmeta = null;
+
+        // save the data objects (data just contains their ID)
+        InputStream dataObject1 = new ByteArrayInputStream(dataId.getValue().getBytes(StandardCharsets.UTF_8));
+        sysmeta = D1NodeServiceTest.createSystemMetadata(dataId, session.getSubject(), dataObject1);
+        dataObject1 = new ByteArrayInputStream(dataId.getValue().getBytes(StandardCharsets.UTF_8));
+        d1NodeTest.mnCreate(session, dataId, dataObject1, sysmeta);
+
+        // second data file
+        InputStream dataObject2 =
+            new ByteArrayInputStream(dataId2.getValue().getBytes(StandardCharsets.UTF_8));
+        sysmeta = D1NodeServiceTest.createSystemMetadata(dataId2, session.getSubject(), dataObject2);
+        dataObject2 =
+            new ByteArrayInputStream(dataId2.getValue().getBytes(StandardCharsets.UTF_8));
+        d1NodeTest.mnCreate(session, dataId2, dataObject2, sysmeta);
+
+        // metadata file
+        InputStream metadataObject =
+            new ByteArrayInputStream(metadataId.getValue().getBytes(StandardCharsets.UTF_8));
+        sysmeta = D1NodeServiceTest.createSystemMetadata(metadataId, session.getSubject(), metadataObject);
+        metadataObject =
+            new ByteArrayInputStream(metadataId.getValue().getBytes(StandardCharsets.UTF_8));
+        d1NodeTest.mnCreate(session, metadataId, metadataObject, sysmeta);
+
+        // save the ORE object
+        object = new ByteArrayInputStream(rdfXml.getBytes(StandardCharsets.UTF_8));
+        sysmeta = D1NodeServiceTest.createSystemMetadata(resourceMapId, session.getSubject(), object);
+        sysmeta.setFormatId(
+            ObjectFormatCache
+                .getInstance().getFormat("http://www.openarchives.org/ore/terms")
+                .getFormatId());
+        object = new ByteArrayInputStream(rdfXml.getBytes(StandardCharsets.UTF_8));
+        Identifier pid =
+            d1NodeTest.mnCreate(session, resourceMapId, object, sysmeta);
+        request = Mockito.spy(new MockHttpServletRequest(
+            null,
+            new MockHttpSession(context),
+            context));
+        Mockito.doReturn("/packages/application%2Fbagit-1.0/" + resourceMapId.getValue())
+            .when(request)
+            .getPathInfo();
+        response = new MockHttpServletResponse(request);
+        resourceHandler = new MNResourceHandler(request, response);
+        resourceHandler.handle(GET);
+        Path bagFile = Files.createTempFile("bagit.", ".zip");
+        try {
+            byte[] bytes = response.getBinaryContent();
+            Files.write(bagFile, bytes);
+            // Check that the resource map is the same
+            ZipFile zipFile = new ZipFile(bagFile.toFile());
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                // Check if it's the ORE
+                if (entry.getName().contains("testGetOREPackage")) {
+                    InputStream stream2 = zipFile.getInputStream(entry);
+                    assertNotNull(stream2);
+                } else if (entry.getName().contains("metadata/science-metadata.xml")) {
+                    InputStream stream2 = zipFile.getInputStream(entry);
+                    metadataObject.reset();
+                    //assertTrue(IOUtils.contentEquals(stream2, metadataObject));
+                } else if (entry.getName().contains("data.1") && !(entry.getName()
+                    .contains("sysmeta"))) {
+                    InputStream stream2 = zipFile.getInputStream(entry);
+                    dataObject1.reset();
+                    assertTrue(IOUtils.contentEquals(stream2, dataObject1));
+                } else if (entry.getName().contains("data.2") && !(entry.getName()
+                    .contains("sysmeta"))) {
+                    InputStream stream2 = zipFile.getInputStream(entry);
+                    dataObject2.reset();
+                    assertTrue(IOUtils.contentEquals(stream2, dataObject2));
+                }
+            }
+        } finally {
+            Files.deleteIfExists(bagFile);
+        }
     }
 }
 
