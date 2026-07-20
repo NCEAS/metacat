@@ -3048,9 +3048,18 @@ public class MNodeService extends D1NodeService
                     continue;
                 }
                 // Get the system metadata and a stream to the data file
-                SystemMetadata entrySysMeta = this.getSystemMetadata(session, entryPid);
-                InputStream objectInputStream = this.get(session, entryPid);
+                SystemMetadata entrySysMeta;
+                InputStream objectInputStream;
+                try {
+                    entrySysMeta = this.getSystemMetadata(session, entryPid);
+                    objectInputStream = this.get(session, entryPid);
+                } catch (NotFound e) {
+                    logMetacat.warn("The data object " + entryPid.getValue() + " doesn't exist. "
+                                        + "So it will be excluded from the package downloading.");
+                    continue;
+                }
                 // Add the stream to the downloader, which will handle finding its location
+                logMetacat.debug("Adding data to the bag " + entryPid.getValue());
                 downloader.addDataFile(entrySysMeta, objectInputStream);
                 try {
                     downloader.addSystemMetadata(entrySysMeta);
@@ -3064,19 +3073,25 @@ public class MNodeService extends D1NodeService
             try {
                 List<Identifier> scienceMetadataIdentifiers =
                     downloader.getScienceMetadataIdentifiers();
-                if (scienceMetadataIdentifiers != null && !scienceMetadataIdentifiers.isEmpty()) {
-                    Identifier sciMetataId = scienceMetadataIdentifiers.get(0);
-                    SystemMetadata systemMetadata = this.getSystemMetadata(session, sciMetataId);
-                    InputStream scienceMetadataStream = this.get(session, sciMetataId);
-                }
                 HashSet<Identifier> uniqueSciPids = new HashSet<>(scienceMetadataIdentifiers);
                 // Add the science metadata and their associated system metadatas to the downloader
                 for (Identifier scienceMetadataIdentifier : uniqueSciPids) {
-                    logMetacat.debug("Adding science metadata to the bag");
-                    SystemMetadata systemMetadata =
-                        this.getSystemMetadata(session, scienceMetadataIdentifier);
-                    InputStream scienceMetadataStream =
-                        this.get(session, scienceMetadataIdentifier);
+                    logMetacat.debug("Adding science metadata to the bag "
+                                         + scienceMetadataIdentifier.getValue());
+                    SystemMetadata systemMetadata;
+                    InputStream scienceMetadataStream;
+                    try {
+                        systemMetadata =
+                            this.getSystemMetadata(session, scienceMetadataIdentifier);
+                        scienceMetadataStream =
+                            this.get(session, scienceMetadataIdentifier);
+                    } catch (NotFound e) {
+                        logMetacat.warn(
+                            "The scientific metadata object " + scienceMetadataIdentifier.getValue()
+                                + " doesn't exist. So it will be excluded from the package "
+                                + "downloading.");
+                        continue;
+                    }
                     downloader.addScienceMetadata(systemMetadata, scienceMetadataStream);
                 }
 
