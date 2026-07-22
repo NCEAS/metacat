@@ -29,6 +29,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -248,28 +249,133 @@ public class MNResourceHandlerIT extends MNResourceHandlerTest {
             // Check that the resource map is the same
             ZipFile zipFile = new ZipFile(bagFile.toFile());
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            Vector<String> list = new Vector<>();
+            list.add("resourceMap");
+            list.add("scienceMeta");
+            list.add("data1");
+            list.add("data2");
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
                 // Check if it's the ORE
                 if (entry.getName().contains("testGetOREPackage")) {
                     InputStream stream2 = zipFile.getInputStream(entry);
                     assertNotNull(stream2);
+                    list.remove("resourceMap");
                 } else if (entry.getName().contains("metadata/science-metadata.xml")) {
                     InputStream stream2 = zipFile.getInputStream(entry);
                     metadataObject.reset();
-                    //assertTrue(IOUtils.contentEquals(stream2, metadataObject));
+                    assertTrue(IOUtils.contentEquals(stream2, metadataObject));
+                    list.remove("scienceMeta");
                 } else if (entry.getName().contains("data.1") && !(entry.getName()
                     .contains("sysmeta"))) {
                     InputStream stream2 = zipFile.getInputStream(entry);
                     dataObject1.reset();
                     assertTrue(IOUtils.contentEquals(stream2, dataObject1));
+                    list.remove("data1");
                 } else if (entry.getName().contains("data.2") && !(entry.getName()
                     .contains("sysmeta"))) {
                     InputStream stream2 = zipFile.getInputStream(entry);
                     dataObject2.reset();
                     assertTrue(IOUtils.contentEquals(stream2, dataObject2));
+                    list.remove("data2");
                 }
             }
+            assertEquals(0, list.size());
+        } finally {
+            Files.deleteIfExists(bagFile);
+        }
+    }
+
+    /**
+     * Test the package API
+     */
+    @Test
+    public void testGetPackageWithMissingMember() throws Exception {
+        // construct the ORE package
+        Identifier resourceMapId = new Identifier();
+        //resourceMapId.setValue("doi://1234/AA/map.1.1");
+        resourceMapId.setValue("testGetOREPackage-" + System.currentTimeMillis());
+        Identifier metadataId = new Identifier();
+        metadataId.setValue("doi://1234/AA/meta.1." + System.currentTimeMillis());
+        List<Identifier> dataIds = new ArrayList<>();
+        Identifier dataId = new Identifier();
+        dataId.setValue("doi://1234/AA/data.1." + System.currentTimeMillis());
+        Identifier dataId2 = new Identifier();
+        dataId2.setValue("doi://1234/AA/data.2." + System.currentTimeMillis());
+        dataIds.add(dataId);
+        dataIds.add(dataId2);
+        Map<Identifier, List<Identifier>> idMap = new HashMap<>();
+        idMap.put(metadataId, dataIds);
+        ResourceMapFactory rmf = ResourceMapFactory.getInstance();
+        ResourceMap resourceMap = rmf.createResourceMap(resourceMapId, idMap);
+        assertNotNull(resourceMap);
+        String rdfXml = ResourceMapFactory.getInstance().serializeResourceMap(resourceMap);
+        assertNotNull(rdfXml);
+
+        Session session = d1NodeTest.getTestSession();
+        InputStream object = null;
+        SystemMetadata sysmeta = null;
+
+        // save the data objects (data just contains their ID)
+        InputStream dataObject1 = new ByteArrayInputStream(dataId.getValue().getBytes(StandardCharsets.UTF_8));
+        sysmeta = D1NodeServiceTest.createSystemMetadata(dataId, session.getSubject(), dataObject1);
+        dataObject1 = new ByteArrayInputStream(dataId.getValue().getBytes(StandardCharsets.UTF_8));
+        d1NodeTest.mnCreate(session, dataId, dataObject1, sysmeta);
+
+        // No second data file created
+
+        // No metadata file created
+
+        // save the ORE object
+        object = new ByteArrayInputStream(rdfXml.getBytes(StandardCharsets.UTF_8));
+        sysmeta = D1NodeServiceTest.createSystemMetadata(resourceMapId, session.getSubject(), object);
+        sysmeta.setFormatId(
+            ObjectFormatCache
+                .getInstance().getFormat("http://www.openarchives.org/ore/terms")
+                .getFormatId());
+        object = new ByteArrayInputStream(rdfXml.getBytes(StandardCharsets.UTF_8));
+        Identifier pid =
+            d1NodeTest.mnCreate(session, resourceMapId, object, sysmeta);
+        request = Mockito.spy(new MockHttpServletRequest(
+            null,
+            new MockHttpSession(context),
+            context));
+        Mockito.doReturn("/packages/application%2Fbagit-1.0/" + resourceMapId.getValue())
+            .when(request)
+            .getPathInfo();
+        response = new MockHttpServletResponse(request);
+        resourceHandler = new MNResourceHandler(request, response);
+        resourceHandler.handle(GET);
+        Path bagFile = Files.createTempFile("bagit.", ".zip");
+        try {
+            Vector<String> list = new Vector<>();
+            list.add("resourceMap");
+            list.add("data1");
+            byte[] bytes = response.getBinaryContent();
+            Files.write(bagFile, bytes);
+            // Check that the resource map is the same
+            ZipFile zipFile = new ZipFile(bagFile.toFile());
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                // Check if it's the ORE
+                if (entry.getName().contains("testGetOREPackage")) {
+                    InputStream stream2 = zipFile.getInputStream(entry);
+                    assertNotNull(stream2);
+                    list.remove("resourceMap");
+                } else if (entry.getName().contains("metadata/science-metadata.xml")) {
+                   fail("The metadata object shouldn't be in the package");
+                } else if (entry.getName().contains("data.1") && !(entry.getName()
+                    .contains("sysmeta"))) {
+                    InputStream stream2 = zipFile.getInputStream(entry);
+                    dataObject1.reset();
+                    assertTrue(IOUtils.contentEquals(stream2, dataObject1));
+                    list.remove("data1");
+                } else if (entry.getName().contains("data.2")) {
+                    fail("The second data object shouldn't be in the package");
+                }
+            }
+            assertEquals(0, list.size());
         } finally {
             Files.deleteIfExists(bagFile);
         }
