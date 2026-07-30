@@ -351,12 +351,5 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
         return publisherStr;
     }
 
-    /**
-     * This method will add HasVersion/IsVersionOf (for sid), and isNewVersionOf/IsPreviousVersionOf
-     * for obsolete into the relatedIdentifiers field
-     */
-    protected void processVersionHistory() {
-
-    }
 
 }

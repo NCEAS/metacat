@@ -53,7 +53,13 @@ public abstract class DataCiteMetadataFactory {
     public static final String FORMATS = "formats";
     public static final String DOI = "DOI";
     public static final String ABSTRACT = "Abstract";
-    
+    public static final String RELATED_IDENTIFIERS = "relatedIdentifiers";
+    public static final String RELATED_IDENTIFIER = "relatedIdentifier";
+    public static final String RELATED_ID_TYPE = "relatedIdentifierType";
+    public static final String RELATION_TYPE = "relationType";
+    public static final String RESOURCE_TYPE_GENERAL = "resourceTypeGeneral";
+    public static final String DATASET = "Dataset";
+
     private static final int FIRST = 0;
     protected static final String INVALIDCODE = "1031";
 
@@ -407,6 +413,81 @@ public abstract class DataCiteMetadataFactory {
         }
         return doc;
     }
+
+    /**
+     * This method will add HasVersion/IsVersionOf (for sid), and isNewVersionOf/IsPreviousVersionOf
+     * for obsolete into the relatedIdentifiers field
+     * @param doc  the xml document which the information will be added into
+     * @param identifier  the identifier of the object
+     * @param sysmeta  the system metadata of the object
+     * @return the modified document object
+     * @throws XPathExpressionException
+     */
+    protected Document appendVersionHistory(Document doc, Identifier identifier,
+                                        SystemMetadata sysmeta) throws XPathExpressionException {
+        String obsolete = null;
+        String obsoletedBy = null;
+        if (sysmeta.getObsoletes() != null && sysmeta.getObsoletes().getValue() != null && !sysmeta
+            .getObsoletes().getValue().isBlank()) {
+            obsolete = sysmeta.getObsoletes().getValue();
+        }
+        if (sysmeta.getObsoletedBy() != null && sysmeta.getObsoletedBy().getValue() != null
+            && !sysmeta.getObsoletedBy().getValue().isBlank()) {
+            obsoletedBy = sysmeta.getObsoletedBy().getValue();
+        }
+        if (obsolete != null || obsoletedBy != null) {
+            String path = "//" + RELATED_IDENTIFIERS;
+            XPathExpression expr = xpath.compile(path);
+            Element relatedIdentifiersEle = null;
+            NodeList relatedIdentifiersList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+            if(relatedIdentifiersList == null || relatedIdentifiersList.getLength() == 0) {
+                //we need to create the relatedIdentifiers element since it doesn't exist
+                relatedIdentifiersEle = doc.createElement(RELATED_IDENTIFIERS);
+                doc.getFirstChild().appendChild(relatedIdentifiersEle);
+            }
+            if (obsolete != null) {
+                Element relatedIdentifierEle = doc.createElement(RELATED_IDENTIFIER);
+                relatedIdentifierEle.setTextContent(obsolete);
+                relatedIdentifierEle.setAttribute(RELATION_TYPE, "IsNewVersionOf");
+                relatedIdentifierEle.setAttribute(RESOURCE_TYPE_GENERAL, DATASET);
+                String idType = getIdentifierType(obsolete);
+                if (idType != null) {
+                    relatedIdentifierEle.setAttribute(RELATED_ID_TYPE, idType);
+                }
+                relatedIdentifiersEle.appendChild(relatedIdentifierEle);
+                logMetacat.debug("Add the obsoletes identifier " + obsolete + " into the datacite "
+                                     + "document");
+            }
+            if (obsoletedBy != null) {
+                Element relatedIdentifierEle = doc.createElement(RELATED_IDENTIFIER);
+                relatedIdentifierEle.setTextContent(obsoletedBy);
+                relatedIdentifierEle.setAttribute(RELATION_TYPE, "IsPreviousVersionOf");
+                relatedIdentifierEle.setAttribute(RESOURCE_TYPE_GENERAL, DATASET);
+                String idType = getIdentifierType(obsoletedBy);
+                if (idType != null) {
+                    relatedIdentifierEle.setAttribute(RELATED_ID_TYPE, idType);
+                }
+                relatedIdentifiersEle.appendChild(relatedIdentifierEle);
+                logMetacat.debug("Add the obsoletedBy identifier " + obsoletedBy + " into the datacite "
+                                     + "document");
+            }
+        }
+        return doc;
+    }
+
+    private String getIdentifierType(String id) {
+        String type = null;
+        if (id != null) {
+            if (id.startsWith("DOI") || id.startsWith("doi")) {
+                type = "DOI";
+            } else if (id.startsWith("UUID") || id.startsWith("uuid")) {
+                type = "UUID";
+            }
+        }
+        logMetacat.debug("The id type is " + type + " for the given id: " + id);
+        return type;
+    }
+
     /**
      * Serialize the given doc object to a string
      * @param doc  the document will be serialized
