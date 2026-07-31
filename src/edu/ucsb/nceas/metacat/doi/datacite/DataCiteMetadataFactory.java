@@ -427,6 +427,7 @@ public abstract class DataCiteMetadataFactory {
                                         SystemMetadata sysmeta) throws XPathExpressionException {
         String obsolete = null;
         String obsoletedBy = null;
+        String seriesId = null;
         if (sysmeta.getObsoletes() != null && sysmeta.getObsoletes().getValue() != null && !sysmeta
             .getObsoletes().getValue().isBlank()) {
             obsolete = sysmeta.getObsoletes().getValue();
@@ -435,7 +436,15 @@ public abstract class DataCiteMetadataFactory {
             && !sysmeta.getObsoletedBy().getValue().isBlank()) {
             obsoletedBy = sysmeta.getObsoletedBy().getValue();
         }
-        if (obsolete != null || obsoletedBy != null) {
+        if (sysmeta.getSeriesId() != null) {
+            String seriesIdType = getIdentifierType(sysmeta.getSeriesId().getValue());
+            if (seriesIdType != null && seriesIdType.equals(DOI)) {
+                // Only consider a series id which is a DOI
+                seriesId = sysmeta.getSeriesId().getValue();
+            }
+        }
+
+        if (obsolete != null || obsoletedBy != null || seriesId != null) {
             String path = "//" + RELATED_IDENTIFIERS;
             XPathExpression expr = xpath.compile(path);
             Element relatedIdentifiersEle = null;
@@ -471,6 +480,17 @@ public abstract class DataCiteMetadataFactory {
                 logMetacat.debug("Add the obsoletedBy identifier " + obsoletedBy + " into the datacite "
                                      + "document");
             }
+            if (seriesId != null) {
+                // Only consider a DOI series id
+                Element relatedIdentifierEle = doc.createElement(RELATED_IDENTIFIER);
+                relatedIdentifierEle.setTextContent(seriesId);
+                relatedIdentifierEle.setAttribute(RELATION_TYPE, "IsVersionOf");
+                relatedIdentifierEle.setAttribute(RESOURCE_TYPE_GENERAL, DATASET);
+                relatedIdentifierEle.setAttribute(RELATED_ID_TYPE, DOI);
+                relatedIdentifiersEle.appendChild(relatedIdentifierEle);
+                logMetacat.debug("Add the series identifier " + seriesId + " into the datacite "
+                                     + "document");
+            }
         }
         return doc;
     }
@@ -479,7 +499,7 @@ public abstract class DataCiteMetadataFactory {
         String type = null;
         if (id != null) {
             if (id.startsWith("DOI") || id.startsWith("doi")) {
-                type = "DOI";
+                type = DOI;
             } else if (id.startsWith("UUID") || id.startsWith("uuid")) {
                 type = "UUID";
             }
