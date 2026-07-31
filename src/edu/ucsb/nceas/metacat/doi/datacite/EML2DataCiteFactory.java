@@ -83,27 +83,27 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
     public String generateMetadata(Identifier identifier, SystemMetadata sysmeta) throws InvalidRequest, ServiceFailure {
         if(identifier != null && sysmeta != null) {
             try {
-                
+
                 DataPackage emlPackage = getEMLPackage(sysmeta);
                 if (emlPackage != null) {
                     String language = emlPackage.getLanguage();
                     Document doc = generateROOTDoc();
-                    
+
                     //identifier
                     String scheme = DOI;
                     String id = removeIdSchemePrefix(identifier.getValue(), scheme);
                     addIdentifier(doc, id, scheme);
-                    
+
                     //creator
                     appendCreators(sysmeta.getRightsHolder(), emlPackage, doc);
-                    
+
                     //title
                     String title = emlPackage.getTitle();
                     if(title == null || title.trim().equals("")) {
                         throw new InvalidRequest(INVALIDCODE, "The datacite instance must have a title. It can't be null or blank");
                     }
                     appendTitle(title, doc, language);
-                    
+
                     //publisher
                     String publisher = lookupPublisher(emlPackage);
                     addPublisher(doc, publisher);
@@ -111,7 +111,12 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
                     //publication year
                     String year = lookupPublishingYear(emlPackage, sysmeta);
                     addPublicationYear(doc, year);
-                    
+
+                    //resource type
+                    String resourceType = null; //only set the attribute to "dataset"
+                    addResourceType(
+                        doc, DataCiteProfileResourceTypeValues.DATASET.toString(), resourceType);
+
                     //subjects (keywords)
                     List<String> subjects = emlPackage.getKeywords();
                     if(subjects != null) {
@@ -119,30 +124,29 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
                             appendSubject(subject, doc, language);
                         }
                     }
-                    
+
                     //language
                     addLanguage(doc, language);
-                    
-                    
-                    //resource type
-                    //String resourceType = lookupResourceType(sysmeta);
-                    String resourceType = null; //only set the attribute to "dataset"
-                    addResourceType(doc, DataCiteProfileResourceTypeValues.DATASET.toString(), resourceType);
-                    
+
+                    // related identifiers for versions
+                    appendVersionHistory(doc, identifier, sysmeta);
+
+                    //size
+
+                    // formats
+                    String format = lookupFormat(sysmeta);
+                    if(format != null) {
+                        appendFormat(doc, format);
+                    }
+
                     //version
-                    
+
                     //description (abstract)
                     String description = emlPackage.getAbstract();
                     if(description != null) {
                         appendDescription(description, doc, language, ABSTRACT);
                     }
-                    //size
 
-                    // format
-                    String format = lookupFormat(sysmeta);
-                    if(format != null) {
-                       appendFormat(doc, format);
-                    }
                     return serializeDoc(doc);
                 } else {
                     throw new ServiceFailure("1030", "Metacat can't parse the eml object " + identifier.getValue() + " so we can't get the needed information from it.");
