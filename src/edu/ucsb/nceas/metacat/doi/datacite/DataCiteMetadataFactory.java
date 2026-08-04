@@ -418,13 +418,25 @@ public abstract class DataCiteMetadataFactory {
      * This method will add HasVersion/IsVersionOf (for sid), and isNewVersionOf/IsPreviousVersionOf
      * for obsolete into the relatedIdentifiers field
      * @param doc  the xml document which the information will be added into
-     * @param identifier  the identifier of the object
+     * @param identifier  the identifier of the object. It can be either a doi pid or sid
      * @param sysmeta  the system metadata of the object
      * @return the modified document object
      * @throws XPathExpressionException
      */
     protected Document appendVersionHistory(Document doc, Identifier identifier,
                                         SystemMetadata sysmeta) throws XPathExpressionException {
+        if (identifier != null && identifier.getValue() != null && !identifier.getValue().isBlank()
+            && sysmeta != null) {
+            if (sysmeta.getIdentifier() != null && identifier.equals(sysmeta.getIdentifier())) {
+                return handlePidForVersions(doc, sysmeta);
+            }
+        }
+        return doc;
+    }
+
+    private Document handlePidForVersions(Document doc, SystemMetadata sysmeta)
+        throws XPathExpressionException {
+        logMetacat.debug("The identifier " + sysmeta.getIdentifier().getValue() + " is a pid");
         String obsolete = null;
         String obsoletedBy = null;
         String seriesId = null;
