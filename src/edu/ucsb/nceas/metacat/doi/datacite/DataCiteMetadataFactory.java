@@ -2,6 +2,8 @@ package edu.ucsb.nceas.metacat.doi.datacite;
 
 import java.io.StringWriter;
 import java.io.Writer;
+import java.sql.SQLException;
+import java.util.List;
 import java.util.Locale;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -12,6 +14,7 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import edu.ucsb.nceas.metacat.IdentifierManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.client.v2.itk.D1Client;
@@ -422,13 +425,17 @@ public abstract class DataCiteMetadataFactory {
      * @param sysmeta  the system metadata of the object
      * @return the modified document object
      * @throws XPathExpressionException
+     * @throws SQLException
      */
     protected Document appendVersionHistory(Document doc, Identifier identifier,
-                                        SystemMetadata sysmeta) throws XPathExpressionException {
+                                        SystemMetadata sysmeta)
+        throws XPathExpressionException, SQLException {
         if (identifier != null && identifier.getValue() != null && !identifier.getValue().isBlank()
             && sysmeta != null) {
             if (sysmeta.getIdentifier() != null && identifier.equals(sysmeta.getIdentifier())) {
                 return handlePidForVersions(doc, sysmeta);
+            } else if (sysmeta.getSeriesId() != null && identifier.equals(sysmeta.getSeriesId())) {
+                return handleSidForVersions(doc, sysmeta.getSeriesId().getValue());
             }
         }
         return doc;
@@ -502,6 +509,38 @@ public abstract class DataCiteMetadataFactory {
                 relatedIdentifiersEle.appendChild(relatedIdentifierEle);
                 logMetacat.debug("Add the series identifier " + seriesId + " into the datacite "
                                      + "document");
+            }
+        }
+        return doc;
+    }
+
+    private Document handleSidForVersions(Document doc, String sid)
+        throws XPathExpressionException, SQLException {
+        List<String> allPids = IdentifierManager.getInstance().getAllPidsInChain(sid);
+        if (allPids != null && !allPids.isEmpty()) {
+            String path = "//" + RELATED_IDENTIFIERS;
+            XPathExpression expr = xpath.compile(path);
+            Element relatedIdentifiersEle = null;
+            NodeList relatedIdentifiersList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+            if(relatedIdentifiersList == null || relatedIdentifiersList.getLength() == 0) {
+                //we need to create the relatedIdentifiers element since it doesn't exist
+                relatedIdentifiersEle = doc.createElement(RELATED_IDENTIFIERS);
+                doc.getFirstChild().appendChild(relatedIdentifiersEle);
+            }
+            for (String pid : allPids) {
+                if (pid != null && !pid.isBlank()) {
+                    Element relatedIdentifierEle = doc.createElement(RELATED_IDENTIFIER);
+                    relatedIdentifierEle.setTextContent(pid);
+                    relatedIdentifierEle.setAttribute(RELATION_TYPE, "HasVersion");
+                    relatedIdentifierEle.setAttribute(RESOURCE_TYPE_GENERAL, DATASET);
+                    String idType = getIdentifierType(pid);
+                    if (idType != null) {
+                        relatedIdentifierEle.setAttribute(RELATED_ID_TYPE, idType);
+                    }
+                    relatedIdentifiersEle.appendChild(relatedIdentifierEle);
+                    logMetacat.debug("Add the pid " + pid + " into the datacite "
+                                         + "document as a component of sid " + sid);
+                }
             }
         }
         return doc;
