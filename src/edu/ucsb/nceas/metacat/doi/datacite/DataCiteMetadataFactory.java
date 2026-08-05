@@ -479,9 +479,7 @@ public abstract class DataCiteMetadataFactory {
                 relatedIdentifierEle.setAttribute(RELATION_TYPE, "IsNewVersionOf");
                 relatedIdentifierEle.setAttribute(RESOURCE_TYPE_GENERAL, DATASET);
                 String idType = getIdentifierType(obsolete);
-                if (idType != null) {
-                    relatedIdentifierEle.setAttribute(RELATED_ID_TYPE, idType);
-                }
+                relatedIdentifierEle.setAttribute(RELATED_ID_TYPE, idType);
                 relatedIdentifiersEle.appendChild(relatedIdentifierEle);
                 logMetacat.debug("Add the obsoletes identifier " + obsolete + " into the datacite "
                                      + "document");
@@ -492,9 +490,7 @@ public abstract class DataCiteMetadataFactory {
                 relatedIdentifierEle.setAttribute(RELATION_TYPE, "IsPreviousVersionOf");
                 relatedIdentifierEle.setAttribute(RESOURCE_TYPE_GENERAL, DATASET);
                 String idType = getIdentifierType(obsoletedBy);
-                if (idType != null) {
-                    relatedIdentifierEle.setAttribute(RELATED_ID_TYPE, idType);
-                }
+                relatedIdentifierEle.setAttribute(RELATED_ID_TYPE, idType);
                 relatedIdentifiersEle.appendChild(relatedIdentifierEle);
                 logMetacat.debug("Add the obsoletedBy identifier " + obsoletedBy + " into the datacite "
                                      + "document");
@@ -534,9 +530,7 @@ public abstract class DataCiteMetadataFactory {
                     relatedIdentifierEle.setAttribute(RELATION_TYPE, "HasVersion");
                     relatedIdentifierEle.setAttribute(RESOURCE_TYPE_GENERAL, DATASET);
                     String idType = getIdentifierType(pid);
-                    if (idType != null) {
-                        relatedIdentifierEle.setAttribute(RELATED_ID_TYPE, idType);
-                    }
+                    relatedIdentifierEle.setAttribute(RELATED_ID_TYPE, idType);
                     relatedIdentifiersEle.appendChild(relatedIdentifierEle);
                     logMetacat.debug("Add the pid " + pid + " into the datacite "
                                          + "document as a component of sid " + sid);
@@ -547,12 +541,10 @@ public abstract class DataCiteMetadataFactory {
     }
 
     private String getIdentifierType(String id) {
-        String type = null;
+        String type = "URN";
         if (id != null) {
             if (id.startsWith("DOI") || id.startsWith("doi")) {
                 type = DOI;
-            } else if (id.startsWith("UUID") || id.startsWith("uuid")) {
-                type = "UUID";
             }
         }
         logMetacat.debug("The id type is " + type + " for the given id: " + id);
