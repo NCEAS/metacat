@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 
 import static edu.ucsb.nceas.MCTestCase.printTestHeader;
 import static edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest.createSystemMetadata;
@@ -1634,6 +1635,126 @@ public class RegisterDOIIT {
         } catch (Exception e) {
             assertTrue(e instanceof NotAuthorized);
         }
+    }
+
+    /**
+     * Test the datacite documents containing related identifiers with version information
+     * @throws Exception
+     */
+    @Test
+    public void testRelatedIdentifiersForVersions() throws Exception {
+        UUID uuid = UUID.randomUUID();
+        Identifier identifier = new Identifier();
+        identifier.setValue("urn:uuid:" + uuid);
+        String scheme = "DOI";
+        Session session = getTestSession();
+        Identifier sid =
+            MNodeService.getInstance(request).generateIdentifier(session, scheme, null);
+        String emlFile = "test/eml-multiple-creators.xml";
+        InputStream content = null;
+        //Create an object which pid is a UUID and sid is a doi
+        content = new FileInputStream(emlFile);
+        SystemMetadata sysmeta =
+            createSystemMetadata(identifier, session.getSubject(), content);
+        content.close();
+        sysmeta.setFormatId(
+            ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0")
+                .getFormatId());
+        sysmeta.setSeriesId(sid);
+        content = new FileInputStream(emlFile);
+        Identifier pid = d1NodeServiceTest.mnCreate(session, identifier,
+                                                    content, sysmeta);
+        content.close();
+        assertEquals(identifier.getValue(), pid.getValue());
+        // check for the metadata explicitly, using ezid service
+        ezid.login(ezidUsername, ezidPassword);
+        int count = 0;
+        HashMap<String, String> metadata = null;
+        String result = null;
+        do {
+            try {
+                Thread.sleep(SLEEP_TIME);
+                metadata = ezid.getMetadata(sid.getValue());
+            } catch (Exception e) {
+
+            }
+            count++;
+        } while (metadata == null && count < MAX_TIMES);
+        assertNotNull(metadata);
+        result = metadata.get(EzidDOIService.DATACITE);
+        assertTrue(result.contains("Test EML package - public-readable from morpho"));
+        assertTrue(result.contains(creatorsStr));
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
+        String year = sdf.format(sysmeta.getDateUploaded());
+        assertTrue(result.contains(year));
+        assertTrue(result.contains("Dataset"));
+        String relatedIdentifierStr = "<relatedIdentifier relatedIdentifierType=\"URN\" "
+            + "relationType=\"HasVersion\" resourceTypeGeneral=\"Dataset\">" + identifier.getValue()
+            + "</relatedIdentifier>";
+        assertTrue(result.contains(relatedIdentifierStr));
+        content.close();
+
+        // Update the object with a doi pid and the same sid
+        Identifier newPid =
+            MNodeService.getInstance(request).generateIdentifier(session, scheme, null);
+        content = new FileInputStream(emlFile);
+        SystemMetadata sysmeta2 =
+            createSystemMetadata(newPid, session.getSubject(), content);
+        content.close();
+        sysmeta2.setFormatId(
+            ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0")
+                .getFormatId());
+        sysmeta2.setSeriesId(sid);
+        content = new FileInputStream(emlFile);
+        d1NodeServiceTest.mnUpdate(session, identifier, content, newPid, sysmeta2);
+        // Check the datacite for the new doi pid
+        do {
+            try {
+                Thread.sleep(SLEEP_TIME);
+                metadata = ezid.getMetadata(newPid.getValue());
+            } catch (Exception e) {
+
+            }
+            count++;
+        } while (metadata == null && count < MAX_TIMES);
+        assertNotNull(metadata);
+        result = metadata.get(EzidDOIService.DATACITE);
+        assertTrue(result.contains("Test EML package - public-readable from morpho"));
+        assertTrue(result.contains(creatorsStr));
+        assertTrue(result.contains(year));
+        assertTrue(result.contains("Dataset"));
+        String relatedIdentifierStr2 = "<relatedIdentifier relatedIdentifierType=\"URN\" "
+            + "relationType=\"IsNewVersionOf\" resourceTypeGeneral=\"Dataset\">"
+            + identifier.getValue() + "</relatedIdentifier>";
+        assertTrue(result.contains(relatedIdentifierStr2));
+        String relatedIdentifierStr3 = "<relatedIdentifier relatedIdentifierType=\"DOI\" "
+            + "relationType=\"IsVersionOf\" resourceTypeGeneral=\"Dataset\">" + sid.getValue()
+            + "</relatedIdentifier>";
+        assertTrue(result.contains(relatedIdentifierStr3));
+        //Check the new sid datacite document
+        String relatedIdentifierStr4 = "<relatedIdentifier relatedIdentifierType=\"DOI\" "
+            + "relationType=\"HasVersion\" resourceTypeGeneral=\"Dataset\">" + newPid.getValue()
+            + "</relatedIdentifier>";
+        do {
+            try {
+                Thread.sleep(SLEEP_TIME);
+                metadata = ezid.getMetadata(sid.getValue());
+            } catch (Exception e) {
+
+            }
+            if (metadata != null) {
+                result = metadata.get(EzidDOIService.DATACITE);
+            }
+            count++;
+        } while (!result.contains(relatedIdentifierStr4) && count < MAX_TIMES);
+        assertTrue(result.contains("Test EML package - public-readable from morpho"));
+        assertTrue(result.contains(creatorsStr));
+        assertTrue(result.contains(year));
+        assertTrue(result.contains("Dataset"));
+        assertTrue(result.contains(relatedIdentifierStr));
+        assertTrue(result.contains(relatedIdentifierStr4));
+        content.close();
+
     }
 
 }
