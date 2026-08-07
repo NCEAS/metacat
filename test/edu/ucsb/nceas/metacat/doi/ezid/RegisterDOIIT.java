@@ -1755,6 +1755,91 @@ public class RegisterDOIIT {
         assertTrue(result.contains(relatedIdentifierStr4));
         content.close();
 
+        // Update the object again with a doi pid and doi sid
+        Identifier newPid2 =
+            MNodeService.getInstance(request).generateIdentifier(session, scheme, null);
+        content = new FileInputStream(emlFile);
+        SystemMetadata sysmeta3 =
+            createSystemMetadata(newPid2, session.getSubject(), content);
+        content.close();
+        sysmeta3.setFormatId(
+            ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0")
+                .getFormatId());
+        sysmeta3.setSeriesId(sid);
+        content = new FileInputStream(emlFile);
+        d1NodeServiceTest.mnUpdate(session, newPid, content, newPid2, sysmeta3);
+        // Check the datacite for the new doi pid
+        do {
+            try {
+                Thread.sleep(SLEEP_TIME);
+                metadata = ezid.getMetadata(newPid2.getValue());
+            } catch (Exception e) {
+
+            }
+            count++;
+        } while (metadata == null && count < MAX_TIMES);
+        assertNotNull(metadata);
+        result = metadata.get(EzidDOIService.DATACITE);
+        assertTrue(result.contains("Test EML package - public-readable from morpho"));
+        assertTrue(result.contains(creatorsStr));
+        assertTrue(result.contains(year));
+        assertTrue(result.contains("Dataset"));
+        String relatedIdentifierStr5 = "<relatedIdentifier relatedIdentifierType=\"DOI\" "
+            + "relationType=\"IsNewVersionOf\" resourceTypeGeneral=\"Dataset\">"
+            + newPid.getValue() + "</relatedIdentifier>";
+        assertTrue(result.contains(relatedIdentifierStr5));
+        String relatedIdentifierStr6 = "<relatedIdentifier relatedIdentifierType=\"DOI\" "
+            + "relationType=\"IsVersionOf\" resourceTypeGeneral=\"Dataset\">" + sid.getValue()
+            + "</relatedIdentifier>";
+        assertTrue(result.contains(relatedIdentifierStr6));
+        //Check the new sid datacite document
+        String relatedIdentifierStr7 = "<relatedIdentifier relatedIdentifierType=\"DOI\" "
+            + "relationType=\"HasVersion\" resourceTypeGeneral=\"Dataset\">" + newPid2.getValue()
+            + "</relatedIdentifier>";
+        do {
+            try {
+                Thread.sleep(SLEEP_TIME);
+                metadata = ezid.getMetadata(sid.getValue());
+            } catch (Exception e) {
+
+            }
+            if (metadata != null) {
+                result = metadata.get(EzidDOIService.DATACITE);
+            }
+            count++;
+        } while (!result.contains(relatedIdentifierStr7) && count < MAX_TIMES);
+        assertTrue(result.contains("Test EML package - public-readable from morpho"));
+        assertTrue(result.contains(creatorsStr));
+        assertTrue(result.contains(year));
+        assertTrue(result.contains("Dataset"));
+        assertTrue(result.contains(relatedIdentifierStr));
+        assertTrue(result.contains(relatedIdentifierStr4));
+        assertTrue(result.contains(relatedIdentifierStr7));
+        content.close();
+        // Check the new datacite document of newPid (it must contain the previous version info)
+        String relatedIdentifierStr8 = "<relatedIdentifier relatedIdentifierType=\"DOI\" "
+            + "relationType=\"IsPreviousVersionOf\" resourceTypeGeneral=\"Dataset\">"
+            + newPid2.getValue() + "</relatedIdentifier>";
+        do {
+            try {
+                Thread.sleep(SLEEP_TIME);
+                metadata = ezid.getMetadata(newPid.getValue());
+                if (metadata != null) {
+                    result = metadata.get(EzidDOIService.DATACITE);
+                }
+            } catch (Exception e) {
+
+            }
+            count++;
+        } while (!result.contains(relatedIdentifierStr8) && count < MAX_TIMES);
+        assertNotNull(metadata);
+        assertTrue(result.contains("Test EML package - public-readable from morpho"));
+        assertTrue(result.contains(creatorsStr));
+        assertTrue(result.contains(year));
+        assertTrue(result.contains("Dataset"));
+        assertTrue(result.contains(relatedIdentifierStr2));
+        assertTrue(result.contains(relatedIdentifierStr3));
+        assertTrue(result.contains(relatedIdentifierStr8));
     }
 
 }
