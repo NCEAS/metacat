@@ -3054,8 +3054,8 @@ public class MNodeService extends D1NodeService
                     entrySysMeta = this.getSystemMetadata(session, entryPid);
                     objectInputStream = this.get(session, entryPid);
                 } catch (NotFound e) {
-                    logMetacat.warn("The data object " + entryPid.getValue() + " doesn't exist. "
-                                        + "So it will be excluded from the package downloading.");
+                    logMetacat.warn("The data object " + entryPid.getValue() + " doesn't exist, "
+                                        + "so it will be excluded from the dowload package.");
                     continue;
                 }
                 // Add the stream to the downloader, which will handle finding its location
@@ -3088,8 +3088,8 @@ public class MNodeService extends D1NodeService
                     } catch (NotFound e) {
                         logMetacat.warn(
                             "The scientific metadata object " + scienceMetadataIdentifier.getValue()
-                                + " doesn't exist. So it will be excluded from the package "
-                                + "downloading.");
+                                + " doesn't exist, so it will be excluded from the download "
+                                + "package.");
                         continue;
                     }
                     downloader.addScienceMetadata(systemMetadata, scienceMetadataStream);
