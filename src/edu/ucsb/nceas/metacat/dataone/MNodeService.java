@@ -702,6 +702,16 @@ public class MNodeService extends D1NodeService
                         + e.getMessage();
                     logMetacat.error(message);
                 }
+                // The obsoleted object should update the datacite document as well since it has
+                // the new version chain information
+                try {
+                    DOIServiceFactory.getDOIService().registerDOI(existingSysMeta);
+                } catch (Exception e) {
+                    String message = "MNodeService.update - The obsoleted object " + pid.getValue()
+                        + " can't be updated on the DOI service: "
+                        + e.getMessage();
+                    logMetacat.error(message);
+                }
                 try {
                     logMetacat.debug("Logging the update event.");
                     EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"),
