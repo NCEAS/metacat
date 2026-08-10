@@ -2,6 +2,7 @@ package edu.ucsb.nceas.metacat.restservice.v2;
 
 import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
 import edu.ucsb.nceas.metacat.restservice.multipart.WrappingServletInputStream;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
@@ -15,6 +16,7 @@ import org.apache.wicket.protocol.http.mock.MockServletContext;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.portal.PortalCertificateManager;
 import org.dataone.service.exceptions.NotAuthorized;
+import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -37,6 +39,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Vector;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
@@ -521,6 +525,58 @@ public class MNResourceHandlerTest {
                         Mockito.any(),
                         Mockito.any(),
                         Mockito.any());
+            }
+        }
+    }
+
+    /**
+     * Test the scenario that the getPackage call throws an exception
+     * @throws Exception
+     */
+    @Test
+    public void testGetPackageFailed() throws Exception {
+        Identifier guid = new Identifier();
+        guid.setValue("testGetPackageFailed_" + System.currentTimeMillis());
+        String error = "Not found " + guid.getValue();
+        request = Mockito.spy(new MockHttpServletRequest(
+                null,
+                new MockHttpSession(context),
+                context));
+        Mockito.doReturn("/packages/application%2Fbagit-1.0/" + guid.getValue())
+            .when(request)
+            .getPathInfo();
+        response = new MockHttpServletResponse(request);
+        try (MockedStatic<MNodeService> staticMock = Mockito.mockStatic(MNodeService.class)) {
+            MNodeService mockMNodeService = Mockito.mock(MNodeService.class);
+            // Prepare mock return values for the getPackage method
+            Mockito.when(mockMNodeService.getPackage(
+                Mockito.any(),
+                Mockito.any(),
+                Mockito.any()
+            )).thenThrow(new NotFound("0000", error));
+            // static getInstance returns our mock
+            staticMock.when(() ->
+                                MNodeService.getInstance(Mockito.any())
+            ).thenAnswer(invocation -> {
+                return mockMNodeService;
+            });
+            // Entire object
+            response = new MockHttpServletResponse(request);
+            resourceHandler = new MNResourceHandler(request, response);
+            resourceHandler.handle(GET);
+            byte[] zipBytes = response.getBinaryContent();
+            assertNotNull(zipBytes);
+            assertTrue(zipBytes.length > 0);
+            try (ZipInputStream zis =
+                     new ZipInputStream(new ByteArrayInputStream(zipBytes))) {
+                ZipEntry entry = zis.getNextEntry();
+                assertNotNull(entry);
+                assertEquals("error_" + guid.getValue() + ".txt", entry.getName());
+                String content = IOUtils.toString(zis, StandardCharsets.UTF_8);
+                assertTrue(content.contains(guid.getValue()));
+                assertTrue(content.contains(error));
+                // verify only one entry
+                assertNull(zis.getNextEntry());
             }
         }
     }
