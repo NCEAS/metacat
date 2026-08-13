@@ -30,6 +30,8 @@ metadata:
       {{- toYaml . | nindent 4 }}
     {{- end -}}
     {{- if $isTraefik }}
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace -}}
+            -{{ .Release.Name }}-middleware-chain@kubernetescrd"
       {{- if $mutualAuth }}
         {{- include "dataone.traefik.mtls.annotations" . | nindent 4 }}
       {{- end }}
