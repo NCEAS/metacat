@@ -46,6 +46,7 @@ public class MNResourceHandlerIT extends MNResourceHandlerTest {
     private final static String QUERY = "query";
     private final static String SOLR = "solr";
     private final static String ID_START = "id:*";
+    private final static String ID_SPECIAL_QUERY = "id:水";
     private final static String SELECT_ALL = "q=" + ID_START;
     private final static String CHECKSUM = "<str name=\"checksum\">";
     private final static String SOLR_CONFIG = "solrconfig.xml";
@@ -167,6 +168,12 @@ public class MNResourceHandlerIT extends MNResourceHandlerTest {
         assertTrue(resultStr.contains(CHECKSUM));
         assertTrue(resultStr.contains(ENCODED_qt));
         assertFalse(resultStr.contains(SOLRCONFIG_PART_CONTENT));
+        // Test if the special character are encoded correctly
+        params = new SimpleMultipartEntity();
+        params.addParamPart("q", ID_SPECIAL_QUERY);
+        stream = multipartRestClient.doPostRequest(server + SOLR_PATH, params, 30000);
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        assertTrue(resultStr.contains(ID_SPECIAL_QUERY));
     }
 
 
