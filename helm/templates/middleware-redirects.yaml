@@ -5,6 +5,22 @@
 ## IMPORTANT: ADD THE NAMES OF ANY NEW MIDDLEWARES TO helm/templates/middleware-chain.yaml, OR THEY
 ## WON'T BE LOADED!
 ##
+{{- if ne .Values.global.metacatUiWebRoot "/" }}
+---
+## Add trailing slash to metacatui webroot if not already existing
+##
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Name }}-trailing-slash
+  namespace: {{ .Release.Namespace }}
+spec:
+  redirectRegex:
+    regex: "^https?://([^/]+/{{- .Values.global.metacatUiWebRoot | trimPrefix "/" | trimSuffix "/" }})$"
+    replacement: "https://${1}/"
+    permanent: false
+
+{{- end }}
 ---
 ## Redirect robots.txt requests to the correct location on metacat.
 ##
