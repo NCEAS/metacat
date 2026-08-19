@@ -710,22 +710,21 @@ ingress:
   annotations: {}
 
   ## @param ingress.defaultBackend.enabled Enable the optional defaultBackend
-  ## If none of the hosts or paths match the HTTP request in the Ingress objects, the traffic is
-  ## routed to your default backend. Not typically required, unless MetacatUI is not at the root
-  ## of the site (e.g. https://arcticdata.io/catalog)
-  ## Content included here under `defaultBackend` will be added to the ingress definition under
-  ## 'spec.defaultBackend'; for example:
-  ##
-  ##   spec:
-  ##     defaultBackend:
-  ##       enabled: true
-  ##       service:
-  ##         name: myrelease-wordpress
-  ##         port:
-  ##           number: 80
+  ## If none of the paths match the HTTP request in the Ingress objects, the traffic is routed
+  ## to your default backend.
+  ## IMPORTANT:
+  ## - Use this ONLY IF MetacatUI is NOT at the root of the site (e.g. for arcticdata.io, where
+  ##   MetacatUI is at: https://arcticdata.io/catalog)
+  ## - This creates a catch-all ingress path at the root of your site ("/") - so make sure that
+  ##   doesn't conflict with any other routes
+  ## - The content will be ignored if defaultBackend.enabled is set to false
   ##
   defaultBackend:
     enabled: false
+    service:
+      name: my-wordpress-service
+      port:
+        number: 80
 
   ## @param ingress.rewriteRules IMPORTANT! Nginx & Traefik rewrite rule syntaxes differ; see below
   ##

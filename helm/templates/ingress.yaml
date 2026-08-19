@@ -92,11 +92,13 @@ metadata:
       {{- include "dataone.nginx.mtls.snippets" . | nindent 6 }}
       {{- include "dataone.nginx.mtls.annotations" . | nindent 4 }}
     {{- end }}
-    {{- end }}
-spec:
   {{- if .Values.ingress.defaultBackend.enabled }}
+spec:
   defaultBackend:
-  {{- omit .Values.ingress.defaultBackend "enabled" | toYaml | nindent 4 }}
+    {{- omit .Values.ingress.defaultBackend "enabled" | toYaml | nindent 4 }}
+  {{- end }}
+  {{- else }}
+spec:
   {{- end }}
   ingressClassName: {{ .Values.ingress.className }}
   {{- if .Values.ingress.tls }}
@@ -127,22 +129,35 @@ spec:
                 name: {{ $fullName }}-hl
                 port:
                   number: 8080
-          {{- $webroot := regexReplaceAll "/$" .Values.global.metacatUiWebRoot "" }}
-          {{- if .Values.global.includeMetacatUi }}
-          - path: {{ $webroot }}/
+    {{/*  Remove trailing slash from .Values.global.metacatUiWebRoot, unless it is simply "/"  */}}
+    {{- $webroot := regexReplaceAll "/$" .Values.global.metacatUiWebRoot "" | trim | default "/" }}
+    {{- if and ( eq $webroot "/" ) (and $isTraefik .Values.ingress.defaultBackend.enabled) }}
+    {{- fail "Enable ingress.defaultBackend ONLY IF MetacatUI is NOT at the site root (\"/\")!" -}}
+    {{- end }}
+        {{- if .Values.global.includeMetacatUi }}
+          - path: {{ $webroot }}
             pathType: Prefix
             backend:
               service:
                 name: {{ .Release.Name }}-metacatui
                 port:
                   number: 80
-          {{- else }}
-            {{- if .Values.global.metacatUiIngressBackend.enabled }}
-          - path: {{ $webroot }}/
+        {{- else }}
+          {{- if .Values.global.metacatUiIngressBackend.enabled }}
+          - path: {{ $webroot }}
             pathType: Prefix
             backend:
               {{- omit .Values.global.metacatUiIngressBackend "enabled" | toYaml | nindent 14 }}
-            {{- end }}
           {{- end }}
+          {{- if and $isTraefik .Values.ingress.defaultBackend.enabled }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.ingress.defaultBackend.service.name }}
+                port:
+                  number: {{ .Values.ingress.defaultBackend.service.port.number }}
+          {{- end }}
+        {{- end }}
 {{- end }}
 {{- end }}
