@@ -49,6 +49,8 @@ DB_PASSWORD = config["database"]["password"]
 CN_URL = config["services"]["cn_url"]
 SOLR_URL = config["services"]["solr_url"]
 
+ENABLE_INDEXER = config["services"].getboolean("enable_indexer")
+
 # --- Configuration ---
 PULL_INTERVAL = 50  # second
 MAX_ROWS = 4000
@@ -620,6 +622,9 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
    tasks for them
 """
 def poll_and_submit(non_data_formats):
+    if not ENABLE_INDEXER:
+            logger.debug("The index submission is disabled.")
+            return
     global pg_pool
     global channel_pool
     worker_timeout_sec = MAX_ROWS/MAX_WORKERS * 0.25
