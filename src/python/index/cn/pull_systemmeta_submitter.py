@@ -81,6 +81,7 @@ DEFAULT_DATE = "2000-01-01 00:00:00.000"
 FORMATS_URL = urljoin(CN_URL + "/", "formats")
 NODE_URL = urljoin(CN_URL + "/", "node")
 MN_STATE_FILE = ".mn_latest_modified_map.json"
+MN_NOTIFICATION_STATE_FILE = ".notification_mn_latest_modification_map.json"
 LOG_LEVEL = logging.DEBUG
 LOGGER_NAME = "pull_systemmeta_submitter"
 LOG_FILE = f"log/{LOGGER_NAME}.log"
@@ -621,7 +622,7 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
    Periodically to pull new modified records from the systemmetadata table and submit the index
    tasks for them
 """
-def poll_and_submit(non_data_formats):
+def poll_and_submit_index(non_data_formats):
     if not ENABLE_INDEXER:
             logger.debug("The index submission is disabled.")
             return
@@ -798,4 +799,4 @@ if __name__ == "__main__":
                 logger.error(f"[ERROR] AMQPStorm error while initializing the RabbitMQ channel pool: {amqp_err}. It will retry again.")
                 # Sleep 10 seconds
                 time.sleep(10)
-    poll_and_submit(non_data_formats)
+    poll_and_submit_index(non_data_formats)
