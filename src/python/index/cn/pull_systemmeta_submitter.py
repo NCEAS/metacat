@@ -778,6 +778,13 @@ def poll_and_submit_index(non_data_formats):
         if pg_pool:
             pg_pool.closeall()
 
+"""
+   Periodically to pull new modified records from the solr server and submit the RabbitMQ messages
+   to the notification service
+"""
+def poll_and_submit_notification():
+
+
 if __name__ == "__main__":
     setup_logging()
     logger.info("pull_systemmeta_submitter started")
