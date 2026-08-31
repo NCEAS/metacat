@@ -619,15 +619,96 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
     return None
 
 """
+   Query the system metadata table and submit the index tasks
+"""
+def submit_index_tasks(payload, executor):
+    global pg_pool
+    global channel_pool
+    global futures
+    futures = []
+    if not ENABLE_INDEXER:
+        logger.debug("The index submission is disabled.")
+        return
+    # Single Postgres query
+    conn = None
+    try:
+        conn = pg_pool.getconn()
+        with conn.cursor() as cur:
+            cur.execute(f"""
+                SELECT
+                    sm.guid,
+                    sm.object_format,
+                    i.docid || '.' || i.rev AS doc_id,
+                    sm.date_modified,
+                    sm.authoritive_member_node
+                FROM systemmetadata sm
+                LEFT JOIN identifier i
+                    ON sm.guid = i.guid
+                JOIN (
+                    SELECT *
+                    FROM json_to_recordset(%s::json)
+                    AS t(amn text, last_time timestamptz)
+                ) AS latest
+                  ON sm.authoritive_member_node = latest.amn
+                 AND sm.date_modified > latest.last_time
+                ORDER BY sm.date_modified ASC
+                LIMIT {MAX_ROWS};
+            """, (payload,))
+
+            rows = cur.fetchall()
+            length = len(rows)
+
+            if not rows:
+                logger.info("No new records. Sleeping.")
+                shutdown_event.wait(PULL_INTERVAL)
+                return
+
+            # Process rows
+            global batch_max_time
+            batch_max_time = {}
+            for guid, object_format, doc_id, modified_time, amn in rows:
+                try:
+                    logger.debug(f"Start to process {guid}:")
+                    # docId retry logic
+                    if object_format in non_data_formats and not doc_id:
+                        doc_id = lookup_docid_with_retry(conn, guid)
+                    # After multiple retries, we have to skip it if the docid still
+                    # cannot be found
+                    if object_format in non_data_formats and not doc_id:
+                        logger.info(f"Skipping guid {guid}: doc_id not found after {DOCID_MAX_RETRIES} retries")
+                        # Event though the guid is skipped, we still need to set its
+                        # date as the last modified_time
+                        batch_max_time[amn] = max(batch_max_time.get(amn, modified_time),
+                            modified_time
+                        )
+                        continue
+
+                    # Submit task to thread pool
+                    shutdown_event.wait(EVERY_SUBMIT_WAIT_TIME_SEC)
+                    futures.append(
+                        executor.submit(
+                            process_pid_wrapper,
+                            channel_pool,
+                            guid,
+                            object_format,
+                            doc_id
+                        )
+                    )
+                    batch_max_time[amn] = max(
+                        batch_max_time.get(amn, modified_time),
+                        modified_time
+                    )
+                except Exception as error:
+                    logger.error(f"[ERROR] Process {guid}: {error}")
+    finally:
+        if conn:
+            pg_pool.putconn(conn)
+
+"""
    Periodically to pull new modified records from the systemmetadata table and submit the index
    tasks for them
 """
 def poll_and_submit_index(non_data_formats):
-    if not ENABLE_INDEXER:
-            logger.debug("The index submission is disabled.")
-            return
-    global pg_pool
-    global channel_pool
     worker_timeout_sec = MAX_ROWS/MAX_WORKERS * 0.25
     logger.debug(f"The timeout for workers to completed jobs for a batch is {worker_timeout_sec}")
 
@@ -658,82 +739,7 @@ def poll_and_submit_index(non_data_formats):
                     {"amn": k, "last_time": v}  # use string directly
                     for k, v in mn_latest_map.items()
                 ])
-
-                # Single Postgres query
-                futures = []
-                conn = None
-                try:
-                    conn = pg_pool.getconn()
-                    with conn.cursor() as cur:
-                        cur.execute(f"""
-                            SELECT
-                                sm.guid,
-                                sm.object_format,
-                                i.docid || '.' || i.rev AS doc_id,
-                                sm.date_modified,
-                                sm.authoritive_member_node
-                            FROM systemmetadata sm
-                            LEFT JOIN identifier i
-                                ON sm.guid = i.guid
-                            JOIN (
-                                SELECT *
-                                FROM json_to_recordset(%s::json)
-                                AS t(amn text, last_time timestamptz)
-                            ) AS latest
-                              ON sm.authoritive_member_node = latest.amn
-                             AND sm.date_modified > latest.last_time
-                            ORDER BY sm.date_modified ASC
-                            LIMIT {MAX_ROWS};
-                        """, (payload,))
-
-                        rows = cur.fetchall()
-                        length = len(rows)
-
-                        if not rows:
-                            logger.info("No new records. Sleeping.")
-                            shutdown_event.wait(PULL_INTERVAL)
-                            continue
-
-                        # Process rows
-                        batch_max_time = {}
-                        for guid, object_format, doc_id, modified_time, amn in rows:
-                            try:
-                                logger.debug(f"Start to process {guid}:")
-                                # docId retry logic
-                                if object_format in non_data_formats and not doc_id:
-                                    doc_id = lookup_docid_with_retry(conn, guid)
-                                # After multiple retries, we have to skip it if the docid still
-                                # cannot be found
-                                if object_format in non_data_formats and not doc_id:
-                                    logger.info(f"Skipping guid {guid}: doc_id not found after {DOCID_MAX_RETRIES} retries")
-                                    # Event though the guid is skipped, we still need to set its
-                                    # date as the last modified_time
-                                    batch_max_time[amn] = max(batch_max_time.get(amn, modified_time),
-                                        modified_time
-                                    )
-                                    continue
-
-                                # Submit task to thread pool
-                                shutdown_event.wait(EVERY_SUBMIT_WAIT_TIME_SEC)
-                                futures.append(
-                                    executor.submit(
-                                        process_pid_wrapper,
-                                        channel_pool,
-                                        guid,
-                                        object_format,
-                                        doc_id
-                                    )
-                                )
-                                batch_max_time[amn] = max(
-                                    batch_max_time.get(amn, modified_time),
-                                    modified_time
-                                )
-                            except Exception as error:
-                                logger.error(f"[ERROR] Process {guid}: {error}")
-                finally:
-                    if conn:
-                        pg_pool.putconn(conn)
-
+                submit_index_tasks(payload, executor)
                 # Wait for all workers
                 disconnectionHappened = None
                 if futures:
@@ -778,11 +784,6 @@ def poll_and_submit_index(non_data_formats):
         if pg_pool:
             pg_pool.closeall()
 
-"""
-   Periodically to pull new modified records from the solr server and submit the RabbitMQ messages
-   to the notification service
-"""
-def poll_and_submit_notification():
 
 
 if __name__ == "__main__":
