@@ -442,7 +442,7 @@ def get_full_mn_latest_map():
     changed = False
     node_ids = get_node_ids_from_systemmetadata()
     # Loaded the map from the stored file first
-    map = load_mn_latest_map_from_file()
+    map = load_mn_latest_map_from_file(MN_STATE_FILE)
     if not map:
         # Try to get the map from solr if it can't be load from the file
         map = get_mn_latest_map_from_solr()
@@ -456,20 +456,20 @@ def get_full_mn_latest_map():
                 map[node_id] = DEFAULT_DATE
                 changed = True
     if changed:
-        save_mn_latest_map(map)
+        save_mn_latest_map(map, MN_STATE_FILE)
     return map
 
 """
 Get a  map of the node_id and latest_modification_date from the stored file. An empty map will be
 returned if the file doesn't exist, is empty, corrupted, or not well-formatted.
 """
-def load_mn_latest_map_from_file():
+def load_mn_latest_map_from_file(file_name):
     data = {}
-    if os.path.exists(MN_STATE_FILE):
+    if os.path.exists(file_name):
         try:
-            with open(MN_STATE_FILE, "r") as f:
+            with open(file_name, "r") as f:
                 data = json.load(f)
-            logger.debug(f"Loaded MN state from {MN_STATE_FILE}")
+            logger.debug(f"Loaded MN state from {file_name}")
         except Exception as e:
             logger.warning(f"[WARN] Failed to load MN state file, starting fresh: {e}")
     return data
@@ -477,14 +477,14 @@ def load_mn_latest_map_from_file():
 """
 Save the given map into a file
 """
-def save_mn_latest_map(mn_map):
-    tmp = MN_STATE_FILE + ".tmp"
+def save_mn_latest_map(mn_map, file_name):
+    tmp = file_name + ".tmp"
     with open(tmp, "w") as f:
         fcntl.flock(f, fcntl.LOCK_EX)
         json.dump(mn_map, f, indent=2, sort_keys=True)
         f.flush()
         os.fsync(f.fileno())
-    os.replace(tmp, MN_STATE_FILE)
+    os.replace(tmp, file_name)
 
 """
     Fetch DataONE format XML and return a list of formatId values
@@ -705,6 +705,11 @@ def submit_index_tasks(payload, executor):
             pg_pool.putconn(conn)
 
 """
+   Query the solr service and submit the notification tasks
+"""
+def submit_notification_tasks(payload, executor):
+
+"""
    Periodically to pull new modified records from the systemmetadata table and submit the index
    tasks for them; Also pull new modified records from Solr and submit the notification.
 """
@@ -763,7 +768,7 @@ def poll_and_submit(non_data_formats):
                     continue
                 for amn, ts in batch_max_time.items():
                     mn_latest_map[amn] = ts.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-                save_mn_latest_map(mn_latest_map)
+                save_mn_latest_map(mn_latest_map, MN_STATE_FILE)
                 logger.info("Cycle completed.")
 
             except KeyboardInterrupt:
