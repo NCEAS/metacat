@@ -26,7 +26,7 @@ import xml.etree.ElementTree as ET
 
 from amqpstorm import Connection, AMQPError, AMQPConnectionError, AMQPChannelError
 from concurrent.futures import wait, ALL_COMPLETED
-from datetime import datetime
+from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from psycopg2 import pool
@@ -457,6 +457,28 @@ def get_full_mn_latest_map():
                 changed = True
     if changed:
         save_mn_latest_map(map, MN_STATE_FILE)
+    return map
+
+"""
+Get a full map of the node_id and latest_modification_date by checking the stored file, and the full node_id list.
+"""
+def get_notification_mn_latest_map():
+    changed = False
+    node_ids = get_node_ids_from_systemmetadata()
+    # Loaded the map from the stored file first
+    map = load_mn_latest_map_from_file(MN_NOTIFICATION_STATE_FILE)
+    if not map:
+       map = {}
+       changed = True
+    # Check if all node_id in the systemmetadata table is in the map. If not, add it.
+    # This can handle a fresh start as well.
+    for node_id in node_ids:
+            if node_id not in map:
+                logger.debug(f"Adding missing node: {node_id} to the map of node_id and latest_modification_date in {MN_NOTIFICATION_STATE_FILE}")
+                map[node_id] = datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+                changed = True
+    if changed:
+        save_mn_latest_map(map, MN_NOTIFICATION_STATE_FILE)
     return map
 
 """
