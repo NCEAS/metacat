@@ -706,9 +706,9 @@ def submit_index_tasks(payload, executor):
 
 """
    Periodically to pull new modified records from the systemmetadata table and submit the index
-   tasks for them
+   tasks for them; Also pull new modified records from Solr and submit the notification.
 """
-def poll_and_submit_index(non_data_formats):
+def poll_and_submit(non_data_formats):
     worker_timeout_sec = MAX_ROWS/MAX_WORKERS * 0.25
     logger.debug(f"The timeout for workers to completed jobs for a batch is {worker_timeout_sec}")
 
@@ -807,4 +807,4 @@ if __name__ == "__main__":
                 logger.error(f"[ERROR] AMQPStorm error while initializing the RabbitMQ channel pool: {amqp_err}. It will retry again.")
                 # Sleep 10 seconds
                 time.sleep(10)
-    poll_and_submit_index(non_data_formats)
+    poll_and_submit(non_data_formats)
