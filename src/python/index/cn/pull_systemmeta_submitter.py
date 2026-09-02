@@ -648,6 +648,8 @@ def submit_index_tasks(payload, executor):
     global channel_pool
     global futures
     futures = []
+    global batch_max_time
+    batch_max_time = {}
     if not ENABLE_INDEXER:
         logger.debug("The index submission is disabled.")
         return
@@ -686,8 +688,6 @@ def submit_index_tasks(payload, executor):
                 return
 
             # Process rows
-            global batch_max_time
-            batch_max_time = {}
             for guid, object_format, doc_id, modified_time, amn in rows:
                 try:
                     logger.debug(f"Start to process {guid}:")
