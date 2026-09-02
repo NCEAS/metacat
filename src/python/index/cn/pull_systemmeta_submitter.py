@@ -729,7 +729,54 @@ def submit_index_tasks(payload, executor):
 """
    Query the solr service and submit the notification tasks
 """
-# def submit_notification_tasks(payload, executor):
+def submit_notification_tasks(notification_mn_latest_map, executor):
+    # Build the MN/date conditions.
+    mn_queries = []
+    for mn, date_modified in notification_mn_latest_map.items():
+        mn_queries.append(
+            f'(authoritativeMN:"{mn}" '
+            f'AND dateModified:{{{date_modified} TO *}})'
+        )
+    if not mn_queries:
+        return
+    # Combine all MN/date conditions with OR.
+    mn_date_query = "(" + " OR ".join(mn_queries) + ")"
+    # Add the common conditions.
+    q = (
+        f"{mn_date_query} "
+        "AND obsoletedBy:[* TO *] "
+        'AND (formatType:"RESOURCE" OR formatType:"METADATA")'
+    )
+    # cursorMark requires a deterministic sort.
+    params = {
+        "q": q,
+        "fl": "id,authoritativeMN",
+        "sort": "id asc",
+        "cursorMark": "*",
+        "rows": 1000,
+    }
+    while True:
+        response = requests.post(
+            SOLR_URL + "/select",
+            data=params,
+            timeout=60,
+        )
+        response.raise_for_status()
+        result = response.json()
+        documents = result["response"]["docs"]
+        # Process this batch.
+        for doc in documents:
+            print(
+                f"id={doc.get('id')}, "
+                f"authoritativeMN={doc.get('authoritativeMN')}"
+            )
+        # Solr returns the cursor to use for the next request.
+        next_cursor_mark = result["nextCursorMark"]
+        # No more results.
+        if next_cursor_mark == params["cursorMark"]:
+            break
+        # Use the returned cursor for the next batch.
+        params["cursorMark"] = next_cursor_mark
 
 """
    Periodically to pull new modified records from the systemmetadata table and submit the index
@@ -767,8 +814,8 @@ def poll_and_submit(non_data_formats):
                     for k, v in mn_latest_map.items()
                 ])
                 submit_index_tasks(payload, executor)
-
                 notification_mn_latest_map = get_notification_mn_latest_map()
+                submit_notification_tasks(notification_mn_latest_map, executor)
                 # Wait for all workers
                 disconnectionHappened = None
                 if futures:
