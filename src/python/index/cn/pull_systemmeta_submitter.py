@@ -468,8 +468,8 @@ def get_notification_mn_latest_map():
     # Loaded the map from the stored file first
     map = load_mn_latest_map_from_file(MN_NOTIFICATION_STATE_FILE)
     if not map:
-       map = {}
-       changed = True
+        map = {}
+        changed = True
     # Check if all node_id in the systemmetadata table is in the map. If not, add it.
     # This can handle a fresh start as well.
     for node_id in node_ids:
@@ -729,7 +729,7 @@ def submit_index_tasks(payload, executor):
 """
    Query the solr service and submit the notification tasks
 """
-def submit_notification_tasks(payload, executor):
+# def submit_notification_tasks(payload, executor):
 
 """
    Periodically to pull new modified records from the systemmetadata table and submit the index
@@ -767,6 +767,8 @@ def poll_and_submit(non_data_formats):
                     for k, v in mn_latest_map.items()
                 ])
                 submit_index_tasks(payload, executor)
+
+                notification_mn_latest_map = get_notification_mn_latest_map()
                 # Wait for all workers
                 disconnectionHappened = None
                 if futures:
