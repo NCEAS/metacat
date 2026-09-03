@@ -21,7 +21,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: "4.3.1-interim"  # pre-official-release, for migrating nceas clusters to traefik
+version: "4.3.1-interim"  # pre-official-release chart, for migrating nceas clusters to traefik
 
 icon: https://github.com/NCEAS/metacat/blob/develop/docs/dev/images/metacat-logo.png
 
