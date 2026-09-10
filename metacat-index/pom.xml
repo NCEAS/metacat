@@ -10,7 +10,7 @@
 
     <properties>
         <metacat_common_version>3.5.1</metacat_common_version>
-        <dataone_indexer_version>3.4.0</dataone_indexer_version>
+        <dataone_indexer_version>3.4.1</dataone_indexer_version>
     </properties>
 
     <repositories>
