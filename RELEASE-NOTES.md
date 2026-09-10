@@ -31,6 +31,7 @@ Metacat 3.5.1 is a patch release with several DOI/DataCite metadata improvements
 - Added a caution note to the Configuration documentation](docs/user/metacat/source/configuration.rst) regarding the hashstore upgrade/conversion process: since it creates hard links, `/var/metacat/hashstore` must be on the same filesystem as `/var/metacat/data` and `/var/metacat/documents`, or the conversion will fail
 
 ### Dependency Updates
+- Upgrade dataone-indexer to the newest version (3.4.1)
 - Upgrade d1_common_java to 2.5.1 and d1_libclient_java to 2.4.1
 - Upgrade log4j to 2.26.1
 - Upgrade PostgreSQL JDBC driver to 42.7.13
