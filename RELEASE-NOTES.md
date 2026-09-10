@@ -13,6 +13,42 @@
 >    - CloudNative PG Operator to deploy your PostgreSQL cluster - see [Appendix 5 of the helm/README.md](./helm/README.md#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg)
 >    - RabbitMQ Cluster Operator to deploy your RabbitMQ cluster - see [Appendix 6 of the helm/README.md](./helm/README.md#appendix-6-the-rabbitmq-cluster-operator)
 
+## Release Notes for Metacat 3.5.1
+
+**Release date: @TODO **
+
+Metacat 3.5.1 is a patch release with several DOI/DataCite metadata improvements, bug fixes, and dependency updates:
+
+### New Features
+- Added version history to DataCite metadata: `relatedIdentifiers` entries (`IsNewVersionOf`, `IsPreviousVersionOf`, `IsVersionOf`, `HasVersion`) are now included for the `obsoletes`, `obsoletedBy`, and series id (`sid`) relationships of a data or metadata object
+- The DataCite document is now re-registered/updated for the obsoleted object whenever a new version is created, so that its version chain information stays current
+
+### Bug Fixes
+- Fixed `MNode.getPackage()` (used by the `download` endpoint) so that a missing/deleted data or science metadata object no longer causes the whole download package (bag) to fail; the missing object is now logged and excluded from the package instead
+- If `MNode.getPackage()` fails, the error is now returned to the client as a zip file containing a text file describing the error, rather than an unhandled server error
+- Fixed a character-encoding bug in the multipart request resolver, which could corrupt non-ASCII form field values submitted in multipart requests
+- Made `DocumentUtil.generateDocumentId()` thread-safe (`synchronized`), to prevent a potential race condition when generating new document ids
+- Added a caution note to the Configuration documentation](docs/user/metacat/source/configuration.rst) regarding the hashstore upgrade/conversion process: since it creates hard links, `/var/metacat/hashstore` must be on the same filesystem as `/var/metacat/data` and `/var/metacat/documents`, or the conversion will fail
+
+### Dependency Updates
+- Upgrade dataone-indexer to the newest version (3.4.1)
+- Upgrade d1_common_java to 2.5.1 and d1_libclient_java to 2.4.1
+- Upgrade log4j to 2.26.1
+- Upgrade PostgreSQL JDBC driver to 42.7.13
+- Upgrade RabbitMQ amqp-client to 5.34.0
+
+## Release Notes for Helm Chart 4.3.2
+
+**Release date: @TODO **
+
+In addition to deploying the newest Metacat version, this chart release fixes several issues with the Traefik Ingress support that was introduced in chart-4.3.0, and improves the `ingress.defaultBackend` feature used when MetacatUI is not deployed at the root of the site.
+
+- Fixed the Traefik `middleware-chain` annotation, which was being applied at the wrong scope and so was not being picked up correctly by the ingress
+- Added a new `trailing-slash` middleware that automatically redirects requests to the MetacatUI web root to add a trailing slash (e.g. `/catalog` -> `/catalog/`), when `global.metacatUiWebRoot` is not `/`
+- Fixed and clarified the `ingress.defaultBackend` feature: it now correctly creates a catch-all route at `/` for the configured default backend service, and the chart now fails fast with a clear error message if `defaultBackend` is enabled while `global.metacatUiWebRoot` is set to `/` (which would create a routing conflict)
+- Updated the documentation and example values for `ingress.defaultBackend` in [`helm/values.yaml`](./helm/values.yaml) to clarify when and how it should be used
+- Added a `Chart.lock` file, pinning the exact versions of the `metacatui` and `dataone-indexer` sub-charts used to build/test this chart release
+
 ## Release Notes for Metacat 3.5.0
 
 **Release date: 2026-07-09**

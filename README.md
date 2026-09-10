@@ -1,10 +1,10 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 3.5.0 Release
+Version: 3.5.1 Release
 - See [Release Notes](RELEASE-NOTES.md)
 - DOI: [doi:10.18739/A2HX15T0B](https://doi.org/10.18739/A2HX15T0B)
 
-Send feedback and bugs to: 
+Send feedback and bugs to:
 
 - developers@ecoinformatics.org
 - http://github.com/NCEAS/metacat

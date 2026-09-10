@@ -1,9 +1,9 @@
 dependencies:
 - name: metacatui
   repository: oci://ghcr.io/nceas/charts
-  version: 1.0.14
+  version: 1.0.15
 - name: dataone-indexer
   repository: oci://ghcr.io/dataoneorg/charts
-  version: 2.2.0
-digest: sha256:86bdb99dd68609b5ac06476185b5d1c4b71839f606b1ecb36534f955df0e97e1
-generated: "2026-08-18T17:48:23.201541-07:00"
+  version: 2.2.1
+digest: sha256:b155fb03d65cd56d90a5bbaa9b581f8d7931c506d7508596e09dd6c10be4cec7
+generated: "2026-09-09T17:12:08.772193-07:00"
