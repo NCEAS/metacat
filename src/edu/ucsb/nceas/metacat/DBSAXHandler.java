@@ -52,7 +52,7 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class DBSAXHandler extends DefaultHandler implements LexicalHandler, DeclHandler {
     public final static long NODE_ID = -1;
-    
+    private boolean rejectDoctypeDecl = true;
     protected boolean atFirstElement;
 
     protected boolean processingDTD;
@@ -88,6 +88,14 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
      */
     public DBSAXHandler() {
 
+    }
+
+    /**
+     * Set whether to reject the DOCTYPE declaration.
+     * @param rejectDoctypeDecl true to reject the DOCTYPE declaration; false otherwise
+     */
+    public void setRejectDoctypeDecl(boolean rejectDoctypeDecl) {
+        this.rejectDoctypeDecl = rejectDoctypeDecl;
     }
 
     /** SAX Handler that receives notification of beginning of the document */
@@ -232,12 +240,13 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
 
     /** SAX Handler that receives notification of DOCTYPE. Sets the DTD */
     public void startDTD(String name, String publicId, String systemId)
-            throws SAXException
-    {
+            throws SAXException {
+        if (rejectDoctypeDecl) {
+            throw new SAXException("DOCTYPE declarations are not allowed in metadata documents.");
+        }
         docname = name;
         doctype = publicId;
         systemid = systemId;
-
         processingDTD = true;
         logMetacat.trace("DBSaxHandler.startDTD - Start DTD");
         logMetacat.trace("DBSaxHandler.startDTD - Setting processingDTD to true");

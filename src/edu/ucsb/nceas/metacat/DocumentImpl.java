@@ -1116,12 +1116,11 @@ public class DocumentImpl {
         parser.setFeature("http://xml.org/sax/features/external-general-entities", false);
         parser.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
         parser.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-        // DTDs are not required for non-DTD documents.
-        // Reject DOCTYPE declarations to prevent XXE attacks.
-        if (ruleBase== null || !ruleBase.equals(DTD)) {
-            parser.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        }
         handler = new DBSAXHandler();
+        // Reject DOCTYPE declarations in non-DTD documents.
+        // Legacy DTD documents are allowed to contain a DOCTYPE.
+        // This provides an additional defense against XXE attacks.
+        handler.setRejectDoctypeDecl(ruleBase == null || !ruleBase.equals(DTD));
         parser.setContentHandler(handler);
         parser.setErrorHandler(handler);
         parser.setProperty(DECLARATIONHANDLERPROPERTY, handler);
