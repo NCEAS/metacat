@@ -1113,6 +1113,13 @@ public class DocumentImpl {
         parser = XMLReaderFactory.createXMLReader(parserName);
          //XML security settings
          //These settings prevent external entity expansion and enable secure XML processing.
+        // We don't set the "http://apache.org/xml/features/disallow-doctype-decl"
+        // feature to true because it would block DOCTYPE declarations everywhere,
+        // including in imported schema files. A Dryad document would then fail to
+        // upload because one of its imported schemas contains a DOCTYPE declaration.
+        // Instead, we use DBSAXHandler.startDTD() to reject DOCTYPE declarations
+        // in the original XML document for schema-based and non-schema documents,
+        // while preserving support for legacy DTD documents.
         parser.setFeature("http://xml.org/sax/features/external-general-entities", false);
         parser.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
         parser.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
