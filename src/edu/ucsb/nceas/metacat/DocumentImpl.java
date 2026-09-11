@@ -1111,6 +1111,16 @@ public class DocumentImpl {
         // Get an instance of the parser
         String parserName = PropertyService.getProperty("xml.saxparser");
         parser = XMLReaderFactory.createXMLReader(parserName);
+         //XML security settings
+         //These settings prevent external entity expansion and enable secure XML processing.
+        parser.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        parser.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        parser.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        // DTDs are not required for non-DTD documents.
+        // Reject DOCTYPE declarations to prevent XXE attacks.
+        if (ruleBase== null || !ruleBase.equals(DTD)) {
+            parser.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        }
         handler = new DBSAXHandler();
         parser.setContentHandler(handler);
         parser.setErrorHandler(handler);
