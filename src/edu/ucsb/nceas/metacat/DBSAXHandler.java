@@ -127,7 +127,10 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
         logMetacat.trace("DBSaxHandler.startElement - Start ELEMENT(qName) " + qName);
         logMetacat.trace("DBSaxHandler.startElement - Start ELEMENT(localName) " + localName);
         logMetacat.trace("DBSaxHandler.startElement - Start ELEMENT(uri) " + uri);
-        
+        if ("http://www.w3.org/2001/XInclude".equals(uri) && "include".equals(localName)) {
+            throw new SAXException(
+                "XInclude elements are not allowed in metadata documents.");
+        }
         // Document representation that points to the root document node
         if (atFirstElement) {
             atFirstElement = false;
