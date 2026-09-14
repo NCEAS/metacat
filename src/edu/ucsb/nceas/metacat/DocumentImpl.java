@@ -1123,6 +1123,7 @@ public class DocumentImpl {
         parser.setFeature("http://xml.org/sax/features/external-general-entities", false);
         parser.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
         parser.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        parser.setFeature("http://apache.org/xml/features/xinclude", false);
         handler = new DBSAXHandler();
         // Reject DOCTYPE declarations in non-DTD documents.
         // Legacy DTD documents are allowed to contain a DOCTYPE.
