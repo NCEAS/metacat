@@ -47,6 +47,7 @@ import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.apache.xerces.util.SecurityManager;
 import org.xml.sax.DTDHandler;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.SAXException;
@@ -1124,6 +1125,9 @@ public class DocumentImpl {
         parser.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
         parser.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
         parser.setFeature("http://apache.org/xml/features/xinclude", false);
+        SecurityManager securityManager = new SecurityManager();
+        securityManager.setEntityExpansionLimit(50000);
+        parser.setProperty("http://apache.org/xml/properties/security-manager", securityManager);
         handler = new DBSAXHandler();
         // Reject DOCTYPE declarations in non-DTD documents.
         // Legacy DTD documents are allowed to contain a DOCTYPE.
