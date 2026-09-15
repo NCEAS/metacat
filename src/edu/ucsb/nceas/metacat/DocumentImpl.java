@@ -1113,7 +1113,8 @@ public class DocumentImpl {
         String parserName = PropertyService.getProperty("xml.saxparser");
         parser = XMLReaderFactory.createXMLReader(parserName);
          //XML security settings
-         //These settings prevent external entity expansion and enable secure XML processing.
+        // Disable external entity resolution, external DTD loading, and XInclude,
+        // and limit entity expansion to protect against XXE and entity-expansion attacks.
         // We don't set the "http://apache.org/xml/features/disallow-doctype-decl"
         // feature to true because it would block DOCTYPE declarations everywhere,
         // including in imported schema files. A Dryad document would then fail to
@@ -1128,6 +1129,7 @@ public class DocumentImpl {
         SecurityManager securityManager = new SecurityManager();
         securityManager.setEntityExpansionLimit(50000);
         parser.setProperty("http://apache.org/xml/properties/security-manager", securityManager);
+        parser.setFeature(NAMESPACEFEATURE, true);
         handler = new DBSAXHandler();
         // Reject DOCTYPE declarations in non-DTD documents.
         // Legacy DTD documents are allowed to contain a DOCTYPE.
@@ -1145,7 +1147,6 @@ public class DocumentImpl {
             logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
             // turn on schema validation feature
             parser.setFeature(VALIDATIONFEATURE, true);
-            parser.setFeature(NAMESPACEFEATURE, true);
             parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
 
             boolean allSchemasRegistered = XMLSchemaService.areAllSchemasRegistered(schemaList);
@@ -1167,7 +1168,6 @@ public class DocumentImpl {
             logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
             // turn on schema validation feature
             parser.setFeature(VALIDATIONFEATURE, true);
-            parser.setFeature(NAMESPACEFEATURE, true);
             parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
             logMetacat.info(
                 "DocumentImpl.initalizeParser - Generic external no-namespace schema location: "
@@ -1192,10 +1192,10 @@ public class DocumentImpl {
             logMetacat.info("DocumentImpl.initalizeParser - Using other parser");
             // non validation
             parser.setFeature(VALIDATIONFEATURE, false);
-            eresolver = new DBEntityResolver((DBSAXHandler) handler, dtd);
+            eresolver = new DBEntityResolver(handler, dtd);
             dtdhandler = new DBDTDHandler();
-            parser.setEntityResolver((EntityResolver) eresolver);
-            parser.setDTDHandler((DTDHandler) dtdhandler);
+            parser.setEntityResolver(eresolver);
+            parser.setDTDHandler(dtdhandler);
         }
         return parser;
     }
