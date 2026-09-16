@@ -1184,10 +1184,10 @@ public class DocumentImpl {
             logMetacat.info("DocumentImpl.initalizeParser - Using dtd parser");
             // turn on dtd validaton feature
             parser.setFeature(VALIDATIONFEATURE, true);
-            eresolver = new DBEntityResolver((DBSAXHandler) handler, dtd);
+            eresolver = new DBEntityResolver(handler, dtd);
             dtdhandler = new DBDTDHandler();
-            parser.setEntityResolver((EntityResolver) eresolver);
-            parser.setDTDHandler((DTDHandler) dtdhandler);
+            parser.setEntityResolver(eresolver);
+            parser.setDTDHandler(dtdhandler);
         } else {
             logMetacat.info("DocumentImpl.initalizeParser - Using other parser");
             // non validation
