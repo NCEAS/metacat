@@ -1112,7 +1112,7 @@ public class DocumentImpl {
         // Get an instance of the parser
         String parserName = PropertyService.getProperty("xml.saxparser");
         parser = XMLReaderFactory.createXMLReader(parserName);
-         //XML security settings
+        //XML security settings
         // Disable external entity resolution, external DTD loading, and XInclude,
         // and limit entity expansion to protect against XXE and entity-expansion attacks.
         // We don't set the "http://apache.org/xml/features/disallow-doctype-decl"

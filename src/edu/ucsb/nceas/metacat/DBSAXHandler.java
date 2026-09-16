@@ -340,6 +340,8 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
         // it processes other external entity, not the DTD;
         // it doesn't signal for the DTD here
         processingDTD = false;
+        throw new SAXException("External entity '" + name
+                                   + "' is not allowed in metadata documents.");
     }
 
     /**
