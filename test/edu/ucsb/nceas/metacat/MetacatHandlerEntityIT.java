@@ -231,6 +231,61 @@ public class MetacatHandlerEntityIT {
         }
     }
 
+    /**
+     * Test the EML 2.2.0 XML documents containing internal entity expansion
+     * @throws Exception
+     */
+    @Test
+    public void testEML2InternalEntityExpansion() throws Exception {
+        String xml = Files.readString(
+            Path.of("test/resources/external-entity/eml2-with-internal-entity-expansion.xml"),
+            StandardCharsets.UTF_8);
+        // Replace the placeholder port with the dynamically allocated port.
+        xml = xml.replace(DEFAULT_SERVER, LOCAL_HOST + port);
+        InputStream stream = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
+        try (MockedStatic<MetacatHandler> mocked = Mockito.mockStatic(MetacatHandler.class,
+                                                                      Mockito.CALLS_REAL_METHODS)) {
+            // Mock only read(), regardless of the pid
+            mocked.when(() -> MetacatHandler.read(Mockito.any(Identifier.class)))
+                .thenReturn(stream);
+            Exception exception = assertThrows(
+                Exception.class,
+                () -> handler.validateXmlSciMeta(pid, EML220));
+            // The handler should reject the XML document
+            assertTrue(exception.getMessage().contains("DOCTYPE is disallowed"));
+            // No http request (in the external entity)
+            assertEquals(0, requestCount.get(), "The external HTTP entity must not be accessed");
+        }
+    }
+
+    /**
+     * Test the EML beta 6 XML documents containing internal entity expansion
+     * @throws Exception
+     */
+    @Test
+    public void testEMLBeta6InternalEntityExpansion() throws Exception {
+        String xml = Files.readString(
+            Path.of("test/resources/external-entity/emlbeta-with-entity-expansion.xml"),
+            StandardCharsets.UTF_8);
+        // Replace the placeholder port with the dynamically allocated port.
+        xml = xml.replace(DEFAULT_SERVER, LOCAL_HOST + port);
+        InputStream stream = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
+        try (MockedStatic<MetacatHandler> mocked = Mockito.mockStatic(MetacatHandler.class,
+                                                                      Mockito.CALLS_REAL_METHODS)) {
+            // Mock only read(), regardless of the pid
+            mocked.when(() -> MetacatHandler.read(Mockito.any(Identifier.class)))
+                .thenReturn(stream);
+            Exception exception = assertThrows(
+                Exception.class,
+                () -> handler.validateXmlSciMeta(pid, EMLBETA6));
+            // The handler should reject the XML document
+            assertTrue(exception.getMessage().contains("Invalid metadata: Fatal processing error"));
+            // No http request (in the external entity)
+            assertEquals(0, requestCount.get(), "The external HTTP entity must not be accessed");
+        }
+    }
+
+
     @After
     public void tearDown() {
         if (server != null) {
