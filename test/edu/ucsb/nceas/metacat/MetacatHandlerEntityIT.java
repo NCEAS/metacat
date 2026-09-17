@@ -74,7 +74,8 @@ public class MetacatHandlerEntityIT {
     }
 
     /**
-     * Test the EML 2.2.0 XML documents containing the external general entities
+     * Test the EML 2.2.0 XML documents containing the external general entities.
+     * Metacat should reject it and no http requests are made.
      * @throws Exception
      */
     @Test
@@ -97,7 +98,7 @@ public class MetacatHandlerEntityIT {
             assertTrue(exception.getMessage().contains("DOCTYPE is disallowed"));
             // No http request (in the external entity)
             assertEquals("The external HTTP entity must not be accessed", 0, requestCount.get());
-            // Make sure an http request will be counted
+            // Make sure an http request will be counted by explicit calling
             URL url = new URL("http://" + LOCAL_HOST+ port +"/test.txt");
             try (InputStream inputStream = url.openStream()){
                 //Do nothing
@@ -110,6 +111,7 @@ public class MetacatHandlerEntityIT {
 
     /**
      * Test the EML beta 6 XML documents containing the external general entities
+     * Metacat should reject it and no http requests are made.
      * @throws Exception
      */
     @Test
@@ -137,6 +139,7 @@ public class MetacatHandlerEntityIT {
 
     /**
      * Test the EML 2.2.0 XML documents containing the external parameter entities
+     * Metacat should reject it and no http requests are made.
      * @throws Exception
      */
     @Test
@@ -164,6 +167,7 @@ public class MetacatHandlerEntityIT {
 
     /**
      * Test the EML beta 6 XML documents containing the external parameter entities
+     * Metacat should reject it and no http requests are made.
      * @throws Exception
      */
     @Test
@@ -191,6 +195,7 @@ public class MetacatHandlerEntityIT {
 
     /**
      * Test the EML 2.2.0 XML documents containing the external dtd
+     * Metacat should reject it and no http requests are made.
      * @throws Exception
      */
     @Test
@@ -211,9 +216,9 @@ public class MetacatHandlerEntityIT {
                 () -> handler.validateXmlSciMeta(pid, EML220));
             // The handler should reject the XML document
             assertTrue(exception.getMessage().contains("Invalid metadata: The doctype: eml:eml"));
-            // No http request (in the external entity)
+            // No http request
             assertEquals("The external HTTP DTD must not be accessed", 0, requestCount.get());
-            // Make sure an http request will be counted
+            // Make sure an http request will be counted by an explicit calling
             URL url = new URL("http://" + LOCAL_HOST+ port +"/test.dtd");
             try (InputStream inputStream = url.openStream()){
                 //Do nothing
@@ -226,10 +231,11 @@ public class MetacatHandlerEntityIT {
 
     /**
      * Test the EML beta 6 XML documents containing the external untrusted dtd
+     * Metacat should reject it and no http requests are made.
      * @throws Exception
      */
     @Test
-    public void testEMLBeta6ExternalUntrustedDTD() throws Exception {
+    public void testEMLBeta6UntrustedExternalDTD() throws Exception {
         String xml = Files.readString(
             Path.of("test/resources/external-entity/emlbeta-with-untrusted-external-dtd.xml"),
             StandardCharsets.UTF_8);
@@ -253,6 +259,7 @@ public class MetacatHandlerEntityIT {
 
     /**
      * Test the EML 2.2.0 XML documents containing internal entity expansion
+     * Metacat should reject it and no http requests are made.
      * @throws Exception
      */
     @Test
@@ -280,6 +287,7 @@ public class MetacatHandlerEntityIT {
 
     /**
      * Test the EML beta 6 XML documents containing internal entity expansion
+     * Metacat should reject it and no http requests are made.
      * @throws Exception
      */
     @Test
@@ -427,7 +435,7 @@ public class MetacatHandlerEntityIT {
 
     /**
      * Test the EML 2.2.0 XML documents containing an external schema location with the
-     * namespace being registered in Metacat.
+     * namespace being registered in Metacat. Metacat should accept it but without an http request.
      * @throws Exception
      */
     @Test
@@ -446,7 +454,7 @@ public class MetacatHandlerEntityIT {
             // No exception should throw.
             handler.validateXmlSciMeta(pid, EML220);
             // No http request (in the external entity)
-            assertEquals("The external HTTP entity must not be accessed", 0, requestCount.get());
+            assertEquals("The external HTTP schema must not be accessed", 0, requestCount.get());
             // Make sure an http request will be counted
             URL url = new URL("http://" + LOCAL_HOST+ port +"/test.xsd");
             try (InputStream inputStream = url.openStream()){
@@ -460,7 +468,7 @@ public class MetacatHandlerEntityIT {
 
     /**
      * Test an XML documents containing an external schema whose namespace is NOT
-     * registered in Metacat.
+     * registered in Metacat. Metacat should reject it and no http requests are made.
      * @throws Exception
      */
     @Test
@@ -482,7 +490,7 @@ public class MetacatHandlerEntityIT {
             // The handler should reject the XML document
             assertTrue(exception.getMessage().contains("are not registered in the Metacat"));
             // No http request (in the external entity)
-            assertEquals("The external HTTP entity must not be accessed", 0, requestCount.get());
+            assertEquals("The external HTTP schema must not be accessed", 0, requestCount.get());
             // Make sure an http request will be counted
             URL url = new URL("http://" + LOCAL_HOST+ port +"/test.xsd");
             try (InputStream inputStream = url.openStream()){
