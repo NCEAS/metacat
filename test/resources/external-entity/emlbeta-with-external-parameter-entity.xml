@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!DOCTYPE dataset PUBLIC "-//ecoinformatics.org//eml-dataset-2.0.0beta6//EN" "http://metacat.nceas.ucsb.edu/metacat/dtd/eml-dataset-2.0.0beta6.dtd" [
-  <!ENTITY % testParameterEntity SYSTEM "https://mn-sandbox-ucsb-2.test.dataone.org/knb/d1/mn/v2/should-not-be-accessed.dtd">
+  <!ENTITY % testParameterEntity SYSTEM "http://localhost:18999/test.txt">
 
 %testParameterEntity;
 ]> <dataset> <identifier>jones.204.22</identifier>

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!DOCTYPE dataset SYSTEM "https://mn-sandbox-ucsb-2.test.dataone.org/knb/d1/mn/v2/untrusted.dtd">
+<!DOCTYPE dataset SYSTEM "http://localhost:18999/test.dtd">
 <dataset>
   <identifier>jones.204.22</identifier>
   <title>This is an untrusted external DTD test</title>

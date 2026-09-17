@@ -50,12 +50,17 @@ public class MetacatHandlerEntityIT {
             exchange.sendResponseHeaders(200, 0);
             exchange.close();
         });
+        server.createContext("/test.dtd", exchange -> {
+            requestCount.incrementAndGet();
+            exchange.sendResponseHeaders(200, 0);
+            exchange.close();
+        });
         server.start();
         port = server.getAddress().getPort();
     }
 
     /**
-     * Test the EML 2.2.0 XML documents containing the external entities
+     * Test the EML 2.2.0 XML documents containing the external general entities
      * @throws Exception
      */
     @Test
@@ -87,7 +92,7 @@ public class MetacatHandlerEntityIT {
     }
 
     /**
-     * Test the EML beta 6 XML documents containing the external entities
+     * Test the EML beta 6 XML documents containing the external general entities
      * @throws Exception
      */
     @Test
@@ -110,6 +115,119 @@ public class MetacatHandlerEntityIT {
             assertTrue(exception.getMessage().contains("DOCTYPE is disallowed"));
             // No http request (in the external entity)
             assertEquals(0, requestCount.get(), "The external HTTP entity must not be accessed");
+        }
+    }
+
+    /**
+     * Test the EML 2.2.0 XML documents containing the external parameter entities
+     * @throws Exception
+     */
+    @Test
+    public void testEML2ExternalParameterEntity() throws Exception {
+        String xml = Files.readString(
+            Path.of("test/resources/external-entity/eml2-with-external-parameter-entity.xml"),
+            StandardCharsets.UTF_8);
+        // Replace the placeholder port with the dynamically allocated port.
+        xml = xml.replace(DEFAULT_SERVER, LOCAL_HOST + port);
+        InputStream stream = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
+        try (MockedStatic<MetacatHandler> mocked = Mockito.mockStatic(MetacatHandler.class,
+                                                                      Mockito.CALLS_REAL_METHODS)) {
+            // Mock only read(), regardless of the pid
+            mocked.when(() -> MetacatHandler.read(Mockito.any(Identifier.class)))
+                .thenReturn(stream);
+            Exception exception = assertThrows(
+                Exception.class,
+                () -> handler.validateXmlSciMeta(pid, EML220));
+            // The handler should reject the XML document
+            assertTrue(exception.getMessage().contains("DOCTYPE is disallowed"));
+            // No http request (in the external entity)
+            assertEquals(0, requestCount.get(), "The external HTTP entity must not be accessed");
+        }
+    }
+
+    /**
+     * Test the EML beta 6 XML documents containing the external parameter entities
+     * @throws Exception
+     */
+    @Test
+    public void testEMLBeta6ExternalParameterEntity() throws Exception {
+        String xml = Files.readString(
+            Path.of("test/resources/external-entity/emlbeta-with-external-parameter-entity.xml"),
+            StandardCharsets.UTF_8);
+        // Replace the placeholder port with the dynamically allocated port.
+        xml = xml.replace(DEFAULT_SERVER, LOCAL_HOST + port);
+        InputStream stream = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
+        try (MockedStatic<MetacatHandler> mocked = Mockito.mockStatic(MetacatHandler.class,
+                                                                      Mockito.CALLS_REAL_METHODS)) {
+            // Mock only read(), regardless of the pid
+            mocked.when(() -> MetacatHandler.read(Mockito.any(Identifier.class)))
+                .thenReturn(stream);
+            Exception exception = assertThrows(
+                Exception.class,
+                () -> handler.validateXmlSciMeta(pid, EMLBETA6));
+            // The handler should reject the XML document
+            assertTrue(exception.getMessage().contains("DOCTYPE is disallowed"));
+            // No http request (in the external entity)
+            assertEquals(0, requestCount.get(), "The external HTTP entity must not be accessed");
+        }
+    }
+
+    /**
+     * Test the EML 2.2.0 XML documents containing the external dtd
+     * @throws Exception
+     */
+    @Test
+    public void testEML2ExternalDTD() throws Exception {
+        String xml = Files.readString(
+            Path.of("test/resources/external-entity/eml2-with-external-dtd.xml"),
+            StandardCharsets.UTF_8);
+        // Replace the placeholder port with the dynamically allocated port.
+        xml = xml.replace(DEFAULT_SERVER, LOCAL_HOST + port);
+        InputStream stream = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
+        try (MockedStatic<MetacatHandler> mocked = Mockito.mockStatic(MetacatHandler.class,
+                                                                      Mockito.CALLS_REAL_METHODS)) {
+            // Mock only read(), regardless of the pid
+            mocked.when(() -> MetacatHandler.read(Mockito.any(Identifier.class)))
+                .thenReturn(stream);
+            Exception exception = assertThrows(
+                Exception.class,
+                () -> handler.validateXmlSciMeta(pid, EML220));
+            // The handler should reject the XML document
+            assertTrue(exception.getMessage().contains("Invalid metadata: The doctype: eml:eml"));
+            // No http request (in the external entity)
+            assertEquals(0, requestCount.get(), "The external HTTP DTD must not be accessed");
+            // Make sure an http request will be counted
+            URL url = new URL("http://" + LOCAL_HOST+ port +"/test.dtd");
+            url.openStream();
+            assertEquals(1, requestCount.get(), "The server access number should increase to 1 "
+                + "after a specific access.");
+        }
+    }
+
+    /**
+     * Test the EML beta 6 XML documents containing the external untrusted dtd
+     * @throws Exception
+     */
+    @Test
+    public void testEMLBeta6ExternalUntrustedDTD() throws Exception {
+        String xml = Files.readString(
+            Path.of("test/resources/external-entity/emlbeta-with-untrusted-external-dtd.xml"),
+            StandardCharsets.UTF_8);
+        // Replace the placeholder port with the dynamically allocated port.
+        xml = xml.replace(DEFAULT_SERVER, LOCAL_HOST + port);
+        InputStream stream = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
+        try (MockedStatic<MetacatHandler> mocked = Mockito.mockStatic(MetacatHandler.class,
+                                                                      Mockito.CALLS_REAL_METHODS)) {
+            // Mock only read(), regardless of the pid
+            mocked.when(() -> MetacatHandler.read(Mockito.any(Identifier.class)))
+                .thenReturn(stream);
+            Exception exception = assertThrows(
+                Exception.class,
+                () -> handler.validateXmlSciMeta(pid, EMLBETA6));
+            // The handler should reject the XML document
+            assertTrue(exception.getMessage().contains("isn't registered in Metacat"));
+            // No http request (in the external entity)
+            assertEquals(0, requestCount.get(), "The external HTTP DTD must not be accessed");
         }
     }
 

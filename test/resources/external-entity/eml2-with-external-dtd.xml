@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE eml:eml SYSTEM
-    "https://mn-sandbox-ucsb-2.test.dataone.org/knb/d1/mn/v2/test.dtd">
+    "http://localhost:18999/test.dtd">
 <eml:eml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:eml="https://eml.ecoinformatics.org/eml-2.2.0" xmlns:stmml="http://www.xml-cml.org/schema/stmml-1.2" packageId="eml-test-doc" system="https://arcticdata.io" scope="system" xsi:schemaLocation="https://eml.ecoinformatics.org/eml-2.2.0 eml.xsd">
   <dataset>
     <title>EML Annotation Example</title>
