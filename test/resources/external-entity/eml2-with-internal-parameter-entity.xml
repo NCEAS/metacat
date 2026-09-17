@@ -22,15 +22,16 @@
 
     <!ELEMENT contact ANY>
 
-    <!ENTITY % name "John">
-    %name;
+    <!ENTITY % testParameterEntity
+        "<!ELEMENT testElement (#PCDATA)>">
+    %testParameterEntity;
 ]>
 <eml:eml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:eml="https://eml.ecoinformatics.org/eml-2.2.0" xmlns:stmml="http://www.xml-cml.org/schema/stmml-1.2" packageId="eml-test-doc" system="https://arcticdata.io" scope="system" xsi:schemaLocation="https://eml.ecoinformatics.org/eml-2.2.0 eml.xsd">
   <dataset>
     <title>EML Annotation Example</title>
     <creator>
       <individualName>
-        <givenName>&xxe;</givenName>
+        <givenName>John</givenName>
         <surName>Smith</surName>
       </individualName>
     </creator>

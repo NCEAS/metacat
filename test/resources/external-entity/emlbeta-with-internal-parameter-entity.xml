@@ -1,9 +1,8 @@
 <?xml version="1.0"?>
-
 <!DOCTYPE dataset PUBLIC "-//ecoinformatics.org//eml-dataset-2.0.0beta6//EN" "http://metacat.nceas.ucsb.edu/metacat/dtd/eml-dataset-2.0.0beta6.dtd" [
-  <!ENTITY % testParameterEntity  "paramter">
-
-%testParameterEntity;
+   <!ENTITY % testParameterEntity
+        "<!ELEMENT testElement (#PCDATA)>">
+    %testParameterEntity;
 ]> <dataset> <identifier>jones.204.22</identifier>
 
   <title>This is a test data set with taxonomic coverage</title>
