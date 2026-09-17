@@ -17,7 +17,7 @@
   </dataset>
   <additionalMetadata>
     <metadata>
-  		<xi:include href="https://mn-sandbox-ucsb-2.test.dataone.org/knb/d1/mn/v2/xinclude-test.xml"/>
+      <xi:include href="http://localhost:18999/test.txt"/>
   	</metadata>
   </additionalMetadata>
 </eml:eml>

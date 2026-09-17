@@ -493,4 +493,33 @@ public class MetacatHandlerEntityIT {
                 requestCount.get());
         }
     }
+
+    /**
+     * Test the EML 2.2.0 XML documents containing an XInclude namespace. Metacat should
+     * reject it and no http requests are made.
+     * @throws Exception
+     */
+    @Test
+    public void testEML2XmlInclude() throws Exception {
+        String xml = Files.readString(
+            Path.of("test/resources/external-entity/eml2-with-xml-include.xml"),
+            StandardCharsets.UTF_8);
+        // Replace the placeholder port with the dynamically allocated port.
+        xml = xml.replace(DEFAULT_SERVER, LOCAL_HOST + port);
+        InputStream stream = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
+        try (MockedStatic<MetacatHandler> mocked = Mockito.mockStatic(MetacatHandler.class,
+                                                                      Mockito.CALLS_REAL_METHODS)) {
+            // Mock only read(), regardless of the pid
+            mocked.when(() -> MetacatHandler.read(Mockito.any(Identifier.class)))
+                .thenReturn(stream);
+            Exception exception = assertThrows(
+                Exception.class,
+                () -> handler.validateXmlSciMeta(pid, EML220));
+            // The handler should reject the XML document
+            assertTrue(exception.getMessage().contains("XInclude elements are not allowed"));
+
+            // No http request
+            assertEquals("The external HTTP entity must not be accessed", 0, requestCount.get());
+        }
+    }
 }
