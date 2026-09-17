@@ -66,6 +66,13 @@ public class MetacatHandlerEntityIT {
         port = server.getAddress().getPort();
     }
 
+    @After
+    public void tearDown() {
+        if (server != null) {
+            server.stop(0);
+        }
+    }
+
     /**
      * Test the EML 2.2.0 XML documents containing the external general entities
      * @throws Exception
@@ -92,7 +99,9 @@ public class MetacatHandlerEntityIT {
             assertEquals("The external HTTP entity must not be accessed", 0, requestCount.get());
             // Make sure an http request will be counted
             URL url = new URL("http://" + LOCAL_HOST+ port +"/test.txt");
-            url.openStream();
+            try (InputStream inputStream = url.openStream()){
+                //Do nothing
+            };
             assertEquals(
                 "The server access number should increase to 1 after a specific access.", 1,
                 requestCount.get());
@@ -206,7 +215,9 @@ public class MetacatHandlerEntityIT {
             assertEquals("The external HTTP DTD must not be accessed", 0, requestCount.get());
             // Make sure an http request will be counted
             URL url = new URL("http://" + LOCAL_HOST+ port +"/test.dtd");
-            url.openStream();
+            try (InputStream inputStream = url.openStream()){
+                //Do nothing
+            };
             assertEquals(
                 "The server access number should increase to 1 after a specific access.", 1,
                 requestCount.get());
@@ -318,18 +329,13 @@ public class MetacatHandlerEntityIT {
             assertEquals("The external HTTP entity must not be accessed", 0, requestCount.get());
             // Make sure an http request will be counted
             URL url = new URL("http://" + LOCAL_HOST+ port +"/test.xsd");
-            url.openStream();
+            try (InputStream inputStream = url.openStream()){
+                //Do nothing
+            };
             assertEquals(
                 "The server access number should increase to 1 after a specific access.", 1,
                 requestCount.get());
         }
     }
 
-
-    @After
-    public void tearDown() {
-        if (server != null) {
-            server.stop(0);
-        }
-    }
 }
