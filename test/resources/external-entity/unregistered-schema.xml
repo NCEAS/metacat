@@ -5,7 +5,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="
         https://mn-sandbox-ucsb-2.test.dataone.org/unregistered/foo
-        https://mn-sandbox-ucsb-2.test.dataone.org/knb/d1/mn/v2/unregistered-test.xsd">
+        http://localhost:18999/test.xsd">
 
     <foo:title>Unregistered Schema Test</foo:title>
 

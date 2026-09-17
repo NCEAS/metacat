@@ -306,8 +306,8 @@ public class MetacatHandlerEntityIT {
     }
 
     /**
-     * Test the EML 2.2.0 XML documents containing the external schema, but the namespace is
-     * register in Metacat.
+     * Test the EML 2.2.0 XML documents containing an external schema location with the
+     * namespace being registered in Metacat.
      * @throws Exception
      */
     @Test
@@ -338,4 +338,39 @@ public class MetacatHandlerEntityIT {
         }
     }
 
+    /**
+     * Test an XML documents containing an external schema whose namespace is NOT
+     * registered in Metacat.
+     * @throws Exception
+     */
+    @Test
+    public void testUnregisteredSchema() throws Exception {
+        String xml = Files.readString(
+            Path.of("test/resources/external-entity/unregistered-schema.xml"),
+            StandardCharsets.UTF_8);
+        // Replace the placeholder port with the dynamically allocated port.
+        xml = xml.replace(DEFAULT_SERVER, LOCAL_HOST + port);
+        InputStream stream = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
+        try (MockedStatic<MetacatHandler> mocked = Mockito.mockStatic(MetacatHandler.class,
+                                                                      Mockito.CALLS_REAL_METHODS)) {
+            // Mock only read(), regardless of the pid
+            mocked.when(() -> MetacatHandler.read(Mockito.any(Identifier.class)))
+                .thenReturn(stream);
+            Exception exception = assertThrows(
+                Exception.class,
+                () -> handler.validateXmlSciMeta(pid, EMLBETA6));
+            // The handler should reject the XML document
+            assertTrue(exception.getMessage().contains("are not registered in the Metacat"));
+            // No http request (in the external entity)
+            assertEquals("The external HTTP entity must not be accessed", 0, requestCount.get());
+            // Make sure an http request will be counted
+            URL url = new URL("http://" + LOCAL_HOST+ port +"/test.xsd");
+            try (InputStream inputStream = url.openStream()){
+                //Do nothing
+            };
+            assertEquals(
+                "The server access number should increase to 1 after a specific access.", 1,
+                requestCount.get());
+        }
+    }
 }
