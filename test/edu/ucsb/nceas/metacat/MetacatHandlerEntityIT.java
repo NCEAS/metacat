@@ -12,6 +12,7 @@ import org.mockito.Mockito;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class MetacatHandlerEntityIT {
     private static final String EML220 = "https://eml.ecoinformatics.org/eml-2.2.0";
+    private static final String EMLBETA6 = "-//ecoinformatics.org//eml-dataset-2.0.0beta6//EN";
     private static final String LOCAL_HOST = "localhost:";
     private static final String DEFAULT_SERVER = LOCAL_HOST + "18999";
     private MetacatHandler handler;
@@ -76,6 +78,11 @@ public class MetacatHandlerEntityIT {
             assertTrue(exception.getMessage().contains("DOCTYPE is disallowed"));
             // No http request (in the external entity)
             assertEquals(0, requestCount.get(), "The external HTTP entity must not be accessed");
+            // Make sure an http request will be counted
+            URL url = new URL("http://" + LOCAL_HOST+ port +"/test.txt");
+            url.openStream();
+            assertEquals(1, requestCount.get(), "The server access number should increase to 1 "
+                + "after a specific access.");
         }
     }
 
@@ -98,7 +105,7 @@ public class MetacatHandlerEntityIT {
                 .thenReturn(stream);
             Exception exception = assertThrows(
                 Exception.class,
-                () -> handler.validateXmlSciMeta(pid, EML220));
+                () -> handler.validateXmlSciMeta(pid, EMLBETA6));
             // The handler should reject the XML document
             assertTrue(exception.getMessage().contains("DOCTYPE is disallowed"));
             // No http request (in the external entity)
