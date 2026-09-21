@@ -15,7 +15,7 @@
 
 ## Release Notes for Metacat 3.5.1
 
-**Release date: 2026-09-24 **
+**Release date: 2026-09-24**
 
 Metacat 3.5.1 is a patch release with a critical security update, several DOI/DataCite metadata improvements, bug fixes, and dependency updates:
 
@@ -51,7 +51,7 @@ The official CVE report will be published for the vulnerability within the next 
 
 ## Release Notes for Helm Chart 4.3.2
 
-**Release date: 2026-09-24 **
+**Release date: 2026-09-24**
 
 > [!WARNING]
 > If you are using the helm chart to deploy Metacat, we strongly advise upgrading to this version as soon as possible, since it addresses a critical security vulnerability. For details on the vulnerability and mitigation steps, please see the security advisories linked in the [Release Notes for Metacat 3.5.1](#release-notes-for-metacat-351) above.
