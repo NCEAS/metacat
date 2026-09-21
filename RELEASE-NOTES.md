@@ -17,7 +17,18 @@
 
 **Release date: 2026-09-24 **
 
-Metacat 3.5.1 is a patch release with several DOI/DataCite metadata improvements, bug fixes, and dependency updates:
+Metacat 3.5.1 is a patch release with a critical security update, several DOI/DataCite metadata improvements, bug fixes, and dependency updates:
+
+> [!WARNING]
+>
+> We strongly advise all users to upgrade to this version as soon as possible, since it addresses a critical security vulnerability affecting all previous metacat versions. For details on the vulnerabilities and mitigation steps, please see the security advisories linked below:
+
+### Security
+
+The following critical security vulnerability was reported against all versions of Metacat 3.5.0 and before:
+- **CVE Number Pending**: Addressed the XML External Entity (XXE) Attack security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-phm3-q6x2-5g25](https://github.com/NCEAS/metacat/security/advisories/GHSA-phm3-q6x2-5g25)
+
+The official CVE report will be published for the vulnerability within the next few days.
 
 ### New Features
 - Added version history to DataCite metadata: `relatedIdentifiers` entries (`IsNewVersionOf`, `IsPreviousVersionOf`, `IsVersionOf`, `HasVersion`) are now included for the `obsoletes`, `obsoletedBy`, and series id (`sid`) relationships of a data or metadata object
@@ -41,6 +52,9 @@ Metacat 3.5.1 is a patch release with several DOI/DataCite metadata improvements
 ## Release Notes for Helm Chart 4.3.2
 
 **Release date: 2026-09-24 **
+
+> [!WARNING]
+> If you are using the helm chart to deploy Metacat, we strongly advise upgrading to this version as soon as possible, since it addresses a critical security vulnerability. For details on the vulnerability and mitigation steps, please see the security advisories linked in the [Release Notes for Metacat 3.5.1](#release-notes-for-metacat-351) above.
 
 In addition to deploying the newest Metacat version, this chart release fixes several issues with the Traefik Ingress support that was introduced in chart-4.3.0, and improves the `ingress.defaultBackend` feature used when MetacatUI is not deployed at the root of the site.
 
