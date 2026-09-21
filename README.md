@@ -2,7 +2,7 @@
 
 Version: 3.5.1 Release
 - See [Release Notes](RELEASE-NOTES.md)
-- DOI: [doi:10.18739/A2HX15T0B](https://doi.org/10.18739/A2HX15T0B)
+- DOI: [doi:10.18739/A2XG9FD2H](https://doi.org/10.18739/A2XG9FD2H)
 
 Send feedback and bugs to:
 
@@ -52,7 +52,7 @@ for the next release.
 
 Cite this software as:
 
-> Jing Tao, Matthew Brooke, Ian Nesbitt, Matthew B. Jones. 2026. Metacat: Data Preservation and Discovery System (3.5.0). Arctic Data Center. Software. [doi:10.18739/A2HX15T0B](https://doi.org/10.18739/A2HX15T0B)
+> Jing Tao, Matthew Brooke, Ian Nesbitt, Matthew B. Jones. 2026. Metacat: Data Preservation and Discovery System (3.5.0). Arctic Data Center. Software. [doi:10.18739/A2XG9FD2H](https://doi.org/10.18739/A2XG9FD2H)
 
 ## Current Contributors
 
