@@ -15,7 +15,7 @@
 
 ## Release Notes for Metacat 3.5.1
 
-**Release date: @TODO **
+**Release date: 2026-09-24 **
 
 Metacat 3.5.1 is a patch release with several DOI/DataCite metadata improvements, bug fixes, and dependency updates:
 
@@ -33,13 +33,14 @@ Metacat 3.5.1 is a patch release with several DOI/DataCite metadata improvements
 ### Dependency Updates
 - Upgrade dataone-indexer to the newest version (3.4.1)
 - Upgrade d1_common_java to 2.5.1 and d1_libclient_java to 2.4.1
+- Upgrade bundled MetacatUI to the newest version 2.39.0
 - Upgrade log4j to 2.26.1
 - Upgrade PostgreSQL JDBC driver to 42.7.13
 - Upgrade RabbitMQ amqp-client to 5.34.0
 
 ## Release Notes for Helm Chart 4.3.2
 
-**Release date: @TODO **
+**Release date: 2026-09-24 **
 
 In addition to deploying the newest Metacat version, this chart release fixes several issues with the Traefik Ingress support that was introduced in chart-4.3.0, and improves the `ingress.defaultBackend` feature used when MetacatUI is not deployed at the root of the site.
 
