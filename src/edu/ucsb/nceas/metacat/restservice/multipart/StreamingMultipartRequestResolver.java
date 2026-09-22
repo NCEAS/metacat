@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -126,7 +127,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                 try (InputStream stream = item.openStream()) {
                     if (item.isFormField()) {
                         //process form parts
-                        String value = Streams.asString(stream);
+                        String value = Streams.asString(stream, StandardCharsets.UTF_8.name());
                         log.debug("StreamingMultipartRequestResolver.resoloveMulitpart - form field "
                                     + name + " with value "+ value + " detected.");
                         if (mpParams.containsKey(name)) {

@@ -17,6 +17,10 @@ spec:
   chain:
     middlewares:
       - name: {{ $.Release.Name }}-security-headers
+
+    {{- if ne .Values.global.metacatUiWebRoot "/" }}
+      - name: {{ $.Release.Name }}-trailing-slash
+    {{- end }}
     {{- if .Values.ingress.ipAllowList }}
       - name: {{ $.Release.Name }}-ip-allowlist
     {{- end }}

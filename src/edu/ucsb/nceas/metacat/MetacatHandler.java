@@ -468,18 +468,12 @@ public class MetacatHandler {
                         // set eml2 base     validation parser
                         rule = DocumentImpl.EML200;
                         needValidation = true;
-                        // using emlparser to check id validation
-                        @SuppressWarnings("unused") EMLParser parser =
-                            new EMLParser(doctext);
                     } else if (namespace.compareTo(DocumentImpl.EML2_1_0NAMESPACE) == 0
                         || namespace.compareTo(DocumentImpl.EML2_1_1NAMESPACE) == 0
                         || namespace.compareTo(DocumentImpl.EML2_2_0NAMESPACE) == 0) {
                         // set eml2 base validation parser
                         rule = DocumentImpl.EML210;
                         needValidation = true;
-                        // using emlparser to check id validation
-                        @SuppressWarnings("unused") EMLParser parser =
-                            new EMLParser(doctext);
                     } else {
                         if (!XMLSchemaService.isNamespaceRegistered(namespace)) {
                             throw new ServiceFailure("1190", "The namespace " + namespace
@@ -528,6 +522,11 @@ public class MetacatHandler {
                 parser.parse(new InputSource(xmlReader));
             } catch (SAXException e) {
                 throw new InvalidRequest("1181", "Invalid metadata: " + e.getMessage());
+            }
+            if (rule != null && (rule.equals(DocumentImpl.EML200) || rule.equals(
+                DocumentImpl.EML210))) {
+                // using emlparser to check id validation
+                EMLParser emlParser = new EMLParser(doctext);
             }
         } catch (ServiceException | MetacatException | PropertyNotFoundException | SAXException e) {
             throw new ServiceFailure("1190", "Metacat cannot validate the object since "

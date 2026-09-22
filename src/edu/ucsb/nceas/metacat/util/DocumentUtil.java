@@ -22,7 +22,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  */
 public class DocumentUtil {
 
-    private static int documentIdCounter = 0;
+    private static volatile int documentIdCounter = 0;
 
     public static AbstractDatabase dbAdapter;
     public static String startTag = "<systemMetadata>";
@@ -308,8 +308,7 @@ public class DocumentUtil {
      * @param revision the integer revision to use for this docid
      * @return a String docid based on the current date and time
      */
-    public static String generateDocumentId(String idPrefix, int revision)
-    {
+    public synchronized static String generateDocumentId(String idPrefix, int revision) {
         StringBuffer docid = new StringBuffer(idPrefix);
         docid.append(".");
 
