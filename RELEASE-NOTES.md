@@ -44,7 +44,7 @@ The official CVE report will be published for the vulnerability within the next 
 ### Dependency Updates
 - Upgrade dataone-indexer to the newest version (3.4.1)
 - Upgrade d1_common_java to 2.5.1 and d1_libclient_java to 2.4.1
-- Upgrade bundled MetacatUI to the newest version 2.39.0
+- Upgrade bundled MetacatUI to the newest version (2.39.0)
 - Upgrade log4j to 2.26.1
 - Upgrade PostgreSQL JDBC driver to 42.7.13
 - Upgrade RabbitMQ amqp-client to 5.34.0
