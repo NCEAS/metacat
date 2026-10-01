@@ -23,10 +23,12 @@ import time
 import threading
 import xml.etree.ElementTree as ET
 
+from collections import defaultdict
+from lxml import etree
 
 from amqpstorm import Connection, AMQPError, AMQPConnectionError, AMQPChannelError
 from concurrent.futures import wait, ALL_COMPLETED
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from psycopg2 import pool
@@ -87,6 +89,14 @@ LOGGER_NAME = "pull_systemmeta_submitter"
 LOG_FILE = f"log/{LOGGER_NAME}.log"
 shutdown_event = threading.Event()
 logger = logging.getLogger(LOGGER_NAME)
+
+DATAONE_V1_NS = "http://ns.dataone.org/service/types/v1"
+DATAONE_V2_NS = "http://ns.dataone.org/service/types/v2.0"
+
+NSMAP = {
+    "d1v1": DATAONE_V1_NS,
+    "d1v2": DATAONE_V2_NS,
+}
 
 # Settings for not showing the log from some libraries
 def _silence_third_party_logs():
