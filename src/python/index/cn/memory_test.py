@@ -140,6 +140,87 @@ def format_datetime(value):
 
     return value.isoformat().replace("+00:00", "Z")
 
+# Add the access policy to system metadata
+def add_access_policy(root, access_rules):
+    if not access_rules:
+        return
+    access_policy = etree.SubElement(root, "accessPolicy")
+    for rule in access_rules:
+        principal_name = rule["principal_name"]
+        permission = rule["permission"]
+        # permission should be the DataONE string here:
+        # "read", "write", or "changePermission"
+        if permission not in ("read", "write", "changePermission"):
+            continue
+        allow = etree.SubElement(access_policy, "allow")
+        add_text(allow, "subject", principal_name)
+        add_text(allow, "permission", permission)
+
+# Add the replication policy to system metadata
+def add_replication_policy(root, main_row, policies):
+    replication_allowed = main_row["replication_allowed"]
+    number_replicas = main_row["number_replicas"]
+
+    if replication_allowed is None and number_replicas is None and not policies:
+        return
+
+    element = etree.SubElement(root, "replicationPolicy")
+
+    if replication_allowed is not None:
+        element.set(
+            "replicationAllowed",
+            "true" if replication_allowed else "false"
+        )
+
+    if number_replicas is not None:
+        element.set("numberReplicas", str(number_replicas))
+
+    for policy in policies:
+        member_node = policy["member_node"]
+        policy_type = policy["policy"]
+
+        if policy_type == "preferredMemberNode":
+            add_text(element, "preferredMemberNode", member_node)
+
+        elif policy_type == "blockedMemberNode":
+            add_text(element, "blockedMemberNode", member_node)
+
+# Add the replication status to system metadata
+def add_replication_status(root, statuses):
+    for status in statuses:
+        replica = etree.SubElement(root, "replica")
+
+        add_text(
+            replica,
+            "replicaMemberNode",
+            status["member_node"]
+        )
+
+        add_text(
+            replica,
+            "replicationStatus",
+            status["status"]
+        )
+
+        add_text(
+            replica,
+            "replicaVerified",
+            format_datetime(status["date_verified"])
+        )
+
+# Add the media type to system metadata
+def add_media_type(root, media_type, properties):
+    if media_type is None:
+        return
+
+    element = etree.SubElement(root, "mediaType")
+    element.set("name", media_type)
+
+    for prop in properties:
+        property_element = etree.SubElement(element, "property")
+        property_element.set("name", prop["name"])
+        property_element.text = prop["value"]
+
 # Settings for not showing the log from some libraries
 def _silence_third_party_logs():
     """
