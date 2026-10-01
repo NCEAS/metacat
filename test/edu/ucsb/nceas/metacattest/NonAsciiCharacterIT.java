@@ -10,10 +10,10 @@ import java.util.TimeZone;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
-import org.ecoinformatics.eml.EMLParserException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -152,9 +152,8 @@ public class NonAsciiCharacterIT {
             Identifier pid = d1NodeTest.mnCreate(session, guid, object, sysmeta);
             fail("It shouldn't get there since the uploaded object is invalid");
         } catch (Exception e) {
-            assertTrue("The exception should be EMLParserException",
-                    e instanceof EMLParserException);
-            assertTrue(e.getMessage().contains("'&'"));
+            assertTrue("The exception should be InvalidRequest", e instanceof InvalidRequest);
+            assertTrue(e.getMessage().contains("Fatal processing error"));
         }
     }
 
@@ -179,9 +178,8 @@ public class NonAsciiCharacterIT {
             Identifier pid = d1NodeTest.mnCreate(session, guid, object, sysmeta);
             fail("It shouldn't get there since the uploaded object is invalid");
         } catch (Exception e) {
-            assertTrue("The exception should be EMLParserException",
-                            e instanceof EMLParserException);
-            assertTrue(e.getMessage().contains("'&'"));
+            assertTrue("The exception should be InvalidException", e instanceof InvalidRequest);
+            assertTrue(e.getMessage().contains("Fatal processing error"));
         }
     }
 

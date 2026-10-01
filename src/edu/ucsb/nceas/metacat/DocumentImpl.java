@@ -47,6 +47,7 @@ import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.apache.xerces.util.SecurityManager;
 import org.xml.sax.DTDHandler;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.SAXException;
@@ -1111,7 +1112,29 @@ public class DocumentImpl {
         // Get an instance of the parser
         String parserName = PropertyService.getProperty("xml.saxparser");
         parser = XMLReaderFactory.createXMLReader(parserName);
+        //XML security settings
+        // Disable external entity resolution, external DTD loading, and XInclude,
+        // and limit entity expansion to protect against XXE and entity-expansion attacks.
+        // We don't set the "http://apache.org/xml/features/disallow-doctype-decl"
+        // feature to true because it would block DOCTYPE declarations everywhere,
+        // including in imported schema files. A Dryad document would then fail to
+        // upload because one of its imported schemas contains a DOCTYPE declaration.
+        // Instead, we use DBSAXHandler.startDTD() to reject DOCTYPE declarations
+        // in the original XML document for schema-based and non-schema documents,
+        // while preserving support for legacy DTD documents.
+        parser.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        parser.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        parser.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        parser.setFeature("http://apache.org/xml/features/xinclude", false);
+        SecurityManager securityManager = new SecurityManager();
+        securityManager.setEntityExpansionLimit(50000);
+        parser.setProperty("http://apache.org/xml/properties/security-manager", securityManager);
+        parser.setFeature(NAMESPACEFEATURE, true);
         handler = new DBSAXHandler();
+        // Reject DOCTYPE declarations in non-DTD documents.
+        // Legacy DTD documents are allowed to contain a DOCTYPE.
+        // This provides an additional defense against XXE attacks.
+        handler.setRejectDoctypeDecl(ruleBase == null || !ruleBase.equals(DTD));
         parser.setContentHandler(handler);
         parser.setErrorHandler(handler);
         parser.setProperty(DECLARATIONHANDLERPROPERTY, handler);
@@ -1124,7 +1147,6 @@ public class DocumentImpl {
             logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
             // turn on schema validation feature
             parser.setFeature(VALIDATIONFEATURE, true);
-            parser.setFeature(NAMESPACEFEATURE, true);
             parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
 
             boolean allSchemasRegistered = XMLSchemaService.areAllSchemasRegistered(schemaList);
@@ -1146,7 +1168,6 @@ public class DocumentImpl {
             logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
             // turn on schema validation feature
             parser.setFeature(VALIDATIONFEATURE, true);
-            parser.setFeature(NAMESPACEFEATURE, true);
             parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
             logMetacat.info(
                 "DocumentImpl.initalizeParser - Generic external no-namespace schema location: "
@@ -1163,18 +1184,18 @@ public class DocumentImpl {
             logMetacat.info("DocumentImpl.initalizeParser - Using dtd parser");
             // turn on dtd validaton feature
             parser.setFeature(VALIDATIONFEATURE, true);
-            eresolver = new DBEntityResolver((DBSAXHandler) handler, dtd);
+            eresolver = new DBEntityResolver(handler, dtd);
             dtdhandler = new DBDTDHandler();
-            parser.setEntityResolver((EntityResolver) eresolver);
-            parser.setDTDHandler((DTDHandler) dtdhandler);
+            parser.setEntityResolver(eresolver);
+            parser.setDTDHandler(dtdhandler);
         } else {
             logMetacat.info("DocumentImpl.initalizeParser - Using other parser");
             // non validation
             parser.setFeature(VALIDATIONFEATURE, false);
-            eresolver = new DBEntityResolver((DBSAXHandler) handler, dtd);
+            eresolver = new DBEntityResolver(handler, dtd);
             dtdhandler = new DBDTDHandler();
-            parser.setEntityResolver((EntityResolver) eresolver);
-            parser.setDTDHandler((DTDHandler) dtdhandler);
+            parser.setEntityResolver(eresolver);
+            parser.setDTDHandler(dtdhandler);
         }
         return parser;
     }

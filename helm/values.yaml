@@ -721,10 +721,10 @@ ingress:
   ##
   defaultBackend:
     enabled: false
-    service:
-      name: my-wordpress-service
-      port:
-        number: 80
+#    service:
+#      name: my-wordpress-service
+#      port:
+#        number: 80
 
   ## @param ingress.rewriteRules IMPORTANT! Nginx & Traefik rewrite rule syntaxes differ; see below
   ##

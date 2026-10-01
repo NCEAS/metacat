@@ -70,8 +70,18 @@ public class XMLNamespaceParser extends DefaultHandler {
       // Get an instance of the parser
        String parserName = PropertyService.getProperty("xml.saxparser");
        parser = XMLReaderFactory.createXMLReader(parserName);
+       // This parser is only used to determine the root namespace and
+       // noNamespaceSchemaLocation. It does not validate the document.
+       parser.setFeature("http://xml.org/sax/features/validation", false);
+       // Do not allow DOCTYPE declarations.
+       parser.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+       // Prevent external entity and DTD access.
+       parser.setFeature("http://xml.org/sax/features/external-general-entities", false);
+       parser.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+       parser.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+       // Do not process XInclude.
+       parser.setFeature("http://apache.org/xml/features/xinclude", false);
        parser.setContentHandler(this);
-      
     }
     
     /**

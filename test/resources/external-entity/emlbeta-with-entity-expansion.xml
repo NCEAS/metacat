@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE dataset PUBLIC "-//ecoinformatics.org//eml-dataset-2.0.0beta6//EN" "http://metacat.nceas.ucsb.edu/metacat/dtd/eml-dataset-2.0.0beta6.dtd" [
+  <!ENTITY lol "lol">
+
+  <!ENTITY lol1 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">
+
+  <!ENTITY lol2 "&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;">
+
+  <!ENTITY lol3 "&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;">
+
+  <!ENTITY lol4 "&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;">
+
+  <!ENTITY lol5 "&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;">
+  <!ENTITY lol6 "&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;">
+]> <dataset> <identifier>entity-expansion-test</identifier>
+
+  <title>&lol6;</title>
+  <originator>
+    <individualName>
+      <givenName>Matthew</givenName>
+      <surName>Jones</surName>
+    </individualName>
+    <role>Originator</role>
+  </originator>
+  <keywordSet>
+    <keyword>taxonomy</keyword>
+    <keyword>synonyms</keyword>
+  </keywordSet>
+  <taxonomicCov>
+    <keywtax>
+      <taxonkt>somewhere</taxonkt>
+      <taxonkey>plants</taxonkey>
+    </keywtax>
+    <taxoncl>
+      <taxonrn>Genus</taxonrn>
+      <taxonrv>Bison</taxonrv>
+      <common>bison</common>
+      <taxoncl>
+        <taxonrn>species</taxonrn>
+        <taxonrv>Bison bison</taxonrv>
+        <common>bison</common>
+      </taxoncl>
+    </taxoncl>
+  </taxonomicCov>
+</dataset>
