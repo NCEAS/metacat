@@ -98,6 +98,48 @@ NSMAP = {
     "d1v2": DATAONE_V2_NS,
 }
 
+### Methods helping to build system metadata
+def add_text(parent, name, value):
+    """Add an unqualified DataONE SystemMetadata child element."""
+    if value is None:
+        return None
+
+    element = etree.SubElement(parent, name)
+    element.text = str(value)
+    return element
+
+
+def add_bool(parent, name, value):
+    """Add a boolean XML element."""
+    if value is None:
+        return None
+
+    element = etree.SubElement(parent, name)
+    element.text = "true" if value else "false"
+    return element
+
+
+def format_datetime(value):
+    """
+    Convert a PostgreSQL datetime/date into DataONE xs:dateTime.
+
+    DataONE timestamps are UTC.
+    """
+    if value is None:
+        return None
+
+    if isinstance(value, date) and not isinstance(value, datetime):
+        value = datetime.combine(value, datetime.min.time())
+
+    if value.tzinfo is None:
+        # PostgreSQL columns are timestamp without time zone in this schema.
+        # Metacat timestamps should be interpreted as UTC.
+        value = value.replace(tzinfo=timezone.utc)
+    else:
+        value = value.astimezone(timezone.utc)
+
+    return value.isoformat().replace("+00:00", "Z")
+
 # Settings for not showing the log from some libraries
 def _silence_third_party_logs():
     """
