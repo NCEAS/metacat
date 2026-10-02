@@ -371,41 +371,102 @@ def build_system_metadata_xml(
         pretty_print=True
     )
 
-# Prepare the child-table dictionaries
-media_type_properties_by_guid = defaultdict(list)
-for guid, name, value in media_type_properties:
-    media_type_properties_by_guid[guid].append({
-        "name": name,
-        "value": value,
-    })
+def build_system_metadata_for_guid(conn, row):
+    """
+    Build complete DataONE SystemMetadata XML for one GUID.
 
-replication_policy_by_guid = defaultdict(list)
-for guid, member_node, policy in replication_policies:
-    replication_policy_by_guid[guid].append({
-        "member_node": member_node,
-        "policy": policy,
-    })
+    The main systemmetadata fields are supplied by the caller's
+    existing main query. This method only queries the related tables.
+    """
 
-replication_status_by_guid = defaultdict(list)
-for guid, member_node, status, date_verified in replication_statuses:
-    replication_status_by_guid[guid].append({
-        "member_node": member_node,
-        "status": status,
-        "date_verified": date_verified,
-    })
+    guid = row["guid"]
 
-access_policy_by_guid = defaultdict(list)
-for (
-    guid,
-    principal_name,
-    permission,
-    perm_type,
-) in access_rules:
-    access_policy_by_guid[guid].append({
-        "principal_name": principal_name,
-        "permission": permission,
-        "perm_type": perm_type,
-    })
+    with conn.cursor() as cur:
+
+        # ------------------------------------------------------------
+        # 1. Media type properties
+        # ------------------------------------------------------------
+        cur.execute(
+            """
+            SELECT
+                guid,
+                name,
+                value
+            FROM smmediatypeproperties
+            WHERE guid = %s
+            ORDER BY name
+            """,
+            (guid,),
+        )
+
+        media_type_properties = cur.fetchall()
+
+        # ------------------------------------------------------------
+        # 2. Replication policy
+        # ------------------------------------------------------------
+        cur.execute(
+            """
+            SELECT
+                guid,
+                member_node,
+                policy
+            FROM smreplicationpolicy
+            WHERE guid = %s
+            ORDER BY member_node, policy
+            """,
+            (guid,),
+        )
+
+        replication_policies = cur.fetchall()
+
+        # ------------------------------------------------------------
+        # 3. Replication status / replicas
+        # ------------------------------------------------------------
+        cur.execute(
+            """
+            SELECT
+                guid,
+                member_node,
+                status,
+                date_verified
+            FROM smreplica
+            WHERE guid = %s
+            ORDER BY member_node
+            """,
+            (guid,),
+        )
+
+        replication_statuses = cur.fetchall()
+
+        # ------------------------------------------------------------
+        # 4. Access policy
+        # ------------------------------------------------------------
+        cur.execute(
+            """
+            SELECT
+                guid,
+                principal_name,
+                permission,
+                perm_type
+            FROM accesspolicy
+            WHERE guid = %s
+            ORDER BY principal_name, permission
+            """,
+            (guid,),
+        )
+
+        access_rules = cur.fetchall()
+
+    # ------------------------------------------------------------
+    # Build XML
+    # ------------------------------------------------------------
+    return build_system_metadata_xml(
+        row,
+        media_type_properties,
+        replication_policies,
+        replication_statuses,
+        access_rules,
+    )
 
 # Settings for not showing the log from some libraries
 def _silence_third_party_logs():
@@ -1025,8 +1086,15 @@ def submit_index_tasks(payload, executor):
                 return
 
             # Process rows
-            for guid, object_format, doc_id, modified_time, amn in rows:
+            for values in rows:
                 try:
+                    # Turn the main query row into a dictionary.
+                    row = dict(zip(SYSTEM_METADATA_COLUMNS, values))
+                    guid = row["guid"]
+                    object_format = row["object_format"]
+                    doc_id = row["doc_id"]
+                    modified_time = row["date_modified"]
+                    amn = row["authoritive_member_node"]
                     logger.debug(f"Start to process {guid}:")
                     # docId retry logic
                     if object_format in non_data_formats and not doc_id:
@@ -1042,6 +1110,9 @@ def submit_index_tasks(payload, executor):
                         )
                         continue
 
+                    # Build SystemMetadata XML
+                    system_metadata_xml = build_system_metadata_for_guid(conn, row)
+
                     # Submit task to thread pool
                     shutdown_event.wait(EVERY_SUBMIT_WAIT_TIME_SEC)
                     futures.append(
@@ -1050,7 +1121,8 @@ def submit_index_tasks(payload, executor):
                             channel_pool,
                             guid,
                             object_format,
-                            doc_id
+                            doc_id,
+                            system_metadata_xml
                         )
                     )
                     batch_max_time[amn] = max(
