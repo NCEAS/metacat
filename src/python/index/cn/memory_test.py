@@ -359,13 +359,10 @@ def build_system_metadata_xml(
         row["media_type"],
         media_type_properties
     )
-
     add_text(root, "fileName", row["file_name"])
-
     # ------------------------------------------------------------
     # Serialize
     # ------------------------------------------------------------
-
     return etree.tostring(
         root,
         encoding="UTF-8",
@@ -373,6 +370,42 @@ def build_system_metadata_xml(
         standalone=True,
         pretty_print=True
     )
+
+# Prepare the child-table dictionaries
+media_type_properties_by_guid = defaultdict(list)
+for guid, name, value in media_type_properties:
+    media_type_properties_by_guid[guid].append({
+        "name": name,
+        "value": value,
+    })
+
+replication_policy_by_guid = defaultdict(list)
+for guid, member_node, policy in replication_policies:
+    replication_policy_by_guid[guid].append({
+        "member_node": member_node,
+        "policy": policy,
+    })
+
+replication_status_by_guid = defaultdict(list)
+for guid, member_node, status, date_verified in replication_statuses:
+    replication_status_by_guid[guid].append({
+        "member_node": member_node,
+        "status": status,
+        "date_verified": date_verified,
+    })
+
+access_policy_by_guid = defaultdict(list)
+for (
+    guid,
+    principal_name,
+    permission,
+    perm_type,
+) in access_rules:
+    access_policy_by_guid[guid].append({
+        "principal_name": principal_name,
+        "permission": permission,
+        "perm_type": perm_type,
+    })
 
 # Settings for not showing the log from some libraries
 def _silence_third_party_logs():
