@@ -98,6 +98,30 @@ NSMAP = {
     "d1v2": DATAONE_V2_NS,
 }
 
+SYSTEM_METADATA_COLUMNS = [
+    "guid",
+    "series_id",
+    "serial_version",
+    "date_uploaded",
+    "rights_holder",
+    "checksum",
+    "checksum_algorithm",
+    "origin_member_node",
+    "authoritive_member_node",
+    "date_modified",
+    "submitter",
+    "object_format",
+    "size",
+    "archived",
+    "replication_allowed",
+    "number_replicas",
+    "obsoletes",
+    "obsoleted_by",
+    "media_type",
+    "file_name",
+    "doc_id",
+]
+
 ### Methods helping to build system metadata
 def add_text(parent, name, value):
     """Add an unqualified DataONE SystemMetadata child element."""
@@ -220,6 +244,135 @@ def add_media_type(root, media_type, properties):
         property_element = etree.SubElement(element, "property")
         property_element.set("name", prop["name"])
         property_element.text = prop["value"]
+
+# Build the system metadata
+def build_system_metadata_xml(
+    row,
+    media_type_properties,
+    replication_policies,
+    replication_statuses,
+    access_rules,
+):
+    root = etree.Element(
+        f"{{{DATAONE_V2_NS}}}systemMetadata",
+        nsmap=NSMAP
+    )
+
+    # ------------------------------------------------------------
+    # DataONE v1 SystemMetadata fields
+    # ------------------------------------------------------------
+
+    add_text(root, "serialVersion", row["serial_version"])
+
+    # Required
+    add_text(root, "identifier", row["guid"])
+    add_text(root, "formatId", row["object_format"])
+    add_text(root, "size", row["size"])
+
+    # Required checksum
+    if row["checksum"] is not None:
+        checksum = etree.SubElement(root, "checksum")
+        checksum.set("algorithm", row["checksum_algorithm"])
+        checksum.text = row["checksum"]
+
+    add_text(root, "submitter", row["submitter"])
+    add_text(root, "rightsHolder", row["rights_holder"])
+
+    # ------------------------------------------------------------
+    # Access policy
+    # ------------------------------------------------------------
+
+    add_access_policy(root, access_rules)
+
+    # ------------------------------------------------------------
+    # Replication policy
+    # ------------------------------------------------------------
+
+    add_replication_policy(
+        root,
+        row,
+        replication_policies
+    )
+
+    # ------------------------------------------------------------
+    # Object relationships
+    # ------------------------------------------------------------
+
+    add_text(root, "obsoletes", row["obsoletes"])
+    add_text(root, "obsoletedBy", row["obsoleted_by"])
+
+    # ------------------------------------------------------------
+    # Archive state
+    # ------------------------------------------------------------
+
+    add_bool(root, "archived", row["archived"])
+
+    # ------------------------------------------------------------
+    # Dates
+    # ------------------------------------------------------------
+
+    add_text(
+        root,
+        "dateUploaded",
+        format_datetime(row["date_uploaded"])
+    )
+
+    add_text(
+        root,
+        "dateSysMetadataModified",
+        format_datetime(row["date_modified"])
+    )
+
+    # ------------------------------------------------------------
+    # Member nodes
+    # ------------------------------------------------------------
+
+    add_text(
+        root,
+        "originMemberNode",
+        row["origin_member_node"]
+    )
+
+    add_text(
+        root,
+        "authoritativeMemberNode",
+        row["authoritive_member_node"]
+    )
+
+    # ------------------------------------------------------------
+    # Replicas
+    # ------------------------------------------------------------
+
+    add_replication_status(
+        root,
+        replication_statuses
+    )
+
+    # ------------------------------------------------------------
+    # DataONE v2 fields
+    # ------------------------------------------------------------
+
+    add_text(root, "seriesId", row["series_id"])
+
+    add_media_type(
+        root,
+        row["media_type"],
+        media_type_properties
+    )
+
+    add_text(root, "fileName", row["file_name"])
+
+    # ------------------------------------------------------------
+    # Serialize
+    # ------------------------------------------------------------
+
+    return etree.tostring(
+        root,
+        encoding="UTF-8",
+        xml_declaration=True,
+        standalone=True,
+        pretty_print=True
+    )
 
 # Settings for not showing the log from some libraries
 def _silence_third_party_logs():
