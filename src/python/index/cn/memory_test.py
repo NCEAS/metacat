@@ -1161,7 +1161,7 @@ def submit_notification_tasks(notification_mn_latest_map, executor):
     }
     while True:
         response = requests.post(
-            SOLR_URL + "/select",
+            SOLR_URL,
             data=params,
             timeout=60,
         )
