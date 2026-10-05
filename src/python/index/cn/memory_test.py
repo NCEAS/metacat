@@ -1057,9 +1057,7 @@ def submit_index_tasks(payload, executor):
                     sm.obsoleted_by,
                     sm.media_type,
                     sm.file_name,
-                    i.docid || '.' || i.rev AS doc_id,
-                    sm.date_modified,
-                    sm.authoritive_member_node
+                    i.docid || '.' || i.rev AS doc_id
                 FROM systemmetadata sm
                 LEFT JOIN identifier i
                     ON sm.guid = i.guid
