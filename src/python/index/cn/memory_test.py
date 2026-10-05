@@ -394,7 +394,6 @@ def build_system_metadata_for_guid(conn, row):
                 value
             FROM smmediatypeproperties
             WHERE guid = %s
-            ORDER BY name
             """,
             (guid,),
         )
@@ -412,7 +411,6 @@ def build_system_metadata_for_guid(conn, row):
                 policy
             FROM smreplicationpolicy
             WHERE guid = %s
-            ORDER BY member_node, policy
             """,
             (guid,),
         )
@@ -429,9 +427,8 @@ def build_system_metadata_for_guid(conn, row):
                 member_node,
                 status,
                 date_verified
-            FROM smreplica
+            FROM smreplicationstatus
             WHERE guid = %s
-            ORDER BY member_node
             """,
             (guid,),
         )
@@ -448,7 +445,7 @@ def build_system_metadata_for_guid(conn, row):
                 principal_name,
                 permission,
                 perm_type
-            FROM accesspolicy
+            FROM xml_access
             WHERE guid = %s
             ORDER BY principal_name, permission
             """,
