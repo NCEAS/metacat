@@ -92,6 +92,7 @@ logger = logging.getLogger(LOGGER_NAME)
 
 DATAONE_V1_NS = "http://ns.dataone.org/service/types/v1"
 DATAONE_V2_NS = "http://ns.dataone.org/service/types/v2.0"
+SYSMETA = "sysmeta"
 
 NSMAP = {
     "d1v1": DATAONE_V1_NS,
@@ -1022,13 +1023,14 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id, system_metada
         if guid:
             logger.debug(f"[{thread_name}] Processing PID: {guid} with type: {index_type}, docid: {doc_id}, priority: {priority}")
             headers = {'index_type': index_type, 'id': guid, 'doc_id': doc_id}
-            message = system_metadata_xml
+            message = {SYSMETA: system_metadata_xml}
+            message_body = json.dumps(message).encode("utf-8")
             channel = None
             wait_for_docid(doc_id)
             try:
                 channel = channel_pool.acquire_channel()
                 channel.basic.publish(
-                    body=message,
+                    body=message_body,
                     routing_key=ROUTING_KEY,
                     exchange=EXCHANGE_NAME,
                     properties={'headers': headers, 'priority': priority}
