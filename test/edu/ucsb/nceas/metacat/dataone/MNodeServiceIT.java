@@ -593,8 +593,24 @@ public class MNodeServiceIT {
                     d1NodeTest.mnCreate(session, guid3, object, sysmeta3);
                     fail("It should fail since the system metadata using the pid as the sid");
                 } catch (InvalidSystemMetadata ee) {
-
+                    assertTrue(ee instanceof InvalidSystemMetadata);
                 }
+
+                //Test to create an XML document based on DTD
+                Identifier guid4 = new Identifier();
+                guid4.setValue("testCreate4." + System.currentTimeMillis());
+                object = new FileInputStream(new File("./test/jones.204.22.xml"));
+                SystemMetadata sysmeta4 = D1NodeServiceTest
+                    .createSystemMetadata(guid4, session.getSubject(), object);
+                ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+                formatId.setValue("-//ecoinformatics.org//eml-dataset-2.0.0beta6//EN");
+                sysmeta4.setFormatId(formatId);
+                object.close();
+                object = new FileInputStream(new File("./test/jones.204.22.xml"));
+                d1NodeTest.mnCreate(session, guid4, object, sysmeta4);
+                SystemMetadata metadata =
+                    MNodeService.getInstance(request).getSystemMetadata(session, guid4);
+                assertEquals(guid4, metadata.getIdentifier());
             } catch (Exception e) {
                 fail("Unexpected error: " + e.getMessage());
             }

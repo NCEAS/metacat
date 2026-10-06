@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!DOCTYPE dataset SYSTEM "http://localhost:18999/test.dtd">
+<dataset>
+  <identifier>jones.204.22</identifier>
+  <title>This is an untrusted external DTD test</title>
+  <originator>
+    <individualName>
+      <givenName>Matthew</givenName>
+      <surName>Jones</surName>
+    </individualName>
+    <role>Originator</role>
+  </originator>
+  <keywordSet>
+    <keyword>taxonomy</keyword>
+    <keyword>synonyms</keyword>
+  </keywordSet>
+  <taxonomicCov>
+    <keywtax>
+      <taxonkt>somewhere</taxonkt>
+      <taxonkey>plants</taxonkey>
+    </keywtax>
+    <taxoncl>
+      <taxonrn>Genus</taxonrn>
+      <taxonrv>Bison</taxonrv>
+      <common>bison</common>
+      <taxoncl>
+        <taxonrn>species</taxonrn>
+        <taxonrv>Bison bison</taxonrv>
+        <common>bison</common>
+      </taxoncl>
+    </taxoncl>
+  </taxonomicCov>
+</dataset>

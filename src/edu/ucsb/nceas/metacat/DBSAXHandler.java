@@ -52,7 +52,7 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class DBSAXHandler extends DefaultHandler implements LexicalHandler, DeclHandler {
     public final static long NODE_ID = -1;
-    
+    private boolean rejectDoctypeDecl = true;
     protected boolean atFirstElement;
 
     protected boolean processingDTD;
@@ -90,6 +90,14 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
 
     }
 
+    /**
+     * Set whether to reject the DOCTYPE declaration.
+     * @param rejectDoctypeDecl true to reject the DOCTYPE declaration; false otherwise
+     */
+    public void setRejectDoctypeDecl(boolean rejectDoctypeDecl) {
+        this.rejectDoctypeDecl = rejectDoctypeDecl;
+    }
+
     /** SAX Handler that receives notification of beginning of the document */
     public void startDocument() throws SAXException {
         logMetacat.trace("DBSaxHandler.startDocument - starting document");
@@ -119,7 +127,10 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
         logMetacat.trace("DBSaxHandler.startElement - Start ELEMENT(qName) " + qName);
         logMetacat.trace("DBSaxHandler.startElement - Start ELEMENT(localName) " + localName);
         logMetacat.trace("DBSaxHandler.startElement - Start ELEMENT(uri) " + uri);
-        
+        if ("http://www.w3.org/2001/XInclude".equals(uri) && "include".equals(localName)) {
+            throw new SAXException(
+                "XInclude elements are not allowed in metadata documents.");
+        }
         // Document representation that points to the root document node
         if (atFirstElement) {
             atFirstElement = false;
@@ -190,8 +201,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
     
 
     /** SAX Handler that is called for each XML text node */
-    public void characters(char[] cbuf, int start, int len) throws SAXException
-    {
+    public void characters(char[] cbuf, int start, int len) throws SAXException {
         logMetacat.trace("DBSaxHandler.characters - starting characters");
     }
 
@@ -199,9 +209,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
      * SAX Handler that is called for each XML text node that is Ignorable
      * white space
      */
-    public void ignorableWhitespace(char[] cbuf, int start, int len)
-            throws SAXException
-    {
+    public void ignorableWhitespace(char[] cbuf, int start, int len) throws SAXException {
         // When validation is turned "on", white spaces are reported here
         // When validation is turned "off" white spaces are not reported here,
         // but through characters() callback
@@ -213,16 +221,13 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
      * SAX Handler called once for each processing instruction found: node that
      * PI may occur before or after the root element.
      */
-    public void processingInstruction(String target, String data)
-            throws SAXException
-    {
+    public void processingInstruction(String target, String data) throws SAXException {
         logMetacat.trace("DBSaxHandler.processingInstruction - in processing instructions");
     }
 
     /** SAX Handler that is called at the end of each XML element */
     public void endElement(String uri, String localName, String qName)
-            throws SAXException
-    {
+            throws SAXException {
         logMetacat.trace("DBSaxHandler.endElement - End element " + qName);
     }
 
@@ -232,12 +237,13 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
 
     /** SAX Handler that receives notification of DOCTYPE. Sets the DTD */
     public void startDTD(String name, String publicId, String systemId)
-            throws SAXException
-    {
+            throws SAXException {
+        if (rejectDoctypeDecl) {
+            throw new SAXException("DOCTYPE declarations are not allowed in metadata documents.");
+        }
         docname = name;
         doctype = publicId;
         systemid = systemId;
-
         processingDTD = true;
         logMetacat.trace("DBSaxHandler.startDTD - Start DTD");
         logMetacat.trace("DBSaxHandler.startDTD - Setting processingDTD to true");
@@ -249,8 +255,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
     /**
      * SAX Handler that receives notification of end of DTD
      */
-    public void endDTD() throws SAXException
-    {
+    public void endDTD() throws SAXException {
 
         processingDTD = false;
         logMetacat.trace("DBSaxHandler.endDTD - Setting processingDTD to false");
@@ -260,32 +265,28 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
     /**
      * SAX Handler that receives notification of comments in the DTD
      */
-    public void comment(char[] ch, int start, int length) throws SAXException
-    {
+    public void comment(char[] ch, int start, int length) throws SAXException {
         logMetacat.trace("DBSaxHandler.comment - starting comment");
     }
 
     /**
      * SAX Handler that receives notification of the start of CDATA sections
      */
-    public void startCDATA() throws SAXException
-    {
+    public void startCDATA() throws SAXException {
         logMetacat.trace("DBSaxHandler.startCDATA - starting CDATA");
     }
 
     /**
      * SAX Handler that receives notification of the end of CDATA sections
      */
-    public void endCDATA() throws SAXException
-    {
+    public void endCDATA() throws SAXException {
         logMetacat.trace("DBSaxHandler.endCDATA - end CDATA");
     }
 
     /**
      * SAX Handler that receives notification of the start of entities
      */
-    public void startEntity(String name) throws SAXException
-    {
+    public void startEntity(String name) throws SAXException {
         logMetacat.trace("DBSaxHandler.startEntity - starting entity: " + name);
         if (name.equals("[dtd]")) {
             processingDTD = true;
@@ -295,8 +296,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
     /**
      * SAX Handler that receives notification of the end of entities
      */
-    public void endEntity(String name) throws SAXException
-    {
+    public void endEntity(String name) throws SAXException {
         logMetacat.trace("DBSaxHandler.endEntity - ending entity: " + name);
         if (name.equals("[dtd]")) {
             processingDTD = false;
@@ -307,8 +307,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
      * SAX Handler that receives notification of element declarations
      */
     public void elementDecl(String name, String model)
-            throws org.xml.sax.SAXException
-    {
+            throws org.xml.sax.SAXException {
         logMetacat.trace("DBSaxHandler.elementDecl - element declaration: " + name + " " + model);
     }
 
@@ -316,8 +315,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
      * SAX Handler that receives notification of attribute declarations
      */
     public void attributeDecl(String eName, String aName, String type,
-            String valueDefault, String value) throws org.xml.sax.SAXException
-    {
+            String valueDefault, String value) throws org.xml.sax.SAXException {
 
         logMetacat.trace("DBSaxHandler.attributeDecl - attribute declaration: " + eName
                        + " " + aName + " " + type + " " + valueDefault + " " + value);
@@ -327,8 +325,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
      * SAX Handler that receives notification of internal entity declarations
      */
     public void internalEntityDecl(String name, String value)
-            throws org.xml.sax.SAXException
-    {
+            throws org.xml.sax.SAXException {
         logMetacat.trace("DBSaxHandler.internalEntityDecl - internal entity declaration: "
                             + name + " " + value);
     }
@@ -337,20 +334,20 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
      * SAX Handler that receives notification of external entity declarations
      */
     public void externalEntityDecl(String name, String publicId, String systemId)
-            throws org.xml.sax.SAXException
-    {
+            throws org.xml.sax.SAXException {
         logMetacat.trace("DBSaxHandler.externalEntityDecl - external entity declaration: "
                             + name + " " + publicId + " " + systemId);
         // it processes other external entity, not the DTD;
         // it doesn't signal for the DTD here
         processingDTD = false;
+        throw new SAXException("External entity '" + name
+                                   + "' is not allowed in metadata documents.");
     }
 
     /**
      * SAX Handler that receives notification of fatal parsing errors
      */
-    public void fatalError(SAXParseException exception) throws SAXException
-    {
+    public void fatalError(SAXParseException exception) throws SAXException {
         logMetacat.fatal("DBSaxHandler.fatalError - " + exception.getMessage());
         throw (new SAXException("Fatal processing error.", exception));
     }
@@ -358,8 +355,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
     /**
      * SAX Handler that receives notification of recoverable parsing errors
      */
-    public void error(SAXParseException exception) throws SAXException
-    {
+    public void error(SAXParseException exception) throws SAXException {
         logMetacat.error("DBSaxHandler.error - " + exception.getMessage());
         throw (new SAXException(exception.getMessage(), exception));
     }
@@ -367,8 +363,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
     /**
      * SAX Handler that receives notification of warnings
      */
-    public void warning(SAXParseException exception) throws SAXException
-    {
+    public void warning(SAXParseException exception) throws SAXException {
         logMetacat.warn("DBSaxHandler.warning - " + exception.getMessage());
         throw (new SAXException(exception.getMessage(), exception));
     }
