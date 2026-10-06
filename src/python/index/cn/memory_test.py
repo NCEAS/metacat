@@ -456,13 +456,15 @@ def build_system_metadata_for_guid(conn, row):
             """,
             (guid,),
         )
-        access_rules = [
-            {
-                "principal_name": principal_name,
-                "permission": permission,
-            }
-            for principal_name, permission in cur.fetchall()
-        ]
+        access_rules = []
+        for principal_name, permission in cur.fetchall():
+            for permission_name in convert_permissions(permission):
+                access_rules.append(
+                    {
+                        "principal_name": principal_name,
+                        "permission": permission_name,
+                    }
+                )
 
     # ------------------------------------------------------------
     # Build XML
@@ -474,6 +476,28 @@ def build_system_metadata_for_guid(conn, row):
         replication_statuses,
         access_rules,
     )
+
+"""
+    Convert Metacat integer permission bits to DataONE permission names.
+    CHMOD  = 1 -> changePermission
+    WRITE  = 2 -> write
+    READ   = 4 -> read
+    ALL    = 7 -> all three permissions
+    """
+def convert_permissions(permission):
+    permissions = []
+    if permission is None:
+        return permissions
+    permission = int(permission)
+    if permission == 7:
+        return ["read", "write", "changePermission"]
+    if (permission & 1) == 1:
+        permissions.append("changePermission")
+    if (permission & 4) == 4:
+        permissions.append("read")
+    if (permission & 2) == 2:
+        permissions.append("write")
+    return permissions
 
 # Settings for not showing the log from some libraries
 def _silence_third_party_logs():
