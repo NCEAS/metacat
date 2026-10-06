@@ -490,6 +490,105 @@ public class DocumentImplIT {
     }
 
     /**
+     * Test to delete a metadata object with a xml_relation record
+     * @throws Exception
+     */
+    @Test
+    public void testDeleteMetadataWithXmlRelationRecord() throws Exception {
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+            // Get a database connection from the pool
+            ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+            formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+            dbConn = DBConnectionPool.getDBConnection("SystemMetadataManager.deleteData");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            Session session = d1NodeTest.getTestSession();
+            Identifier guid = new Identifier();
+            guid.setValue("DocumentImpl_deleteMetadata." + System.currentTimeMillis());
+            InputStream object = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
+            SystemMetadata sysmeta = D1NodeServiceTest
+                .createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(formatId);
+            object.close();
+            object = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
+            d1NodeTest.mnCreate(session, guid, object, sysmeta);
+            object.close();
+            // Add a record to xml_relation
+            String accnum = IdentifierManager.getInstance().getLocalId(guid.getValue());
+            String docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
+            MetacatHandlerIT.addToXmlRelation(dbConn, docid);
+            //check record
+            assertTrue("The identifier table should have value",
+                       IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                      " guid like ?", guid.getValue()));
+            assertTrue("The systemmetadata table should have value",
+                       IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                      " guid like ?", guid.getValue()));
+            assertTrue("The xml_access table should have value",
+                       IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                      " guid like ?", guid.getValue()));
+            assertFalse("The smreplicationpolicy table should not have value",
+                        IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                       " guid like ?", guid.getValue()));
+            assertFalse("The smreplicationstatus table should not have value",
+                        IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                       " guid like ?", guid.getValue()));
+            assertFalse("The smmediatypeproperties table should not have value",
+                        IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                       " guid like ?", guid.getValue()));
+            assertTrue("The xml_documents table should have value",
+                       IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                      " docid like ?", docid));
+            assertFalse("The xml_revisions table should not have value",
+                        IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                       " docid like ?", docid));
+            assertTrue("The xml_relation table should have value",
+                        IntegrationTestUtils.hasRecord("xml_relation", dbConn,
+                                                       " docid like ?", docid));
+            InputStream input = MetacatHandler.read(guid);
+            assertNotNull("The file should exist", input);
+            input.close();
+
+            //Delete
+            SystemMetadataManager.lock(guid);
+            DocumentImpl.delete(accnum, guid);
+            SystemMetadataManager.unLock(guid);
+            assertTrue("The identifier table should have value",
+                       IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                      " guid like ?", guid.getValue()));
+            assertFalse("The systemmetadata table should not have value",
+                        IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                       " guid like ?", guid.getValue()));
+            assertFalse("The xml_access table should not have value",
+                        IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                       " guid like ?", guid.getValue()));
+            assertFalse("The smreplicationpolicy table should not have value",
+                        IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                       " guid like ?", guid.getValue()));
+            assertFalse("The smreplicationstatus table should not have value",
+                        IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                       " guid like ?", guid.getValue()));
+            assertFalse("The smmediatypeproperties table should not have value",
+                        IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                       " guid like ?", guid.getValue()));
+            docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
+            assertFalse("The xml_documents table should not have value",
+                       IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                      " rev=? and docid like ?", 1, docid));
+            assertFalse("The xml_revisions table should not have value",
+                        IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                       " docid like ?", docid));
+            assertFalse("The xml_relation table should not have value",
+                       IntegrationTestUtils.hasRecord("xml_relation", dbConn,
+                                                      " docid like ?", docid));
+
+        } finally {
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+    }
+
+    /**
      * Test the delete method
      * @throws Exception
      */

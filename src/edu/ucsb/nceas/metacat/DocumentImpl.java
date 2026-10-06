@@ -912,6 +912,8 @@ public class DocumentImpl {
                         conn.increaseUsageCount(1);
                     }
                 } else {
+                    // Delete it from xml_relation table
+                    deleteFromXmlRelation(conn, docid);
                     // Delete it from xml_documents table
                     logMetacat.debug("DocumentImpl.delete - deleting from xml_documents");
                     String deleteQuery = "DELETE FROM xml_documents WHERE docid = ? AND rev = ?";
@@ -1209,6 +1211,8 @@ public class DocumentImpl {
             logMetacat.debug("DocumentImpl.archiveDocToRevision - Executing SQL: "
                                 + pstmt.toString());
             pstmt.execute();
+            // Delete the records on xml_relation
+            deleteFromXmlRelation(dbconn, docid);
             // Delete the record on xml_documents
             String deleteQuery = "DELETE FROM xml_documents WHERE docid = ? AND rev = ?";
             try (PreparedStatement pstmt2 = dbconn.prepareStatement(deleteQuery)) {
@@ -1262,5 +1266,21 @@ public class DocumentImpl {
         }
         logMetacat.debug("The catalog id for " + docType + " is " + catalogId);
         return catalogId;
+    }
+
+    /**
+     * Delete a record in the xml_relation table for the given docid
+     * @param conn  db connection used for the deleting
+     * @param docId  the docId which will be deleted
+     * @throws SQLException
+     */
+    protected static void deleteFromXmlRelation(DBConnection conn, String docId) throws SQLException {
+        String deleteQuery = "DELETE FROM xml_relation WHERE docid = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(deleteQuery)) {
+            pstmt.setString(1, docId);
+            logMetacat.debug("Running sql: " + pstmt);
+            pstmt.execute();
+            conn.increaseUsageCount(1);
+        }
     }
 }

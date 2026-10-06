@@ -82,17 +82,20 @@ public class DefaultDataCiteFactory extends DataCiteMetadataFactory {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
                 String year = sdf.format(sysmeta.getDateUploaded());
                 addPublicationYear(doc, year);
-                
-                // type
-                //String resourceType = lookupResourceType(sysmeta);
+
+                // resource type
                 String resourceType = null; //only set the attribute to "dataset"
                 addResourceType(doc, DataCiteProfileResourceTypeValues.DATASET.toString(), resourceType);
+
+                // related identifiers for versions
+                appendVersionHistory(doc, identifier, sysmeta);
 
                 // format
                 String format = lookupFormat(sysmeta);
                 if(format != null) {
                    appendFormat(doc, format);
                 }
+
                 return serializeDoc(doc);
             } catch (InvalidRequest e) {
                 throw e;

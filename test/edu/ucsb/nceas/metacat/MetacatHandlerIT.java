@@ -379,6 +379,108 @@ public class MetacatHandlerIT {
         }
     }
 
+    /**
+     * Test the registerDB method with the previous version having a record in xml_relation
+     * @throws Exception
+     */
+    @Test
+    public void testRegisterToDBWithXmlRelationRecords() throws Exception {
+        int serialNumber = -1;
+        DBConnection dbConn = null;
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection(
+                "MetacatHandlerTest.testRegisterToDBWithXmlRelationRecords");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            Identifier pid = new Identifier();
+            Identifier prePid = null;
+            // Register an inserted metadata object. The prePid will be ignored.
+            pid.setValue("testRegisterToDBMetadata1-" + System.currentTimeMillis());
+            String localId = handler.registerToDB(pid, Action.INSERT, dbConn, "user-metadata",
+                                           "eml://ecoinformatics.org/eml-2.1.1", prePid);
+            String docid = localId.substring(0, localId.lastIndexOf("."));
+            // Add a record for the docId in the xml_relation table
+            addToXmlRelation(dbConn, docid);
+            assertTrue(
+                "The xml_relation table should have value",
+                IntegrationTestUtils.hasRecord(
+                    "xml_relation", dbConn,
+                    " docid like ? ", docid));
+            assertTrue(
+                "The identifier table should have value",
+                IntegrationTestUtils.hasRecord(
+                    "identifier", dbConn,
+                    " rev=? and guid like ? and docid like ? ", 1,
+                    pid.getValue(), docid));
+            assertFalse(
+                "The identifier table should not have value",
+                IntegrationTestUtils.hasRecord(
+                    "identifier", dbConn,
+                    " rev=? and guid like ? and docid like ? ", 2,
+                    pid.getValue(), docid));
+            assertTrue(
+                "The xml_documents table should have value",
+                IntegrationTestUtils.hasRecord(
+                    "xml_documents", dbConn, " rev=? and docid like ?",
+                    1, docid));
+            assertFalse("The xml_revisions table should not have value",
+                        IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                       " docid like ?", docid));
+            // Register a updated metadata object
+            Identifier newPid = new Identifier();
+            newPid.setValue("testRegisterToDBMetadata2-" + System.currentTimeMillis());
+            prePid = pid;
+            localId = handler.registerToDB(newPid, Action.UPDATE, dbConn, "user-metadata",
+                                           "eml://ecoinformatics.org/eml-2.1.1", prePid);
+            assertFalse(
+                "The xml_relation table should not have value",
+                IntegrationTestUtils.hasRecord(
+                    "xml_relation", dbConn,
+                    " docid like ? ", docid));
+            assertTrue(
+                "The identifier table should have value",
+                IntegrationTestUtils.hasRecord(
+                    "identifier", dbConn,
+                    " rev=? and guid like ? and docid like ? ", 1,
+                    pid.getValue(), docid));
+            assertTrue(
+                "The identifier table should have value",
+                IntegrationTestUtils.hasRecord(
+                    "identifier", dbConn,
+                    " rev=? and guid like ? and docid like ? ", 2,
+                    newPid.getValue(), docid));
+            assertTrue("The xml_documents table should have value",
+                       IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                      " rev=? and docid like ?", 2, docid));
+            assertTrue("The xml_revisions table should have value",
+                       IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                      " rev=? and docid like ?", 1, docid));
+            assertFalse("The xml_revisions table should not have value",
+                        IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                       " rev=? and docid like ?", 2, docid));
+            deleteRecords(docid);//clear
+        } finally {
+            // Return database connection to the pool
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+    }
+
+    /**
+     * Add a record in xml_relation for the given docId
+     * @param dbConnection  the connection will run the query
+     * @param docId  the docId will be in the xml_relation table
+     * @throws Exception
+     */
+    protected static void addToXmlRelation(DBConnection dbConnection, String docId)
+        throws Exception {
+        String query =
+            "INSERT INTO xml_relation (docid, subject, relationship, object) VALUES ('" + docId
+            + "', 'foo.1', 'describe', 'foo.2')";
+        try (PreparedStatement pstmt = dbConnection.prepareStatement(query)) {
+            pstmt.execute();
+        }
+    }
+
     private void deleteRecords(String docid) throws Exception {
         DBConnection conn = null;
         int serialNumber = -1;

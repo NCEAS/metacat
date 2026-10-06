@@ -21,7 +21,7 @@ the latest version of Metacat must have the following software installed and run
 
     * In order to use the Metacat Registry (and for a more robust Web-serving environment in general), the Apache Web server should be installed with Tomcat and the two should be integrated. See the installing Apache for more information.
 
-  * `Java 17`_ (Note: Java 8 is deprecated since Metacat v3.0.0)
+  * `Java 25`_
 
   * `RabbitMQ`_
 
@@ -37,7 +37,7 @@ the latest version of Metacat must have the following software installed and run
 
 .. _Apache HTTP Server: http://httpd.apache.org/
 
-.. _Java 17: https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html
+.. _Java 25: https://www.oracle.com/java/technologies/javase/jdk25-archive-downloads.html
 
 .. _RabbitMQ: https://www.rabbitmq.com/
 
@@ -49,7 +49,7 @@ System requirements for running Metacat:
 
 Installing on Linux (Ubuntu is Highly Recommended)
 --------------------------------------------------
-This section contains instructions for downloading and installing Metacat on 
+This section contains instructions for downloading and installing Metacat on
 Linux systems. As Mac OS X is based on BSD Unix, these Linux instructions can
 be adapted to also work on Mac OS X (although the exact commands for
 downloading and installing packages will differ due to the different package
@@ -61,7 +61,7 @@ For the impatient or those who have already installed Metacat and know what
 they are doing, here are the steps needed to install Metacat. Detailed
 instructions for each step are in the next section.
 
-  1. Download and install prerequisites (`Java 17`_, `Apache Tomcat`_, PostgreSQL_, `RabbitMQ`_, `Solr Server`_, `Apache HTTP Server`_)
+  1. Download and install prerequisites (`Java 25`_, `Apache Tomcat`_, PostgreSQL_, `RabbitMQ`_, `Solr Server`_, `Apache HTTP Server`_)
 
   2. Create a database in PostgreSQL named 'metacat' and authorize access to it in ``pb_hba.conf`` for the user 'metacat'
 
@@ -87,7 +87,7 @@ Downloading Metacat
 ~~~~~~~~~~~~~~~~~~~
 Before installing Metacat, please ensure that all required software is
 installed and running correctly. To obtain a Metacat WAR file, which is needed
-for installation, download one of the following: 
+for installation, download one of the following:
 
   * the Metacat installer, which has a pre-built WAR file,
 
@@ -97,12 +97,12 @@ for installation, download one of the following:
 
 Instructions for all three options are discussed below. Note that downloading
 the installer (described in the next section) is the simplest way to get
-started. 
+started.
 
 Download the Metacat Installer (Highly Recommended)
 ...................................................
 Downloading the Metacat Installer is the simplest way to get started with the
-application. To download the installer: 
+application. To download the installer:
 
   1.  Browse to the `Metacat Download Page`_. In the Metacat section, select the link to the "GZIP file" (the link should look like: metacat-bin-X.X.X.tar.gz, where X.X.X is the latest version of Metacat e.g., |release|)
 
@@ -148,7 +148,7 @@ To get the Metacat source distribution:
   4. Rename the metacat-X.X.X directory to metacat.
 
 Note that you do not need to create the WAR file directly because the Ant
-build-file has an "install" target that will build and deploy the WAR for you. 
+build-file has an "install" target that will build and deploy the WAR for you.
 
 
 Check Out Metacat Source Code from GitHub (for Developers)
@@ -173,7 +173,7 @@ The entire Metacat repository will be cloned to your local machine and the curre
 https://github.com/NCEAS/metacat/blob/main/CONTRIBUTING.md
 
 Note that you do not need to create the WAR file directly because the Ant
-build-file has an "install" target that will build and deploy the WAR for you. 
+build-file has an "install" target that will build and deploy the WAR for you.
 
 
 Installing and Configuring Required Software
@@ -181,9 +181,9 @@ Installing and Configuring Required Software
 Before you can install and run Metacat, you must ensure that a recent Java SDK,
 PostgreSQL, Ant (if installing from source), and Tomcat are installed and running correctly.
 We also highly recommend that you install Apache Web server, as it provides a more
-robust Web-serving environment and is required by some Metacat functionality. 
+robust Web-serving environment and is required by some Metacat functionality.
 
-  * `Java 17`_
+  * `Java 25`_
 
   * `Apache Tomcat`_
 
@@ -197,25 +197,25 @@ robust Web-serving environment and is required by some Metacat functionality.
 
   * `Solr Server`_
 
-Java 17
+Java 25
 ......
-To run Metacat, you should use Java 17. Make sure that the JAVA_HOME
-environment variable is properly set and that both ``java`` and ``javac`` 
-are on your PATH. 
+To run Metacat, you should use Java 25. Make sure that the JAVA_HOME
+environment variable is properly set and that both ``java`` and ``javac``
+are on your PATH.
 
 To install Java if you are running Ubuntu_/Debian, you can install using apt-get
 
   ::
 
-    sudo apt-get install openjdk-17-jdk
+    sudo apt-get install openjdk-25-jdk
 
-Then set Java 17 as the default
+Then set Java 25 as the default
 
   ::
 
     cd /usr/lib/jvm
     sudo rm -r default-java
-    sudo ln -s java-17-openjdk-amd64 default-java
+    sudo ln -s java-25-openjdk-amd64 default-java
 
 If you are not using Ubuntu_/Debian, you can get Java from the Oracle_ website and install using the RPM installer.
 
@@ -284,7 +284,7 @@ Although you have the option of running Metacat with only the Tomcat server, we
 highly recommend that you run it behind the Apache Web server for several
 reasons; running Tomcat with the Apache server provides a more robust Web
 serving environment. The Apache Web server is required if you wish to
-install and run the Metacat Registry or to use the Metacat Replication feature. 
+install and run the Metacat Registry or to use the Metacat Replication feature.
 
 This section contains instructions for installing and configuring the Apache
 Web server for Metacat on an Ubuntu_/Debian system. Instructions for configuring
@@ -327,7 +327,7 @@ these helper files will be in one of two locations:
 
     sudo cp <metacat_helper_dir>/metacat-site.conf <apache_install_dir>/sites-available
     sudo a2ensite metacat-site.conf
-  
+
 5. Disable the default Apache site configuration:
 
   ::
@@ -537,33 +537,35 @@ the Solr Debian packages that come with the Ubuntu operating system are obsolete
 to install the binary packages by yourself. This section provides guidance on how to setup Solr to run
 in production on \*nix platforms, such as Ubuntu.
 
-We strongly recommend installing the ``Solr 9.8.*`` series.
+We strongly recommend installing the latest version from the ``Solr 9.*.*`` series (Metacat has not
+been tested with ``Solr version 10.0.0`` or above - use at your own risk).
+
 You can download the binary releases at from `solr's download page`_ or use ``wget``:
 
 .. _solr's download page:  https://solr.apache.org/downloads.html#solr-8112
 
   ::
 
-    wget https://archive.apache.org/dist/solr/solr/9.8.0/solr-9.8.0.tgz
+    wget https://archive.apache.org/dist/solr/solr/<version>/solr-<version>.tgz
 
 1. Go to the directory which contains the Solr release file and extract the installation script
-   file by typing (assuming the downloaded file is solr-9.8.0.tgz):
+   file by typing (assuming the downloaded file is solr-<version>.tgz):
 
   ::
 
-    tar xzf solr-9.8.0.tgz solr-9.8.0/bin/install_solr_service.sh --strip-components=2
+    tar xzf solr-<version>.tgz solr-<version>/bin/install_solr_service.sh --strip-components=2
 
 2. Install Solr as the root user:
 
   ::
 
-    sudo bash ./install_solr_service.sh solr-9.8.0.tgz
-  
-If you upgrade Solr from an old 8.* version to 9.8.0, you may run this command instead:
-  
+    sudo bash ./install_solr_service.sh solr-<version>.tgz
+
+If you upgrade Solr from an old 8.*.* version to 9.*.*, you may run this command instead:
+
   ::
 
-    sudo bash ./install_solr_service.sh solr-9.8.0.tgz -f
+    sudo bash ./install_solr_service.sh solr-<version>.tgz -f
 
 3. Ensure the Solr defaults file is group writable:
 
@@ -585,7 +587,8 @@ If you upgrade Solr from an old 8.* version to 9.8.0, you may run this command i
 
 6. Add New Allowed Solr Path and Solr Home
 
-Add a new line for the ``SOLR_OPTS`` variable in the environment specific include file (e.g. ``/etc/default/solr.in.sh``) with the path to Metacat:
+  Add a new line for the ``SOLR_OPTS`` variable in the environment specific include file (e.g.
+  ``/etc/default/solr.in.sh``) with the path to Metacat:
 
   ::
 
@@ -593,7 +596,15 @@ Add a new line for the ``SOLR_OPTS`` variable in the environment specific includ
 
   **Note:** The path to Metacat must be a real path, it CANNOT be a symlink.
 
-7. Increase Memory
+
+7. If you are running Solr under Java 25 or above, and Solr fails to start up correctly, add this line to ``/etc/default/solr.in.sh``:
+
+  ::
+
+    SOLR_SECURITY_MANAGER_ENABLED=false
+
+
+8. Increase Memory
 
 Note: If you are upgrading the Solr server and you might already run this command during the previous installation, you may skip this step.
 
@@ -604,11 +615,11 @@ By default, Solr sets the maximum Java heap size to 512M (-Xmx512m). Values betw
 
     SOLR_JAVA_MEM="-Xms2g -Xmx2g"
 
-8. Tomcat and Solr User Management
+9. Tomcat and Solr User Management
 
 Note: If you are upgrading the Solr server and you have already run this command during the previous installation, you may skip this step.
 
-The interaction of the Tomcat and Solr services can cause the file permission issues. 
+The interaction of the Tomcat and Solr services can cause the file permission issues.
 Add the ``tomcat`` user to the ``solr`` group and the ``solr`` user to ``tomcat`` group to fix the problem:
 
   ::
@@ -616,14 +627,14 @@ Add the ``tomcat`` user to the ``solr`` group and the ``solr`` user to ``tomcat`
     sudo usermod -a -G solr tomcat
     sudo usermod -a -G tomcat solr
 
-9. Restart the Solr server to make the new group setting effective (:note2:`Important`) 
+10. Restart the Solr server to make the new group setting effective (:note2:`Important`)
 
   ::
 
     sudo service solr stop
     sudo service solr start
 
-10. Check that the ``tomcat`` user and ``solr`` user are members of the appropriate groups with:
+11. Check that the ``tomcat`` user and ``solr`` user are members of the appropriate groups with:
 
   ::
 
@@ -647,7 +658,7 @@ binary distribution do not require it.) Ant is a Java-based build application
 similar to Make on UNIX systems. It takes build instructions from a file named
 "build.xml", which is found in the root installation directory. Metacat source
 code comes with a default "build.xml" file that may require some modification
-upon installation. 
+upon installation.
 
 If you are running Ubuntu/Debian, get Ant by typing::
 
@@ -657,7 +668,7 @@ Otherwise, get Ant from the `Apache Ant`_ homepage.
 
 Ant should be installed on your system and the "ant" executable shell script
 should be available in the user's path. The latest Metacat release was tested
-with Ant 1.8.2. 
+with Ant 1.8.2.
 
 Installing Metacat
 ~~~~~~~~~~~~~~~~~~
@@ -710,8 +721,8 @@ configuring Metacat, please see the Configuration Section.
 .. figure:: images/screenshots/image009_updatedconfighome.png
    :align: center
 
-   The Authentication Configuration screen appears the first time you open a 
-   new installation of Metacat. 
+   The Authentication Configuration screen appears the first time you open a
+   new installation of Metacat.
 
 Upgrading Metacat
 .................
@@ -720,7 +731,7 @@ To upgrade an existing binary Metacat installation follow the steps in this
 section. The steps for upgrading Metacat from source are the same as the
 instructions for installing from source:
 
- **Note: Please first upgrade to Metacat v2.19.0 before proceeding to Metacat v3.0.0 or above**
+ **Note: Please first upgrade to Metacat v2.19.0 before proceeding to Metacat v3.5.0 or above**
 
 1. Download and extract the new version of Metacat. For more information about downloading and extracting Metacat, please see Downloading Metacat.
 
@@ -740,7 +751,7 @@ instructions for installing from source:
   **Warning**: Do not backup the files to the ``<web_app_dir>`` directory. Tomcat will
   try to run the backup copy as a service.
 
-4. Copy the new Metacat WAR file in to the Tomcat applications directory: 
+4. Copy the new Metacat WAR file in to the Tomcat applications directory:
 
   ::
 
@@ -759,7 +770,7 @@ instructions for installing from source:
     /etc/init.d/tomcat9 restart
 
 6. Run your new Metacat servlet. Go to a Web browser and visit your installed
-Metacat application, using a URL of the form: 
+Metacat application, using a URL of the form:
 
   ::
 
@@ -772,19 +783,19 @@ with Metacat's Authorization Configuration screen. Note that if you do not have
 Tomcat integrated with Apache you will probably have to type
 http://yourserver.yourdomain.com:8080/yourcontext/
 
-Upgrading to Metacat v3.0.0 or above
+Upgrading to Metacat v3.5.0 or above
 ....................................
 
 Starting Requirements:
 
   * Your existing Metacat installation must already have been successfully upgraded to
-    `Metacat v2.19.0`_ before you can begin upgrading to v3.0.0 or above.
+    `Metacat v2.19.0`_ before you can begin upgrading to v3.5.0 or above.
 
     * If not, please upgrade to `Metacat v2.19.0`_ first, before proceeding.
 
 .. _Metacat v2.19.0: https://github.com/NCEAS/metacat/releases/tag/2.19.0
 
-  * You must have Java 17 installed
+  * You must have Java 25 installed
 
     * If it is not installed, please install it and set it as the default version
 
@@ -792,13 +803,13 @@ Starting Requirements:
 
       ex. `sudo update-alternatives --config java` which will bring up a list of versions to select from
 
-  * If Tomcat uses the `default-java` directory, ensure that it points to Java 17
+  * If Tomcat uses the `default-java` directory, ensure that it points to Java 25
 
     ::
 
       cd /usr/lib/jvm
       sudo rm -r default-java
-      sudo ln -s java-17-openjdk-amd64 default-java
+      sudo ln -s java-25-openjdk-amd64 default-java
 
   * If Metacat is currently running:
 
@@ -814,13 +825,15 @@ Starting Requirements:
 
       ex. `sudo systemctl stop solr`
 
-1. Download/upgrade your solr version to 9.8.0
+1. Download/upgrade to the latest ``9.*.*`` version of solr
 
-  * The solr schema and configuration changed significantly between Metacat v2.19.x and v3.0.0.
+  * The solr schema and configuration changed significantly between Metacat v2.19.x and v3.5.0.
 
     * Please back up your current solr-home (directory) and then remove all of its contents.
 
     * Reminder: **Your solr-home (directory) must exist and be empty before proceeding.**
+
+    * Metacat has not been tested with Solr version ``10.0.0`` or newer - use at your own risk.
 
   * Ensure that `/etc/default/solr.in.sh` is group writable
 
@@ -836,6 +849,14 @@ Starting Requirements:
 
     **Note:** As of solr v9.*, a security requirement was introduced and the usage of a wildcard ``*``
     in the allowPaths property has been deprecated.
+
+  * If you are running Solr under Java 25 or above, and Solr fails to start up correctly, add this
+    line to ``/etc/default/solr.in.sh``:
+
+    ::
+
+      SOLR_SECURITY_MANAGER_ENABLED=false
+
 
   * Optionally, add/adjust memory settings to:
 
@@ -856,7 +877,7 @@ Starting Requirements:
     sudo apt install rabbitmq-server
     sudo systemctl restart rabbitmq-server
 
-4. You are now ready to install Metacat v3.0.0 or above
+4. You are now ready to install Metacat v3.5.0 or above
 
   * Additional notes:
 
@@ -871,7 +892,7 @@ Starting Requirements:
   * **Reminder**:
 
     * Data from existing or previous solr installations are incompatible with the  new schema and
-      configuration for Metacat v3.0.0 and above.
+      configuration for Metacat v3.5.0 and above.
     * During the Metacat configuration process, confirm the path to your solr-home directory and
       **ensure that the directory is empty**.
     * **After upgrading and configuring Metacat, re-index all objects (an example is below for your
@@ -890,18 +911,18 @@ Source Install and Upgrade
 ..........................
 Whether you are building Metacat from the source distribution or source code
 checked out from GitHub, you will need Apache Ant to do the build (see Installing
-and Configuring Required Software for more information about Ant). 
+and Configuring Required Software for more information about Ant).
 
 To install Metacat from source:
 
 1. Edit the build.properties file found in the directory in which you
    downloaded Metacat. Note: Throughout the instructions, we will refer to this
-   directory as ``<metacat_src_dir>``. 
+   directory as ``<metacat_src_dir>``.
 
   * Set the app.deploy.dir property to your application deployment directory.
     For instance: app.deploy.dir=/usr/local/tomcat/webapps
 
-2. In the ``<metacat_src_dir>``, run: 
+2. In the ``<metacat_src_dir>``, run:
 
   ::
 
@@ -915,7 +936,7 @@ To install Metacat from source:
 
 To access your new Metacat servlet, open a Web browser and type::
 
-  http://yourserver.yourdomain.com/yourcontext/ 
+  http://yourserver.yourdomain.com/yourcontext/
   (e.g.  http://knb.ecoinformatics.org/metacat/)
 
 Your context will be "metacat" unless you changed the name of the metacat.war file to
@@ -925,5 +946,5 @@ is running, you will be presented with the Authorization Configuration screen.
 Troubleshooting
 ~~~~~~~~~~~~~~~
 We keep and update a list of common problems and their solutions on the KNB
-website. See http://knb.ecoinformatics.org/software/metacat/troubleshooting.html 
+website. See http://knb.ecoinformatics.org/software/metacat/troubleshooting.html
 for more information.

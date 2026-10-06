@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
-import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -90,6 +89,8 @@ public abstract class D1NodeService {
     public static final String DELETEDMESSAGE =
         "The object with the PID has been deleted from the node.";
     public static final String METADATA = "METADATA";
+    private static final String OBSOLETES = "obsoletes";
+    private static final String OBSOLETED_BY = "obsoleted_by";
 
     private static org.apache.commons.logging.Log logMetacat =
         LogFactory.getLog(D1NodeService.class);
@@ -2097,7 +2098,7 @@ public abstract class D1NodeService {
      * the guid of the first row.
      */
     protected String existsInObsoletes(Identifier id) throws InvalidRequest, ServiceFailure {
-        String guid = existsInFields("obsoletes", id);
+        String guid = existsInFields(OBSOLETES, id);
         return guid;
     }
 
@@ -2108,7 +2109,7 @@ public abstract class D1NodeService {
      * the guid of the first row.
      */
     protected String existsInObsoletedBy(Identifier id) throws InvalidRequest, ServiceFailure {
-        String guid = existsInFields("obsoleted_by", id);
+        String guid = existsInFields(OBSOLETED_BY, id);
         return guid;
     }
 
@@ -2120,6 +2121,12 @@ public abstract class D1NodeService {
      */
     private String existsInFields(String column, Identifier id)
         throws InvalidRequest, ServiceFailure {
+        if (column == null || column.isBlank() || (!column.equals(OBSOLETES) && !column.equals(
+            OBSOLETED_BY))) {
+            throw new InvalidRequest("4863",
+                                     "The given column name " + column + " is neither " + OBSOLETES
+                                         + " nor " + OBSOLETED_BY);
+        }
         String guid = null;
         if (id == null) {
             throw new InvalidRequest(

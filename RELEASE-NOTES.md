@@ -1,8 +1,149 @@
 # Metacat Release Notes
 
-> [!CAUTION]
-> If you are upgrading from a helm chart version earlier than 2.1.0, please see the [Upgrade
-> Notes](#chart-upgrade-notes) below. Failure to do so may result in loss of data!
+> [!IMPORTANT]
+> **Security Updates**
+> - Only the most recent product release is supported for security fixes.
+> - Security fixes are not backported to older releases.
+> - Users should upgrade to the latest release to receive security updates.
+> See [Supported Versions](SECURITY.md#supported-versions) for details.
+>
+> **Helm Charts:**
+> 1. If you are upgrading from a helm chart version earlier than 2.1.0, please see the [Upgrade Notes](#chart-upgrade-notes) below. Failure to do so may result in loss of data!
+> 2. We are continuing to move away from using Bitnami helm charts for production dependencies. The Metacat chart now assumes you will provide your own instances of PostgreSQL and RabbitMQ, which are no longer included as sub-charts. You are free to choose any method of deploying these dependencies; we have had success with:
+>    - CloudNative PG Operator to deploy your PostgreSQL cluster - see [Appendix 5 of the helm/README.md](./helm/README.md#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg)
+>    - RabbitMQ Cluster Operator to deploy your RabbitMQ cluster - see [Appendix 6 of the helm/README.md](./helm/README.md#appendix-6-the-rabbitmq-cluster-operator)
+
+## Release Notes for Metacat 3.5.0
+
+**Release date: 2026-07-09**
+
+Metacat 3.5.0 is a minor release that upgrades the codebase to compile and run under Java 25 (upgraded from Java 17), and includes updates to the following dependencies:
+
+> [!WARNING]
+> We strongly advise all users to upgrade to this version as soon as possible, since it addresses a critical security vulnerability in one of its dependency libraries (`d1_common_java`), which affects all previous metacat versions.
+
+- Upgrade d1_libclient_java to 2.4.0 and d1_common_java to 2.5.0
+- Upgrade PlantUML to 1.2026.6
+- Upgrade Apache Wicket-core to 9.23.0
+- Upgrade log4j to 2.26.0
+- Update Docker base image to `tomcat:9.0.118-jre25-temurin-noble`
+- Update bundled MetacatUI to version 2.37.0
+
+> [!TIP]
+> If you are running Solr under Java 25 or above, and Solr fails to start up correctly, add the line
+> `SOLR_SECURITY_MANAGER_ENABLED=false` to the file `/etc/default/solr.in.sh`
+
+## Release Notes for Helm Chart 4.3.0
+
+**Release date: 2026-07-09**
+
+In addition to deploying the above changes for Metacat version 3.5.0, this chart release includes adding support for Traefik Proxy Ingress.
+
+> [!IMPORTANT]
+> The Kubernetes open source community version of `ingress-nginx` is [no longer maintained, effective March 2026](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/).
+> We strongly recommend that you use the [Traefik Proxy Ingress controller](https://doc.traefik.io/traefik/) instead. Ingress-nginx is still supported for now in the metacat helm chart, but is DEPRECATED, and will be removed in the near future.
+>
+> **PLEASE NOTE:**
+> 1. This chart IS backwards-compatible with chart-4.2.2 installations that use ingress-nginx. This WILL change in the near future
+> 2. To use with traefik instead (highly recommended), you must explicitly override `.ingress.className: traefik` for now (but traefik will become the default soon)
+
+- Added support for Traefik proxy Ingress, in addition to ingress-nginx. This is backwards compatible with existing Nginx installations for now. To use traefik, please set `ingress.className: traefik`, since `nginx` is still the default, for now
+  - Please also see this HOWTO for the adaptations required when converting from Nginx to Traefik: [traefik-HOWTO.md](https://github.com/DataONEorg/k8s-cluster/blob/main/control-plane/ingress/traefik/traefik-HOWTO.md)
+- Updated [helm/examples/values-dev-cluster-example.yaml](helm/examples/values-dev-cluster-example.yaml), showing example values overrides for configuring traefik, including ingress className and an example rewrite rule
+- Upgraded `dataone-indexer` sub-chart to version 2.2.0
+- Upgraded `metacatui` sub-chart to version 1.0.14
+- Updated documentation, now located in a new `helm/docs` directory
+- Added [`helm/admin/whoami-debug.yaml`](./helm/admin/whoami-debug.yaml) - a YAML definition for a lightweight container that echoes back the details of every request it receives from the ingress (including all headers), for testing and debugging purposes
+
+## Release Notes for Metacat 3.4.2
+
+**Release date: 2026-05-28**
+
+Metacat 3.4.2 is a patch release to provide an important security update
+
+### Security
+
+The following moderate-severity security vulnerability was reported against all versions of Metacat 3.4.1 and before:
+- **CVE-2026-50022**: Addressed security vulnerability "Metacat acts as unintended proxy to backend Apache SOLR engine". For full details and mitigation steps, please see the security advisory: [GHSA-57g5-qq6w-7jr8](https://github.com/NCEAS/metacat/security/advisories/GHSA-57g5-qq6w-7jr8)
+
+The following dependency update addresses a vulnerability in the PostgreSQL JDBC Driver ([CVE-2026-42198](https://nvd.nist.gov/vuln/detail/CVE-2026-42198) describes a high-severity client-side denial of service, but **we believe this is not exploitable in standard Metacat installations**).
+- Upgrade org.postgresql client library from 42.7.7 to 42.7.11
+
+## Release Notes for Helm Chart 4.2.2
+
+**Release date: 2026-05-28**
+
+Metacat Helm Chart 4.2.2 is a patch release deployed primarily to support the Metacat 3.4.2 code release. There is only one functional change to the chart:
+
+- Logging changes:
+  - Make Original Client IP Available to Metacat in K8s (using `x-forwarded-for` header value)
+  - Use json formatting for logs in K8s, to make them more easily parsable by log management tools
+
+
+## Release Notes for Metacat 3.4.1
+
+**Release date: 2026-05-21**
+
+Metacat 3.4.1 is a patch release focused exclusively on critical security updates (plus one minor bug fix).
+
+> [!WARNING]
+>
+> We strongly advise all users to upgrade to this version as soon as possible, since it addresses multiple critical security vulnerabilities affecting all previous metacat versions. For details on the vulnerabilities and mitigation steps, please see the security advisories linked below:
+
+### Security
+
+The following critical security vulnerabilities were reported against all versions of Metacat 3.4.0 and before:
+- **CVE-2026-48528**: Addressed SQL injection security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-6g6j-wh5h-77h5](https://github.com/NCEAS/metacat/security/advisories/GHSA-6g6j-wh5h-77h5)
+
+The following critical security vulnerabilities were reported against all versions of Metacat 2.19.1 and before:
+- **CVE-2026-47754**: Addressed path traversal security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-m852-f287-7cgw](https://github.com/NCEAS/metacat/security/advisories/GHSA-m852-f287-7cgw)
+- **CVE-2026-48114**: Addressed SQL injection security vulnerability. For full details and mitigation steps, please see the security advisory: [GHSA-wrc6-rc34-hrcg](https://github.com/NCEAS/metacat/security/advisories/GHSA-wrc6-rc34-hrcg)
+
+The official CVE reports will be published for all these vulnerabilities within the next few days.
+
+### Bug Fixes
+- Add missing database indexes; see [Issue #2299](https://github.com/NCEAS/metacat/issues/2299).
+
+## Release Notes for Helm Chart 4.2.1
+
+**Release date: 2026-05-21**
+
+> [!WARNING]
+> If you are using the helm chart to deploy Metacat, we strongly advise upgrading to this version as soon as possible, since it addresses critical security vulnerabilities. For details on the vulnerabilities and mitigation steps, please see the security advisories linked in the [Release Notes for Metacat 3.4.1](#release-notes-for-metacat-341) above.
+
+Metacat Helm Chart 4.2.1 is a patch release deployed solely to support the Metacat 3.4.1 code release. There are no functional changes to the chart configuration or templates.
+
+
+## Release Notes for Metacat 3.4.0
+
+**Release date: 2026-05-07**
+
+### New Features & Enhancements:
+- Add support for partial object retrieval using HTTP byte ranges.
+- Improve the `index-all` command so only one thread can run it at a time, and remove resourcemap/non-resourcemap sorting, to speed up indexing.
+- Add database indexes for `smReplicationStatus` and `smReplicationPolicy`, and remove the obsolete `smReplicationPolicy_guid` index.
+- CN Indexing-Related Changes
+  - Add and document the CN systemmetadata-trigger indexing flow, including new utilities to populate Solr from CN and reindex a supplied list of PIDs.
+  - Split CN indexing configuration into a dedicated config file and improve the logging and reconnect behavior of the indexing scripts.
+  - CN-related Solr schema and config changes
+
+### Security Upgrades:
+- Upgrade Solr to 9.10.1
+- Upgrade log4j-core to 2.25.3
+
+## Release Notes for helm chart 4.2.0
+
+**Release date: 2026-05-07**
+
+This chart deploys the new Metacat 3.4.0 release. The Metacat app version update is the only change to the chart.
+
+## Release Notes for helm chart 4.1.0
+
+**Release date: 2026-04-23**
+
+This is a chart-only release, with no changes to the Metacat codebase. The dataone-indexer sub-chart has been upgraded to version 2.1.0, which includes indexing-performance and robustness improvements (see [dataone-indexer Release Notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md#dataone-indexer-version-330--helm-chart-version-210) for details).
+
+In addition to the sub-chart version upgrade, this release removes the indexer values override: `dataone-indexer.solr.javaMem: "-Xms512m -Xmx2g"`, so that Solr will now use the indexer's default Java memory setting of `-XX:MaxRAMPercentage=50` (50% of the container memory limit). See the [dataone-indexer values.yaml documentation](https://github.com/DataONEorg/dataone-indexer/blob/22b9b98517e04e2370de83d682ad2964dce04c9d/helm/values.yaml#L503) for more details on Java memory settings for Solr.
 
 ## Release Notes for Metacat 3.3.0
 

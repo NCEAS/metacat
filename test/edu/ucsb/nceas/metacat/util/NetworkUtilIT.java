@@ -25,7 +25,7 @@ public class NetworkUtilIT {
     public void testCheckUrlStatus_knb301() throws Exception {
         String url = "http://knb.ecoinformatics.org";
         int status = NetworkUtil.checkUrlStatus(url);
-        assertEquals("Unexpected status from " + url, HttpURLConnection.HTTP_MOVED_PERM, status);
+        assertEquals("Unexpected status from " + url, 308, status);
     }
 
     @Test

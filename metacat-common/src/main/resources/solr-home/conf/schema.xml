@@ -115,6 +115,17 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
           <filter class="solr.LowerCaseFilterFactory"/>
       </analyzer>
     </fieldType>
+
+    <fieldType name="keyword_case_insensitive" class="solr.TextField">
+        <analyzer type="index">
+            <tokenizer class="solr.KeywordTokenizerFactory"/>
+            <filter class="solr.LowerCaseFilterFactory"/>
+        </analyzer>
+        <analyzer type="query">
+            <tokenizer class="solr.KeywordTokenizerFactory"/>
+            <filter class="solr.LowerCaseFilterFactory"/>
+        </analyzer>
+    </fieldType>
    </types>
 
    <!-- field names should consist of alphanumeric or underscore characters only and
@@ -144,6 +155,9 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
    
         <field name="id"              	type="string"   indexed="true" stored="true" multiValued="false"/>
         <field name="seriesId"				type="string"	indexed="true" stored="true" multiValued="false" />
+        <field name="id_lc"             type="keyword_case_insensitive" indexed="true" stored="false" multiValued="false"/>
+        <field name="seriesId_lc"       type="keyword_case_insensitive" indexed="true" stored="false"
+               multiValued="false"/>
         <field name="fileName"			type="string"	indexed="true"	stored="true"	multiValued="false" />
         <field name="mediaType"			type="string"	indexed="true"	stored="true"	multiValued="false" />
         <field name="mediaTypeProperty" type="string"   indexed="true"	stored="true"	multiValued="true" />
@@ -469,6 +483,8 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
     <copyField source="pubDate" dest="datePublished" />
     <copyField source="dateUploaded" dest="updateDate" />
     <copyField source="contactOrganization" dest="contactOrganizationText"/>
+    <copyField source="id" dest="id_lc"/>
+    <copyField source="seriesId" dest="seriesId_lc"/>
     
     <!-- the default search filed -->
     <copyField source="*" dest="_text_"/>
