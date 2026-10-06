@@ -281,13 +281,11 @@ def build_system_metadata_xml(
     # ------------------------------------------------------------
     # Access policy
     # ------------------------------------------------------------
-
     add_access_policy(root, access_rules)
 
     # ------------------------------------------------------------
     # Replication policy
     # ------------------------------------------------------------
-
     add_replication_policy(
         root,
         row,
@@ -342,7 +340,6 @@ def build_system_metadata_xml(
     # ------------------------------------------------------------
     # Replicas
     # ------------------------------------------------------------
-
     add_replication_status(
         root,
         replication_statuses
@@ -389,7 +386,6 @@ def build_system_metadata_for_guid(conn, row):
         cur.execute(
             """
             SELECT
-                guid,
                 name,
                 value
             FROM smmediatypeproperties
@@ -397,8 +393,13 @@ def build_system_metadata_for_guid(conn, row):
             """,
             (guid,),
         )
-
-        media_type_properties = cur.fetchall()
+        media_type_properties = [
+            {
+                "name": name,
+                "value": value,
+            }
+            for name, value in cur.fetchall()
+        ]
 
         # ------------------------------------------------------------
         # 2. Replication policy
@@ -406,7 +407,6 @@ def build_system_metadata_for_guid(conn, row):
         cur.execute(
             """
             SELECT
-                guid,
                 member_node,
                 policy
             FROM smreplicationpolicy
@@ -414,8 +414,10 @@ def build_system_metadata_for_guid(conn, row):
             """,
             (guid,),
         )
-
-        replication_policies = cur.fetchall()
+        replication_policies = [
+            {"member_node": member_node, "policy": policy}
+            for member_node, policy in cur.fetchall()
+        ]
 
         # ------------------------------------------------------------
         # 3. Replication status / replicas
@@ -423,7 +425,6 @@ def build_system_metadata_for_guid(conn, row):
         cur.execute(
             """
             SELECT
-                guid,
                 member_node,
                 status,
                 date_verified
@@ -432,8 +433,14 @@ def build_system_metadata_for_guid(conn, row):
             """,
             (guid,),
         )
-
-        replication_statuses = cur.fetchall()
+        replication_statuses = [
+            {
+                "member_node": member_node,
+                "status": status,
+                "date_verified": date_verified,
+            }
+            for member_node, status, date_verified in cur.fetchall()
+        ]
 
         # ------------------------------------------------------------
         # 4. Access policy
@@ -441,18 +448,21 @@ def build_system_metadata_for_guid(conn, row):
         cur.execute(
             """
             SELECT
-                guid,
                 principal_name,
-                permission,
-                perm_type
+                permission
             FROM xml_access
             WHERE guid = %s
             ORDER BY principal_name, permission
             """,
             (guid,),
         )
-
-        access_rules = cur.fetchall()
+        access_rules = [
+            {
+                "principal_name": principal_name,
+                "permission": permission,
+            }
+            for principal_name, permission in cur.fetchall()
+        ]
 
     # ------------------------------------------------------------
     # Build XML
