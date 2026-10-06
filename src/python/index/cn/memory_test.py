@@ -1012,7 +1012,7 @@ def lookup_docid_with_retry(conn, guid):
        1 Construct the rabbitmq message
        2 Publish the message to the rabbitmq service
 """
-def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
+def process_pid_wrapper(channel_pool, guid, object_format, doc_id, system_metadata_xml):
     thread_name = threading.current_thread().name
     try:
         index_type = 'create'
@@ -1022,7 +1022,7 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
         if guid:
             logger.debug(f"[{thread_name}] Processing PID: {guid} with type: {index_type}, docid: {doc_id}, priority: {priority}")
             headers = {'index_type': index_type, 'id': guid, 'doc_id': doc_id}
-            message = ''
+            message = system_metadata_xml
             channel = None
             wait_for_docid(doc_id)
             try:
