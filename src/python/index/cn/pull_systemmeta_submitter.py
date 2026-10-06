@@ -23,10 +23,12 @@ import time
 import threading
 import xml.etree.ElementTree as ET
 
+from collections import defaultdict
+from lxml import etree
 
 from amqpstorm import Connection, AMQPError, AMQPConnectionError, AMQPChannelError
 from concurrent.futures import wait, ALL_COMPLETED
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from psycopg2 import pool
@@ -87,6 +89,416 @@ LOGGER_NAME = "pull_systemmeta_submitter"
 LOG_FILE = f"log/{LOGGER_NAME}.log"
 shutdown_event = threading.Event()
 logger = logging.getLogger(LOGGER_NAME)
+
+DATAONE_V1_NS = "http://ns.dataone.org/service/types/v1"
+DATAONE_V2_NS = "http://ns.dataone.org/service/types/v2.0"
+SYSMETA = "sysmeta"
+
+NSMAP = {
+    "d1v1": DATAONE_V1_NS,
+    "d1v2": DATAONE_V2_NS,
+}
+
+SYSTEM_METADATA_COLUMNS = [
+    "guid",
+    "series_id",
+    "serial_version",
+    "date_uploaded",
+    "rights_holder",
+    "checksum",
+    "checksum_algorithm",
+    "origin_member_node",
+    "authoritive_member_node",
+    "date_modified",
+    "submitter",
+    "object_format",
+    "size",
+    "archived",
+    "replication_allowed",
+    "number_replicas",
+    "obsoletes",
+    "obsoleted_by",
+    "media_type",
+    "file_name",
+    "doc_id",
+]
+
+### Methods helping to build system metadata
+def add_text(parent, name, value):
+    """Add an unqualified DataONE SystemMetadata child element."""
+    if value is None:
+        return None
+
+    element = etree.SubElement(parent, name)
+    element.text = str(value)
+    return element
+
+
+def add_bool(parent, name, value):
+    """Add a boolean XML element."""
+    if value is None:
+        return None
+
+    element = etree.SubElement(parent, name)
+    element.text = "true" if value else "false"
+    return element
+
+
+def format_datetime(value):
+    """
+    Convert a PostgreSQL datetime/date into DataONE xs:dateTime.
+
+    DataONE timestamps are UTC.
+    """
+    if value is None:
+        return None
+
+    if isinstance(value, date) and not isinstance(value, datetime):
+        value = datetime.combine(value, datetime.min.time())
+
+    if value.tzinfo is None:
+        # PostgreSQL columns are timestamp without time zone in this schema.
+        # Metacat timestamps should be interpreted as UTC.
+        value = value.replace(tzinfo=timezone.utc)
+    else:
+        value = value.astimezone(timezone.utc)
+
+    return value.isoformat().replace("+00:00", "Z")
+
+# Add the access policy to system metadata
+def add_access_policy(root, access_rules):
+    if not access_rules:
+        return
+    access_policy = etree.SubElement(root, "accessPolicy")
+    for rule in access_rules:
+        principal_name = rule["principal_name"]
+        permission = rule["permission"]
+        # permission should be the DataONE string here:
+        # "read", "write", or "changePermission"
+        if permission not in ("read", "write", "changePermission"):
+            continue
+        allow = etree.SubElement(access_policy, "allow")
+        add_text(allow, "subject", principal_name)
+        add_text(allow, "permission", permission)
+
+# Add the replication policy to system metadata
+def add_replication_policy(root, main_row, policies):
+    replication_allowed = main_row["replication_allowed"]
+    number_replicas = main_row["number_replicas"]
+
+    if replication_allowed is None and number_replicas is None and not policies:
+        return
+
+    element = etree.SubElement(root, "replicationPolicy")
+
+    if replication_allowed is not None:
+        element.set(
+            "replicationAllowed",
+            "true" if replication_allowed else "false"
+        )
+
+    if number_replicas is not None:
+        element.set("numberReplicas", str(number_replicas))
+
+    for policy in policies:
+        member_node = policy["member_node"]
+        policy_type = policy["policy"]
+
+        if policy_type == "preferredMemberNode":
+            add_text(element, "preferredMemberNode", member_node)
+
+        elif policy_type == "blockedMemberNode":
+            add_text(element, "blockedMemberNode", member_node)
+
+# Add the replication status to system metadata
+def add_replication_status(root, statuses):
+    for status in statuses:
+        replica = etree.SubElement(root, "replica")
+
+        add_text(
+            replica,
+            "replicaMemberNode",
+            status["member_node"]
+        )
+
+        add_text(
+            replica,
+            "replicationStatus",
+            status["status"]
+        )
+
+        add_text(
+            replica,
+            "replicaVerified",
+            format_datetime(status["date_verified"])
+        )
+
+# Add the media type to system metadata
+def add_media_type(root, media_type, properties):
+    if media_type is None:
+        return
+
+    element = etree.SubElement(root, "mediaType")
+    element.set("name", media_type)
+
+    for prop in properties:
+        property_element = etree.SubElement(element, "property")
+        property_element.set("name", prop["name"])
+        property_element.text = prop["value"]
+
+# Build the system metadata
+def build_system_metadata_xml(
+    row,
+    media_type_properties,
+    replication_policies,
+    replication_statuses,
+    access_rules,
+):
+    root = etree.Element(
+        f"{{{DATAONE_V2_NS}}}systemMetadata",
+        nsmap=NSMAP
+    )
+
+    # ------------------------------------------------------------
+    # DataONE v1 SystemMetadata fields
+    # ------------------------------------------------------------
+
+    add_text(root, "serialVersion", row["serial_version"])
+
+    # Required
+    add_text(root, "identifier", row["guid"])
+    add_text(root, "formatId", row["object_format"])
+    add_text(root, "size", row["size"])
+
+    # Required checksum
+    if row["checksum"] is not None:
+        checksum = etree.SubElement(root, "checksum")
+        checksum.set("algorithm", row["checksum_algorithm"])
+        checksum.text = row["checksum"]
+
+    add_text(root, "submitter", row["submitter"])
+    add_text(root, "rightsHolder", row["rights_holder"])
+
+    # ------------------------------------------------------------
+    # Access policy
+    # ------------------------------------------------------------
+    add_access_policy(root, access_rules)
+
+    # ------------------------------------------------------------
+    # Replication policy
+    # ------------------------------------------------------------
+    add_replication_policy(
+        root,
+        row,
+        replication_policies
+    )
+
+    # ------------------------------------------------------------
+    # Object relationships
+    # ------------------------------------------------------------
+
+    add_text(root, "obsoletes", row["obsoletes"])
+    add_text(root, "obsoletedBy", row["obsoleted_by"])
+
+    # ------------------------------------------------------------
+    # Archive state
+    # ------------------------------------------------------------
+
+    add_bool(root, "archived", row["archived"])
+
+    # ------------------------------------------------------------
+    # Dates
+    # ------------------------------------------------------------
+
+    add_text(
+        root,
+        "dateUploaded",
+        format_datetime(row["date_uploaded"])
+    )
+
+    add_text(
+        root,
+        "dateSysMetadataModified",
+        format_datetime(row["date_modified"])
+    )
+
+    # ------------------------------------------------------------
+    # Member nodes
+    # ------------------------------------------------------------
+
+    add_text(
+        root,
+        "originMemberNode",
+        row["origin_member_node"]
+    )
+
+    add_text(
+        root,
+        "authoritativeMemberNode",
+        row["authoritive_member_node"]
+    )
+
+    # ------------------------------------------------------------
+    # Replicas
+    # ------------------------------------------------------------
+    add_replication_status(
+        root,
+        replication_statuses
+    )
+
+    # ------------------------------------------------------------
+    # DataONE v2 fields
+    # ------------------------------------------------------------
+
+    add_text(root, "seriesId", row["series_id"])
+
+    add_media_type(
+        root,
+        row["media_type"],
+        media_type_properties
+    )
+    add_text(root, "fileName", row["file_name"])
+    # ------------------------------------------------------------
+    # Serialize
+    # ------------------------------------------------------------
+    return etree.tostring(
+        root,
+        encoding="UTF-8",
+        xml_declaration=True,
+        standalone=True,
+        pretty_print=True
+    ).decode("utf-8")
+
+def build_system_metadata_for_guid(conn, row):
+    """
+    Build complete DataONE SystemMetadata XML for one GUID.
+
+    The main systemmetadata fields are supplied by the caller's
+    existing main query. This method only queries the related tables.
+    """
+
+    guid = row["guid"]
+
+    with conn.cursor() as cur:
+
+        # ------------------------------------------------------------
+        # 1. Media type properties
+        # ------------------------------------------------------------
+        cur.execute(
+            """
+            SELECT
+                name,
+                value
+            FROM smmediatypeproperties
+            WHERE guid = %s
+            """,
+            (guid,),
+        )
+        media_type_properties = [
+            {
+                "name": name,
+                "value": value,
+            }
+            for name, value in cur.fetchall()
+        ]
+
+        # ------------------------------------------------------------
+        # 2. Replication policy
+        # ------------------------------------------------------------
+        cur.execute(
+            """
+            SELECT
+                member_node,
+                policy
+            FROM smreplicationpolicy
+            WHERE guid = %s
+            """,
+            (guid,),
+        )
+        replication_policies = [
+            {"member_node": member_node, "policy": policy}
+            for member_node, policy in cur.fetchall()
+        ]
+
+        # ------------------------------------------------------------
+        # 3. Replication status / replicas
+        # ------------------------------------------------------------
+        cur.execute(
+            """
+            SELECT
+                member_node,
+                status,
+                date_verified
+            FROM smreplicationstatus
+            WHERE guid = %s
+            """,
+            (guid,),
+        )
+        replication_statuses = [
+            {
+                "member_node": member_node,
+                "status": status,
+                "date_verified": date_verified,
+            }
+            for member_node, status, date_verified in cur.fetchall()
+        ]
+
+        # ------------------------------------------------------------
+        # 4. Access policy
+        # ------------------------------------------------------------
+        cur.execute(
+            """
+            SELECT
+                principal_name,
+                permission
+            FROM xml_access
+            WHERE guid = %s
+            ORDER BY principal_name, permission
+            """,
+            (guid,),
+        )
+        access_rules = []
+        for principal_name, permission in cur.fetchall():
+            for permission_name in convert_permissions(permission):
+                access_rules.append(
+                    {
+                        "principal_name": principal_name,
+                        "permission": permission_name,
+                    }
+                )
+
+    # ------------------------------------------------------------
+    # Build XML
+    # ------------------------------------------------------------
+    return build_system_metadata_xml(
+        row,
+        media_type_properties,
+        replication_policies,
+        replication_statuses,
+        access_rules,
+    )
+
+"""
+    Convert Metacat integer permission bits to DataONE permission names.
+    CHMOD  = 1 -> changePermission
+    WRITE  = 2 -> write
+    READ   = 4 -> read
+    ALL    = 7 -> all three permissions
+    """
+def convert_permissions(permission):
+    permissions = []
+    if permission is None:
+        return permissions
+    permission = int(permission)
+    if permission == 7:
+        return ["read", "write", "changePermission"]
+    if (permission & 1) == 1:
+        permissions.append("changePermission")
+    if (permission & 4) == 4:
+        permissions.append("read")
+    if (permission & 2) == 2:
+        permissions.append("write")
+    return permissions
 
 # Settings for not showing the log from some libraries
 def _silence_third_party_logs():
@@ -601,7 +1013,7 @@ def lookup_docid_with_retry(conn, guid):
        1 Construct the rabbitmq message
        2 Publish the message to the rabbitmq service
 """
-def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
+def process_pid_wrapper(channel_pool, guid, object_format, doc_id, system_metadata_xml):
     thread_name = threading.current_thread().name
     try:
         index_type = 'create'
@@ -611,13 +1023,14 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
         if guid:
             logger.debug(f"[{thread_name}] Processing PID: {guid} with type: {index_type}, docid: {doc_id}, priority: {priority}")
             headers = {'index_type': index_type, 'id': guid, 'doc_id': doc_id}
-            message = ''
+            message = {SYSMETA: system_metadata_xml}
+            message_body = json.dumps(message).encode("utf-8")
             channel = None
             wait_for_docid(doc_id)
             try:
                 channel = channel_pool.acquire_channel()
                 channel.basic.publish(
-                    body=message,
+                    body=message_body,
                     routing_key=ROUTING_KEY,
                     exchange=EXCHANGE_NAME,
                     properties={'headers': headers, 'priority': priority}
@@ -661,10 +1074,26 @@ def submit_index_tasks(payload, executor):
             cur.execute(f"""
                 SELECT
                     sm.guid,
-                    sm.object_format,
-                    i.docid || '.' || i.rev AS doc_id,
+                    sm.series_id,
+                    sm.serial_version,
+                    sm.date_uploaded,
+                    sm.rights_holder,
+                    sm.checksum,
+                    sm.checksum_algorithm,
+                    sm.origin_member_node,
+                    sm.authoritive_member_node,
                     sm.date_modified,
-                    sm.authoritive_member_node
+                    sm.submitter,
+                    sm.object_format,
+                    sm.size,
+                    sm.archived,
+                    sm.replication_allowed,
+                    sm.number_replicas,
+                    sm.obsoletes,
+                    sm.obsoleted_by,
+                    sm.media_type,
+                    sm.file_name,
+                    i.docid || '.' || i.rev AS doc_id
                 FROM systemmetadata sm
                 LEFT JOIN identifier i
                     ON sm.guid = i.guid
@@ -688,8 +1117,15 @@ def submit_index_tasks(payload, executor):
                 return
 
             # Process rows
-            for guid, object_format, doc_id, modified_time, amn in rows:
+            for values in rows:
                 try:
+                    # Turn the main query row into a dictionary.
+                    row = dict(zip(SYSTEM_METADATA_COLUMNS, values))
+                    guid = row["guid"]
+                    object_format = row["object_format"]
+                    doc_id = row["doc_id"]
+                    modified_time = row["date_modified"]
+                    amn = row["authoritive_member_node"]
                     logger.debug(f"Start to process {guid}:")
                     # docId retry logic
                     if object_format in non_data_formats and not doc_id:
@@ -705,6 +1141,9 @@ def submit_index_tasks(payload, executor):
                         )
                         continue
 
+                    # Build SystemMetadata XML
+                    system_metadata_xml = build_system_metadata_for_guid(conn, row)
+
                     # Submit task to thread pool
                     shutdown_event.wait(EVERY_SUBMIT_WAIT_TIME_SEC)
                     futures.append(
@@ -713,7 +1152,8 @@ def submit_index_tasks(payload, executor):
                             channel_pool,
                             guid,
                             object_format,
-                            doc_id
+                            doc_id,
+                            system_metadata_xml
                         )
                     )
                     batch_max_time[amn] = max(
@@ -757,7 +1197,7 @@ def submit_notification_tasks(notification_mn_latest_map, executor):
     }
     while True:
         response = requests.post(
-            SOLR_URL + "/select",
+            SOLR_URL,
             data=params,
             timeout=60,
         )
