@@ -53,6 +53,7 @@ SOLR_URL = config["services"]["solr_url"]
 
 ENABLE_INDEXER = config["services"].getboolean("enable_indexer")
 
+LOOP_MAX_SIZE = 4000000
 # --- Configuration ---
 PULL_INTERVAL = 50  # second
 MAX_ROWS = 4000
@@ -122,6 +123,9 @@ SYSTEM_METADATA_COLUMNS = [
     "file_name",
     "doc_id",
 ]
+
+index = 0
+
 
 ### Methods helping to build system metadata
 def add_text(parent, name, value):
@@ -1057,12 +1061,16 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id, system_metada
    Query the system metadata table and submit the index tasks
 """
 def submit_index_tasks(payload, executor):
+    global index
     global pg_pool
     global channel_pool
     global futures
     futures = []
     global batch_max_time
     batch_max_time = {}
+    if index > LOOP_MAX_SIZE
+        logger.debug("The max number of index tasks has reached. Do nothing.")
+        return
     if not ENABLE_INDEXER:
         logger.debug("The index submission is disabled.")
         return
@@ -1156,6 +1164,7 @@ def submit_index_tasks(payload, executor):
                             system_metadata_xml
                         )
                     )
+                    index += 1
                     batch_max_time[amn] = max(
                         batch_max_time.get(amn, modified_time),
                         modified_time
