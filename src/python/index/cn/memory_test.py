@@ -1060,7 +1060,7 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id, system_metada
 """
    Query the system metadata table and submit the index tasks
 """
-def submit_index_tasks(payload, executor):
+def submit_index_tasks(payload, executor, mn_latest_map):
     global index
     global pg_pool
     global channel_pool
@@ -1068,6 +1068,7 @@ def submit_index_tasks(payload, executor):
     futures = []
     global batch_max_time
     batch_max_time = {}
+    logger.debug(f"The number of submitted index tasks is {index}")
     if index > LOOP_MAX_SIZE:
         logger.debug("The max number of index tasks has reached. Do nothing.")
         return
@@ -1120,8 +1121,10 @@ def submit_index_tasks(payload, executor):
             length = len(rows)
 
             if not rows:
-                logger.info("No new records. Sleeping.")
+                logger.info("No new records. We need to reset the last modified date to keep the loop going.")
                 shutdown_event.wait(PULL_INTERVAL)
+                batch_max_time = {key: datetime(2000, 1, 1) for key in mn_latest_map}
+                logger.debug(f"the new records is {batch_max_time}")
                 return
 
             # Process rows
@@ -1211,7 +1214,7 @@ def poll_and_submit(non_data_formats):
                     {"amn": k, "last_time": v}  # use string directly
                     for k, v in mn_latest_map.items()
                 ])
-                submit_index_tasks(payload, executor)
+                submit_index_tasks(payload, executor, mn_latest_map)
                 # Wait for all workers
                 disconnectionHappened = None
                 if futures:
