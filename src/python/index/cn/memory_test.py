@@ -369,8 +369,7 @@ def build_system_metadata_xml(
         root,
         encoding="UTF-8",
         xml_declaration=True,
-        standalone=True,
-        pretty_print=True
+        standalone=True
     ).decode("utf-8")
 
 def build_system_metadata_for_guid(conn, row):
