@@ -1068,7 +1068,7 @@ def submit_index_tasks(payload, executor):
     futures = []
     global batch_max_time
     batch_max_time = {}
-    if index > LOOP_MAX_SIZE
+    if index > LOOP_MAX_SIZE:
         logger.debug("The max number of index tasks has reached. Do nothing.")
         return
     if not ENABLE_INDEXER:
