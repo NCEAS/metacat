@@ -22,7 +22,8 @@ spec:
     spec:
       initContainers:
         - name: deps
-          image: busybox:latest
+          image: "{{ .Values.initContainer.image.repository }}:{{ .Values.initContainer.image.tag }}"
+          imagePullPolicy: {{ .Values.initContainer.image.pullPolicy }}
           command:
             - sh
             - -c
