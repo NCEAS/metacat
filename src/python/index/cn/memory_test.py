@@ -376,14 +376,6 @@ def build_system_metadata_for_guid(conn, row):
     The main systemmetadata fields are supplied by the caller's
     existing main query. This method only queries the related tables.
     """
-
-def build_system_metadata_for_guid(conn, row):
-    """
-    Build complete DataONE SystemMetadata XML for one GUID.
-
-    The main systemmetadata fields are supplied by the caller's
-    existing main query. This method only queries the related tables.
-    """
     guid = row["guid"]
     with conn.cursor() as cur:
         cur.execute(
