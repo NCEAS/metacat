@@ -173,7 +173,7 @@ elif [[ $1 = "catalina.sh" ]]; then
     echo '****************************************************************************'
     echo
     #   run the passed CMD to Start tomcat, and send all output to stdout for kubernetes
-    "$@" > /dev/stdout 2>&1
+    exec "$@" > /dev/stdout 2>&1
 
 
 else
