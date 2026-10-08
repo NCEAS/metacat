@@ -430,13 +430,13 @@ def build_system_metadata_for_guid(conn, row):
                 (
                     SELECT array_agg(principal_name)
                     FROM xml_access
-                    WHERE guid = %s
+                    WHERE perm_type = 'allow' AND guid = %s
                 ) AS access_principals,
 
                 (
                     SELECT array_agg(permission)
                     FROM xml_access
-                    WHERE guid = %s
+                    WHERE perm_type = 'allow' AND guid = %s
                 ) AS access_permissions
             """,
             (
