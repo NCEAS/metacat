@@ -375,100 +375,87 @@ def build_system_metadata_for_guid(conn, row):
     The main systemmetadata fields are supplied by the caller's
     existing main query. This method only queries the related tables.
     """
-
     guid = row["guid"]
-
     with conn.cursor() as cur:
-
-        # ------------------------------------------------------------
-        # 1. Media type properties
-        # ------------------------------------------------------------
         cur.execute(
             """
             SELECT
-                name,
-                value
-            FROM smmediatypeproperties
-            WHERE guid = %s
-            """,
-            (guid,),
-        )
-        media_type_properties = [
-            {
-                "name": name,
-                "value": value,
-            }
-            for name, value in cur.fetchall()
-        ]
+                COALESCE(
+                    (
+                        SELECT json_agg(
+                            json_build_object(
+                                'name', name,
+                                'value', value
+                            )
+                        )
+                        FROM smmediatypeproperties
+                        WHERE guid = %s
+                    ),
+                    '[]'::json
+                ) AS media_type_properties,
 
-        # ------------------------------------------------------------
-        # 2. Replication policy
-        # ------------------------------------------------------------
-        cur.execute(
-            """
-            SELECT
-                member_node,
-                policy
-            FROM smreplicationpolicy
-            WHERE guid = %s
-            """,
-            (guid,),
-        )
-        replication_policies = [
-            {"member_node": member_node, "policy": policy}
-            for member_node, policy in cur.fetchall()
-        ]
+                COALESCE(
+                    (
+                        SELECT json_agg(
+                            json_build_object(
+                                'member_node', member_node,
+                                'policy', policy
+                            )
+                        )
+                        FROM smreplicationpolicy
+                        WHERE guid = %s
+                    ),
+                    '[]'::json
+                ) AS replication_policies,
 
-        # ------------------------------------------------------------
-        # 3. Replication status / replicas
-        # ------------------------------------------------------------
-        cur.execute(
-            """
-            SELECT
-                member_node,
-                status,
-                date_verified
-            FROM smreplicationstatus
-            WHERE guid = %s
-            """,
-            (guid,),
-        )
-        replication_statuses = [
-            {
-                "member_node": member_node,
-                "status": status,
-                "date_verified": date_verified,
-            }
-            for member_node, status, date_verified in cur.fetchall()
-        ]
+                COALESCE(
+                    (
+                        SELECT json_agg(
+                            json_build_object(
+                                'member_node', member_node,
+                                'status', status,
+                                'date_verified', date_verified
+                            )
+                        )
+                        FROM smreplicationstatus
+                        WHERE guid = %s
+                    ),
+                    '[]'::json
+                ) AS replication_statuses,
 
-        # ------------------------------------------------------------
-        # 4. Access policy
-        # ------------------------------------------------------------
-        cur.execute(
-            """
-            SELECT
-                principal_name,
-                permission
-            FROM xml_access
-            WHERE guid = %s
-            ORDER BY principal_name, permission
+                COALESCE(
+                    (
+                        SELECT json_agg(
+                            json_build_object(
+                                'principal_name', principal_name,
+                                'permission', permission
+                            )
+                        )
+                        FROM xml_access
+                        WHERE guid = %s
+                    ),
+                    '[]'::json
+                ) AS access_rules
             """,
-            (guid,),
+            (guid, guid, guid, guid),
         )
-        access_rules = []
-        for principal_name, permission in cur.fetchall():
-            for permission_name in convert_permissions(permission):
-                access_rules.append(
-                    {
-                        "principal_name": principal_name,
-                        "permission": permission_name,
-                    }
-                )
+        (
+            media_type_properties,
+            replication_policies,
+            replication_statuses,
+            access_rules_data,
+        ) = cur.fetchone()
 
-    # ------------------------------------------------------------
-    # Build XML
-    # ------------------------------------------------------------
+    access_rules = []
+    for rule in access_rules_data:
+        for permission_name in convert_permissions(rule["permission"]):
+            access_rules.append(
+                {
+                    "principal_name": rule["principal_name"],
+                    "permission": permission_name,
+                }
+            )
+
     return build_system_metadata_xml(
         row,
         media_type_properties,
