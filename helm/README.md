@@ -237,6 +237,9 @@ These scenarios will be covered in future releases. In the meantime, please refe
 | `image.pullPolicy`                       | Metacat image pull policy                                                    | `IfNotPresent`          |
 | `image.tag`                              | Overrides the image tag. Will default to the chart appVersion if set to ""   | `""`                    |
 | `image.debug`                            | Specify if container debugging should be enabled (sets log level to "DEBUG") | `false`                 |
+| `initContainer.image.repository`         | Image for the 'deps' init container (waits for dependencies)                 | `busybox`               |
+| `initContainer.image.tag`                | Tag for the 'deps' init container image                                      | `1.37`                  |
+| `initContainer.image.pullPolicy`         | Pull policy for the 'deps' init container image                              | `IfNotPresent`          |
 | `imagePullSecrets`                       | Optional list of references to secrets in the same namespace                 | `[]`                    |
 | `container.ports`                        | Optional list of additional container ports to expose within the cluster     | `[]`                    |
 | `serviceAccount.create`                  | Should a service account be created to run Metacat?                          | `false`                 |
@@ -291,17 +294,17 @@ These scenarios will be covered in future releases. In the meantime, please refe
 | `startupProbe.httpGet.path`        | The url path to probe during startup                                     | `/metacat/d1/mn/v2/monitor/ping` |
 | `startupProbe.httpGet.port`        | The named containerPort to probe                                         | `metacat-web`                    |
 | `startupProbe.successThreshold`    | Min consecutive successes for probe to be successful                     | `1`                              |
-| `startupProbe.failureThreshold`    | No. of consecutive failures before the container restarted               | `30`                             |
-| `startupProbe.periodSeconds`       | Interval (in seconds) between startup checks                             | `10`                             |
+| `startupProbe.failureThreshold`    | No. of consecutive failures before the container restarted               | `150`                            |
+| `startupProbe.periodSeconds`       | Interval (in seconds) between startup checks                             | `2`                              |
 | `startupProbe.timeoutSeconds`      | Timeout (in seconds) for each startup check                              | `5`                              |
 | `livenessProbe.enabled`            | Enable livenessProbe for Metacat container                               | `false`                          |
 | `readinessProbe.enabled`           | Enable readinessProbe for Metacat container                              | `true`                           |
 | `readinessProbe.httpGet.path`      | The url path to probe.                                                   | `/metacat/d1/mn/v2/monitor/ping` |
 | `readinessProbe.httpGet.port`      | The named containerPort to probe                                         | `metacat-web`                    |
-| `readinessProbe.periodSeconds`     | Period seconds for readinessProbe                                        | `15`                             |
+| `readinessProbe.periodSeconds`     | Period seconds for readinessProbe                                        | `5`                              |
 | `readinessProbe.timeoutSeconds`    | Timeout seconds for readinessProbe                                       | `10`                             |
 | `readinessProbe.successThreshold`  | Min consecutive successes for probe to be successful                     | `1`                              |
-| `readinessProbe.failureThreshold`  | No. consecutive failures before container marked unhealthy               | `6`                              |
+| `readinessProbe.failureThreshold`  | No. consecutive failures before container marked unhealthy               | `18`                             |
 
 ### PostgreSQL Database Connection Parameters
 
