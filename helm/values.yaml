@@ -533,7 +533,7 @@ image:
 initContainer:
   image:
     repository: busybox
-    tag: "1.37"
+    tag: "1.38"
     pullPolicy: IfNotPresent
 
 ## @param imagePullSecrets [array] Optional list of references to secrets in the same namespace
