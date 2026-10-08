@@ -175,15 +175,12 @@ def add_access_policy(root, access_rules):
         return
     access_policy = etree.SubElement(root, "accessPolicy")
     for rule in access_rules:
-        principal_name = rule["principal_name"]
-        permission = rule["permission"]
-        # permission should be the DataONE string here:
-        # "read", "write", or "changePermission"
-        if permission not in ("read", "write", "changePermission"):
-            continue
         allow = etree.SubElement(access_policy, "allow")
-        add_text(allow, "subject", principal_name)
-        add_text(allow, "permission", permission)
+        subject = etree.SubElement(allow, "subject")
+        subject.text = rule["principal_name"]
+        for permission in rule["permissions"]:
+            permission_element = etree.SubElement(allow, "permission")
+            permission_element.text = permission
 
 # Add the replication policy to system metadata
 def add_replication_policy(root, main_row, policies):
@@ -392,82 +389,155 @@ def build_system_metadata_for_guid(conn, row):
         cur.execute(
             """
             SELECT
-                COALESCE(
-                    (
-                        SELECT json_agg(
-                            json_build_object(
-                                'name', name,
-                                'value', value
-                            )
-                        )
-                        FROM smmediatypeproperties
-                        WHERE guid = %s
-                    ),
-                    '[]'::json
-                ) AS media_type_properties,
+                -- Media type properties
+                (
+                    SELECT array_agg(name)
+                    FROM smmediatypeproperties
+                    WHERE guid = %s
+                ) AS media_property_names,
 
-                COALESCE(
-                    (
-                        SELECT json_agg(
-                            json_build_object(
-                                'member_node', member_node,
-                                'policy', policy
-                            )
-                        )
-                        FROM smreplicationpolicy
-                        WHERE guid = %s
-                    ),
-                    '[]'::json
-                ) AS replication_policies,
+                (
+                    SELECT array_agg(value)
+                    FROM smmediatypeproperties
+                    WHERE guid = %s
+                ) AS media_property_values,
 
-                COALESCE(
-                    (
-                        SELECT json_agg(
-                            json_build_object(
-                                'member_node', member_node,
-                                'status', status,
-                                'date_verified', date_verified
-                            )
-                        )
-                        FROM smreplicationstatus
-                        WHERE guid = %s
-                    ),
-                    '[]'::json
-                ) AS replication_statuses,
+                -- Replication policies
+                (
+                    SELECT array_agg(member_node)
+                    FROM smreplicationpolicy
+                    WHERE guid = %s
+                ) AS policy_member_nodes,
 
-                COALESCE(
-                    (
-                        SELECT json_agg(
-                            json_build_object(
-                                'principal_name', principal_name,
-                                'permission', permission
-                            )
-                        )
-                        FROM xml_access
-                        WHERE guid = %s
-                    ),
-                    '[]'::json
-                ) AS access_rules
+                (
+                    SELECT array_agg(policy)
+                    FROM smreplicationpolicy
+                    WHERE guid = %s
+                ) AS policy_values,
+
+                -- Replication status
+                (
+                    SELECT array_agg(member_node)
+                    FROM smreplicationstatus
+                    WHERE guid = %s
+                ) AS status_member_nodes,
+
+                (
+                    SELECT array_agg(status)
+                    FROM smreplicationstatus
+                    WHERE guid = %s
+                ) AS status_values,
+
+                (
+                    SELECT array_agg(date_verified)
+                    FROM smreplicationstatus
+                    WHERE guid = %s
+                ) AS status_dates_verified,
+
+                -- Access policy
+                (
+                    SELECT array_agg(principal_name)
+                    FROM xml_access
+                    WHERE guid = %s
+                ) AS access_principals,
+
+                (
+                    SELECT array_agg(permission)
+                    FROM xml_access
+                    WHERE guid = %s
+                ) AS access_permissions
             """,
-            (guid, guid, guid, guid),
+            (
+                guid,
+                guid,
+                guid,
+                guid,
+                guid,
+                guid,
+                guid,
+                guid,
+                guid,
+            ),
         )
+
         (
-            media_type_properties,
-            replication_policies,
-            replication_statuses,
-            access_rules_data,
+            media_property_names,
+            media_property_values,
+            policy_member_nodes,
+            policy_values,
+            status_member_nodes,
+            status_values,
+            status_dates_verified,
+            access_principals,
+            access_permissions,
         ) = cur.fetchone()
 
+    # ------------------------------------------------------------
+    # 1. Media type properties
+    # ------------------------------------------------------------
+    media_type_properties = []
+    if media_property_names:
+        media_type_properties = [
+            {
+                "name": name,
+                "value": value,
+            }
+            for name, value in zip(
+                media_property_names,
+                media_property_values,
+            )
+        ]
+    # ------------------------------------------------------------
+    # 2. Replication policies
+    # ------------------------------------------------------------
+    replication_policies = []
+    if policy_member_nodes:
+        replication_policies = [
+            {
+                "member_node": member_node,
+                "policy": policy,
+            }
+            for member_node, policy in zip(
+                policy_member_nodes,
+                policy_values,
+            )
+        ]
+    # ------------------------------------------------------------
+    # 3. Replication status / replicas
+    # ------------------------------------------------------------
+    replication_statuses = []
+    if status_member_nodes:
+        replication_statuses = [
+            {
+                "member_node": member_node,
+                "status": status,
+                "date_verified": date_verified,
+            }
+            for member_node, status, date_verified in zip(
+                status_member_nodes,
+                status_values,
+                status_dates_verified,
+            )
+        ]
+    # ------------------------------------------------------------
+    # 4. Access policy
+    # ------------------------------------------------------------
     access_rules = []
-    for rule in access_rules_data:
-        for permission_name in convert_permissions(rule["permission"]):
+    if access_principals:
+        for principal_name, permission in zip(
+            access_principals,
+            access_permissions,
+        ):
+            permissions = convert_permissions(permission)
             access_rules.append(
                 {
-                    "principal_name": rule["principal_name"],
-                    "permission": permission_name,
+                    "principal_name": principal_name,
+                    "permissions": permissions,
                 }
             )
-
+    # ------------------------------------------------------------
+    # Build XML
+    # ------------------------------------------------------------
     return build_system_metadata_xml(
         row,
         media_type_properties,
@@ -1148,7 +1218,6 @@ def submit_index_tasks(payload, executor, mn_latest_map):
 
                     # Build SystemMetadata XML
                     system_metadata_xml = build_system_metadata_for_guid(conn, row)
-
                     # Submit task to thread pool
                     shutdown_event.wait(EVERY_SUBMIT_WAIT_TIME_SEC)
                     futures.append(
