@@ -378,158 +378,72 @@ def build_system_metadata_for_guid(conn, row):
     """
     guid = row["guid"]
     with conn.cursor() as cur:
+        # 1. Media type properties
         cur.execute(
             """
-            SELECT
-                -- Media type properties
-                (
-                    SELECT array_agg(name)
-                    FROM smmediatypeproperties
-                    WHERE guid = %s
-                ) AS media_property_names,
-
-                (
-                    SELECT array_agg(value)
-                    FROM smmediatypeproperties
-                    WHERE guid = %s
-                ) AS media_property_values,
-
-                -- Replication policies
-                (
-                    SELECT array_agg(member_node)
-                    FROM smreplicationpolicy
-                    WHERE guid = %s
-                ) AS policy_member_nodes,
-
-                (
-                    SELECT array_agg(policy)
-                    FROM smreplicationpolicy
-                    WHERE guid = %s
-                ) AS policy_values,
-
-                -- Replication status
-                (
-                    SELECT array_agg(member_node)
-                    FROM smreplicationstatus
-                    WHERE guid = %s
-                ) AS status_member_nodes,
-
-                (
-                    SELECT array_agg(status)
-                    FROM smreplicationstatus
-                    WHERE guid = %s
-                ) AS status_values,
-
-                (
-                    SELECT array_agg(date_verified)
-                    FROM smreplicationstatus
-                    WHERE guid = %s
-                ) AS status_dates_verified,
-
-                -- Access policy
-                (
-                    SELECT array_agg(principal_name)
-                    FROM xml_access
-                    WHERE perm_type = 'allow' AND guid = %s
-                ) AS access_principals,
-
-                (
-                    SELECT array_agg(permission)
-                    FROM xml_access
-                    WHERE perm_type = 'allow' AND guid = %s
-                ) AS access_permissions
+            SELECT name, value
+            FROM smmediatypeproperties
+            WHERE guid = %s
             """,
-            (
-                guid,
-                guid,
-                guid,
-                guid,
-                guid,
-                guid,
-                guid,
-                guid,
-                guid,
-            ),
+            (guid,),
         )
-
-        (
-            media_property_names,
-            media_property_values,
-            policy_member_nodes,
-            policy_values,
-            status_member_nodes,
-            status_values,
-            status_dates_verified,
-            access_principals,
-            access_permissions,
-        ) = cur.fetchone()
-
-    # ------------------------------------------------------------
-    # 1. Media type properties
-    # ------------------------------------------------------------
-    media_type_properties = []
-    if media_property_names:
         media_type_properties = [
-            {
-                "name": name,
-                "value": value,
-            }
-            for name, value in zip(
-                media_property_names,
-                media_property_values,
-            )
+            {"name": name, "value": value}
+            for name, value in cur.fetchall()
         ]
-    # ------------------------------------------------------------
-    # 2. Replication policies
-    # ------------------------------------------------------------
-    replication_policies = []
-    if policy_member_nodes:
+
+        # 2. Replication policies
+        cur.execute(
+            """
+            SELECT member_node, policy
+            FROM smreplicationpolicy
+            WHERE guid = %s
+            """,
+            (guid,),
+        )
         replication_policies = [
             {
                 "member_node": member_node,
                 "policy": policy,
             }
-            for member_node, policy in zip(
-                policy_member_nodes,
-                policy_values,
-            )
+            for member_node, policy in cur.fetchall()
         ]
-    # ------------------------------------------------------------
-    # 3. Replication status / replicas
-    # ------------------------------------------------------------
-    replication_statuses = []
-    if status_member_nodes:
+
+        # 3. Replication status
+        cur.execute(
+            """
+            SELECT member_node, status, date_verified
+            FROM smreplicationstatus
+            WHERE guid = %s
+            """,
+            (guid,),
+        )
         replication_statuses = [
             {
                 "member_node": member_node,
                 "status": status,
                 "date_verified": date_verified,
             }
-            for member_node, status, date_verified in zip(
-                status_member_nodes,
-                status_values,
-                status_dates_verified,
-            )
+            for member_node, status, date_verified in cur.fetchall()
         ]
-    # ------------------------------------------------------------
-    # 4. Access policy
-    # ------------------------------------------------------------
-    access_rules = []
-    if access_principals:
-        for principal_name, permission in zip(
-            access_principals,
-            access_permissions,
-        ):
-            permissions = convert_permissions(permission)
-            access_rules.append(
-                {
-                    "principal_name": principal_name,
-                    "permissions": permissions,
-                }
-            )
-    # ------------------------------------------------------------
-    # Build XML
-    # ------------------------------------------------------------
+
+        # 4. Access policy
+        cur.execute(
+            """
+            SELECT principal_name, permission
+            FROM xml_access
+            WHERE guid = %s
+            """,
+            (guid,),
+        )
+        access_rules = [
+            {
+                "principal_name": principal_name,
+                "permissions": convert_permissions(permission),
+            }
+            for principal_name, permission in cur.fetchall()
+        ]
+
     return build_system_metadata_xml(
         row,
         media_type_properties,
