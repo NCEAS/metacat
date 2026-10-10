@@ -205,10 +205,10 @@ def add_replication_policy(root, main_row, policies):
         member_node = policy["member_node"]
         policy_type = policy["policy"]
 
-        if policy_type == "preferredMemberNode":
+        if policy_type == "preferred":
             add_text(element, "preferredMemberNode", member_node)
 
-        elif policy_type == "blockedMemberNode":
+        elif policy_type == "blocked":
             add_text(element, "blockedMemberNode", member_node)
 
 # Add the replication status to system metadata
@@ -225,7 +225,7 @@ def add_replication_status(root, statuses):
         add_text(
             replica,
             "replicationStatus",
-            status["status"]
+            status["status"].lower()
         )
 
         add_text(
