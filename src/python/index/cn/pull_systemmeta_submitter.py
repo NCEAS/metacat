@@ -52,6 +52,7 @@ CN_URL = config["services"]["cn_url"]
 SOLR_URL = config["services"]["solr_url"]
 
 ENABLE_INDEXER = config["services"].getboolean("enable_indexer")
+ENABLE_NOTIFICATION = config["services"].getboolean("enable_notification")
 
 # --- Configuration ---
 PULL_INTERVAL = 50  # second
@@ -1140,6 +1141,9 @@ def submit_index_tasks(payload, executor):
    Query the solr service and submit the notification tasks
 """
 def submit_notification_tasks(notification_mn_latest_map, executor):
+    if not ENABLE_NOTIFICATION:
+        logger.debug("The notification service submission is disabled.")
+        return
     # Build the MN/date conditions.
     mn_queries = []
     for mn, date_modified in notification_mn_latest_map.items():
