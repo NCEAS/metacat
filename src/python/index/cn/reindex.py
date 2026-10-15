@@ -21,6 +21,7 @@ from pull_systemmeta_submitter import (
     MAX_WORKERS,
     DOCID_WAIT_SEC,
     DOCID_MAX_RETRIES,
+    SYSTEM_METADATA_COLUMNS,
     process_pid_wrapper,
     load_non_data_format_ids,
     lookup_docid_with_retry,
@@ -30,13 +31,14 @@ from pull_systemmeta_submitter import (
     RABBITMQ_USERNAME,
     RABBITMQ_PASSWORD,
     setup_logging,
+    build_system_metadata_for_guid,
     logger as submitter_logger
 )
 
 DEFAULT_IDS_FILE_PATH = "/var/metacat/.metacat/reindex-script/pids_to_process.txt"
 
 log_name = "reindex"
-log_file = f"log/{log_name}.log"
+log_file = f"/var/log/dataone/event-submitter/{log_name}.log"
 
 """
    Read ids from a file to and array
@@ -51,14 +53,33 @@ def read_ids_from_file(path):
     return ids
 
 """
-   Lookup object_format and docid.rev for a guid.
+   Lookup main systemmetadata and docid.rev for a guid.
 """
-def lookup_docid_and_format(conn, guid):
+def lookup_docid_and_main_sysmeta(conn, guid):
     with conn.cursor() as cur:
         cur.execute(
             """
             SELECT
+                sm.guid,
+                sm.series_id,
+                sm.serial_version,
+                sm.date_uploaded,
+                sm.rights_holder,
+                sm.checksum,
+                sm.checksum_algorithm,
+                sm.origin_member_node,
+                sm.authoritive_member_node,
+                sm.date_modified,
+                sm.submitter,
                 sm.object_format,
+                sm.size,
+                sm.archived,
+                sm.replication_allowed,
+                sm.number_replicas,
+                sm.obsoletes,
+                sm.obsoleted_by,
+                sm.media_type,
+                sm.file_name,
                 i.docid || '.' || i.rev AS doc_id
             FROM systemmetadata sm
             LEFT JOIN identifier i
@@ -110,28 +131,38 @@ def submit_from_file(id_file):
             conn = pg_pool.getconn()
             try:
                 for guid in ids:
-                    row = lookup_docid_and_format(conn, guid)
-                    if not row:
+                    # The row contains the information from the systemmetadata table and docid
+                    # for the given guid. It only return one row with values
+                    rowResult = lookup_docid_and_main_sysmeta(conn, guid)
+                    if not rowResult:
                         logger.warning(f"[WARN] GUID not found in systemmetadata: {guid}")
                         continue
-                    object_format, doc_id = row
-                    if object_format in non_data_formats and not doc_id:
-                        doc_id = lookup_docid_with_retry(conn, guid)
-
-                    if object_format in non_data_formats and not doc_id:
-                        logger.warning(f"[WARN] Skipping {guid}: doc_id not found after multiple try")
-                        continue
-
-                    futures.append(
-                        executor.submit(
-                            process_pid_wrapper,
-                            channel_pool,
-                            guid,
-                            object_format,
-                            doc_id
+                    # Process the rowResult
+                    try:
+                        # Turn the main query rowResult into a dictionary.
+                        row = dict(zip(SYSTEM_METADATA_COLUMNS, rowResult))
+                        guid = row["guid"]
+                        object_format = row["object_format"]
+                        doc_id = row["doc_id"]
+                        if object_format in non_data_formats and not doc_id:
+                            doc_id = lookup_docid_with_retry(conn, guid)
+                        if object_format in non_data_formats and not doc_id:
+                            logger.warning(f"[WARN] Skipping {guid}: doc_id not found after multiple try")
+                            continue
+                        # Build SystemMetadata XML
+                        system_metadata_xml = build_system_metadata_for_guid(conn, row)
+                        futures.append(
+                            executor.submit(
+                                process_pid_wrapper,
+                                channel_pool,
+                                guid,
+                                object_format,
+                                doc_id,
+                                system_metadata_xml
+                            )
                         )
-                    )
-
+                    except Exception as error:
+                        logger.error(f"[ERROR] Process {guid}: {error}")
             finally:
                 pg_pool.putconn(conn)
             # Wait for all tasks

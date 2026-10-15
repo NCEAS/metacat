@@ -41,7 +41,7 @@ RECONNECT_DELAY = 5
 MAX_RECONNECT_DELAY = 60
 
 log_name = "delete_systemmeta_listener"
-log_file = f"log/{log_name}.log"
+log_file = f"/var/log/dataone/event-submitter/{log_name}.log"
 
 """
     Note: this method only handles the delete actions.
@@ -59,6 +59,9 @@ def process_pid_wrapper(channel_pool, notify):
         # 1. Parse the payload from the trigger
         payload = json.loads(notify.payload)
         guid = payload.get("pid")
+        if not guid:
+            logger.error("There is no pid in the message, so it cannot be processed.")
+            return
         action = payload.get("action")
         if action and action.lower() == 'delete':
             index_type = 'delete'

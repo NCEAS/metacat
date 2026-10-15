@@ -48,7 +48,7 @@ Used to handle objects that may have been missed by `pull_systemmeta_submitter.p
    ```  
 4. Files created:
   - `.mn_latest_modified_map.json` – tracks the indexed latest modification date of objects for each member node. **Do not delete or modify this file.**
-  - Log file: `log/pull_systemmeta_submitter.log` (customizable in the script).
+  - Log file: `/var/log/dataone/event-submitter/pull_systemmeta_submitter.log` (customizable in the script).
 
 ### `delete_systemmeta_listener.py`
 
@@ -65,7 +65,7 @@ Used to handle objects that may have been missed by `pull_systemmeta_submitter.p
    ```bash
    kill -2 <process-id>
    ```  
-5. Default log file: `log/delete_systemmeta_listener.log` (customizable in the script).
+5. Default log file: `/var/log/dataone/event-submitter/delete_systemmeta_listener.log` (customizable in the script).
 
 ### `reindex.py`
 
@@ -78,7 +78,7 @@ Used to handle objects that may have been missed by `pull_systemmeta_submitter.p
   - If `-f` is omitted or provided without a value, the default file path will be used.
     The default path is defined by `RESULTS_FILE_PATH` in
     `metacat/src/python/batch-sync/submit-index/find_objects_to_reindex.py`.
-3. Default log file: `log/reindex.log` (customizable in the script).
+3. Default log file: `/var/log/dataone/event-submitter/reindex.log` (customizable in the script).
 
 ---
 

@@ -12,7 +12,6 @@ import aiohttp
 import concurrent.futures
 import configparser
 import fcntl
-import psycopg2
 import json
 import logging
 import logging.config
@@ -23,12 +22,12 @@ import time
 import threading
 import xml.etree.ElementTree as ET
 
+from lxml import etree
 
 from amqpstorm import Connection, AMQPError, AMQPConnectionError, AMQPChannelError
-from concurrent.futures import wait, ALL_COMPLETED
-from datetime import datetime
+from concurrent.futures import wait
+from datetime import date, datetime, timezone
 from logging.handlers import RotatingFileHandler
-from pathlib import Path
 from psycopg2 import pool
 from queue import Empty
 from urllib.parse import urljoin
@@ -48,6 +47,9 @@ DB_PASSWORD = config["database"]["password"]
 
 CN_URL = config["services"]["cn_url"]
 SOLR_URL = config["services"]["solr_url"]
+
+ENABLE_INDEXER = config["services"].getboolean("enable_indexer")
+ENABLE_NOTIFICATION = config["services"].getboolean("enable_notification")
 
 # --- Configuration ---
 PULL_INTERVAL = 50  # second
@@ -79,11 +81,392 @@ DEFAULT_DATE = "2000-01-01 00:00:00.000"
 FORMATS_URL = urljoin(CN_URL + "/", "formats")
 NODE_URL = urljoin(CN_URL + "/", "node")
 MN_STATE_FILE = ".mn_latest_modified_map.json"
+MN_NOTIFICATION_STATE_FILE = ".notification_mn_latest_modification_map.json"
 LOG_LEVEL = logging.DEBUG
 LOGGER_NAME = "pull_systemmeta_submitter"
-LOG_FILE = f"log/{LOGGER_NAME}.log"
+LOG_FILE = f"/var/log/dataone/event-submitter/{LOGGER_NAME}.log"
 shutdown_event = threading.Event()
 logger = logging.getLogger(LOGGER_NAME)
+
+DATAONE_V1_NS = "http://ns.dataone.org/service/types/v1"
+DATAONE_V2_NS = "http://ns.dataone.org/service/types/v2.0"
+SYSMETA = "sysmeta"
+
+NSMAP = {
+    "d1v1": DATAONE_V1_NS,
+    "d1v2": DATAONE_V2_NS,
+}
+
+SYSTEM_METADATA_COLUMNS = [
+    "guid",
+    "series_id",
+    "serial_version",
+    "date_uploaded",
+    "rights_holder",
+    "checksum",
+    "checksum_algorithm",
+    "origin_member_node",
+    "authoritive_member_node",
+    "date_modified",
+    "submitter",
+    "object_format",
+    "size",
+    "archived",
+    "replication_allowed",
+    "number_replicas",
+    "obsoletes",
+    "obsoleted_by",
+    "media_type",
+    "file_name",
+    "doc_id",
+]
+
+### Methods helping to build system metadata
+def add_text(parent, name, value):
+    """Add an unqualified DataONE SystemMetadata child element."""
+    if value is None:
+        return None
+
+    element = etree.SubElement(parent, name)
+    element.text = str(value)
+    return element
+
+
+def add_bool(parent, name, value):
+    """Add a boolean XML element."""
+    if value is None:
+        return None
+
+    element = etree.SubElement(parent, name)
+    element.text = "true" if value else "false"
+    return element
+
+
+def format_datetime(value):
+    """
+    Convert a PostgreSQL datetime/date into DataONE xs:dateTime.
+
+    DataONE timestamps are UTC.
+    """
+    if value is None:
+        return None
+
+    if isinstance(value, date) and not isinstance(value, datetime):
+        value = datetime.combine(value, datetime.min.time())
+
+    if value.tzinfo is None:
+        # PostgreSQL columns are timestamp without time zone in this schema.
+        # Metacat timestamps should be interpreted as UTC.
+        value = value.replace(tzinfo=timezone.utc)
+    else:
+        value = value.astimezone(timezone.utc)
+
+    return value.isoformat().replace("+00:00", "Z")
+
+# Add the access policy to system metadata
+def add_access_policy(root, access_rules):
+    if not access_rules:
+        return
+    access_policy = etree.SubElement(root, "accessPolicy")
+    for rule in access_rules:
+        allow = etree.SubElement(access_policy, "allow")
+        subject = etree.SubElement(allow, "subject")
+        subject.text = rule["principal_name"]
+        for permission in rule["permissions"]:
+            permission_element = etree.SubElement(allow, "permission")
+            permission_element.text = permission
+
+# Add the replication policy to system metadata
+def add_replication_policy(root, main_row, policies):
+    replication_allowed = main_row["replication_allowed"]
+    number_replicas = main_row["number_replicas"]
+
+    if replication_allowed is None and number_replicas is None and not policies:
+        return
+
+    element = etree.SubElement(root, "replicationPolicy")
+
+    if replication_allowed is not None:
+        element.set(
+            "replicationAllowed",
+            "true" if replication_allowed else "false"
+        )
+
+    if number_replicas is not None:
+        element.set("numberReplicas", str(number_replicas))
+
+    for policy in policies:
+        member_node = policy["member_node"]
+        policy_type = policy["policy"]
+
+        if policy_type == "preferred":
+            add_text(element, "preferredMemberNode", member_node)
+
+        elif policy_type == "blocked":
+            add_text(element, "blockedMemberNode", member_node)
+
+# Add the replication status to system metadata
+def add_replication_status(root, statuses):
+    for status in statuses:
+        replica = etree.SubElement(root, "replica")
+
+        add_text(
+            replica,
+            "replicaMemberNode",
+            status["member_node"]
+        )
+
+        add_text(
+            replica,
+            "replicationStatus",
+            status["status"].lower()
+        )
+
+        add_text(
+            replica,
+            "replicaVerified",
+            format_datetime(status["date_verified"])
+        )
+
+# Add the media type to system metadata
+def add_media_type(root, media_type, properties):
+    if media_type is None:
+        return
+
+    element = etree.SubElement(root, "mediaType")
+    element.set("name", media_type)
+
+    for prop in properties:
+        property_element = etree.SubElement(element, "property")
+        property_element.set("name", prop["name"])
+        property_element.text = prop["value"]
+
+# Build the system metadata
+def build_system_metadata_xml(
+    row,
+    media_type_properties,
+    replication_policies,
+    replication_statuses,
+    access_rules,
+):
+    root = etree.Element(
+        f"{{{DATAONE_V2_NS}}}systemMetadata",
+        nsmap=NSMAP
+    )
+
+    # ------------------------------------------------------------
+    # DataONE v1 SystemMetadata fields
+    # ------------------------------------------------------------
+
+    add_text(root, "serialVersion", row["serial_version"])
+
+    # Required
+    add_text(root, "identifier", row["guid"])
+    add_text(root, "formatId", row["object_format"])
+    add_text(root, "size", row["size"])
+
+    # Required checksum
+    if row["checksum"] is not None:
+        checksum = etree.SubElement(root, "checksum")
+        checksum.set("algorithm", row["checksum_algorithm"])
+        checksum.text = row["checksum"]
+
+    add_text(root, "submitter", row["submitter"])
+    add_text(root, "rightsHolder", row["rights_holder"])
+
+    # ------------------------------------------------------------
+    # Access policy
+    # ------------------------------------------------------------
+    add_access_policy(root, access_rules)
+
+    # ------------------------------------------------------------
+    # Replication policy
+    # ------------------------------------------------------------
+    add_replication_policy(
+        root,
+        row,
+        replication_policies
+    )
+
+    # ------------------------------------------------------------
+    # Object relationships
+    # ------------------------------------------------------------
+
+    add_text(root, "obsoletes", row["obsoletes"])
+    add_text(root, "obsoletedBy", row["obsoleted_by"])
+
+    # ------------------------------------------------------------
+    # Archive state
+    # ------------------------------------------------------------
+
+    add_bool(root, "archived", row["archived"])
+
+    # ------------------------------------------------------------
+    # Dates
+    # ------------------------------------------------------------
+
+    add_text(
+        root,
+        "dateUploaded",
+        format_datetime(row["date_uploaded"])
+    )
+
+    add_text(
+        root,
+        "dateSysMetadataModified",
+        format_datetime(row["date_modified"])
+    )
+
+    # ------------------------------------------------------------
+    # Member nodes
+    # ------------------------------------------------------------
+
+    add_text(
+        root,
+        "originMemberNode",
+        row["origin_member_node"]
+    )
+
+    add_text(
+        root,
+        "authoritativeMemberNode",
+        row["authoritive_member_node"]
+    )
+
+    # ------------------------------------------------------------
+    # Replicas
+    # ------------------------------------------------------------
+    add_replication_status(
+        root,
+        replication_statuses
+    )
+
+    # ------------------------------------------------------------
+    # DataONE v2 fields
+    # ------------------------------------------------------------
+
+    add_text(root, "seriesId", row["series_id"])
+
+    add_media_type(
+        root,
+        row["media_type"],
+        media_type_properties
+    )
+    add_text(root, "fileName", row["file_name"])
+    # ------------------------------------------------------------
+    # Serialize
+    # ------------------------------------------------------------
+    return etree.tostring(
+        root,
+        encoding="UTF-8",
+        xml_declaration=True,
+        standalone=True
+    ).decode("utf-8")
+
+def build_system_metadata_for_guid(conn, row):
+    """
+    Build complete DataONE SystemMetadata XML for one GUID.
+
+    The main systemmetadata fields are supplied by the caller's
+    existing main query. This method only queries the related tables.
+    """
+    guid = row["guid"]
+    with conn.cursor() as cur:
+        # 1. Media type properties
+        cur.execute(
+            """
+            SELECT name, value
+            FROM smmediatypeproperties
+            WHERE guid = %s
+            """,
+            (guid,),
+        )
+        media_type_properties = [
+            {"name": name, "value": value}
+            for name, value in cur.fetchall()
+        ]
+
+        # 2. Replication policies
+        cur.execute(
+            """
+            SELECT member_node, policy
+            FROM smreplicationpolicy
+            WHERE guid = %s
+            """,
+            (guid,),
+        )
+        replication_policies = [
+            {
+                "member_node": member_node,
+                "policy": policy,
+            }
+            for member_node, policy in cur.fetchall()
+        ]
+
+        # 3. Replication status
+        cur.execute(
+            """
+            SELECT member_node, status, date_verified
+            FROM smreplicationstatus
+            WHERE guid = %s
+            """,
+            (guid,),
+        )
+        replication_statuses = [
+            {
+                "member_node": member_node,
+                "status": status,
+                "date_verified": date_verified,
+            }
+            for member_node, status, date_verified in cur.fetchall()
+        ]
+
+        # 4. Access policy
+        cur.execute(
+            """
+            SELECT principal_name, permission
+            FROM xml_access
+            WHERE guid = %s
+            """,
+            (guid,),
+        )
+        access_rules = [
+            {
+                "principal_name": principal_name,
+                "permissions": convert_permissions(permission),
+            }
+            for principal_name, permission in cur.fetchall()
+        ]
+
+    return build_system_metadata_xml(
+        row,
+        media_type_properties,
+        replication_policies,
+        replication_statuses,
+        access_rules,
+    )
+
+"""
+    Convert Metacat integer permission bits to DataONE permission names.
+    CHMOD  = 1 -> changePermission
+    WRITE  = 2 -> write
+    READ   = 4 -> read
+    ALL    = 7 -> all three permissions
+    """
+def convert_permissions(permission):
+    permissions = []
+    if permission is None:
+        return permissions
+    permission = int(permission)
+    if permission == 7:
+        return ["read", "write", "changePermission"]
+    if (permission & 1) == 1:
+        permissions.append("changePermission")
+    if (permission & 4) == 4:
+        permissions.append("read")
+    if (permission & 2) == 2:
+        permissions.append("write")
+    return permissions
 
 # Settings for not showing the log from some libraries
 def _silence_third_party_logs():
@@ -150,7 +533,7 @@ class AMQPStormChannelPool:
             else:
                 # Another thread already fixed it → discard extra connection
                 try:
-                    new_conn.close()
+                    conn.close()
                 except Exception:
                     pass
 
@@ -439,7 +822,7 @@ def get_full_mn_latest_map():
     changed = False
     node_ids = get_node_ids_from_systemmetadata()
     # Loaded the map from the stored file first
-    map = load_mn_latest_map_from_file()
+    map = load_mn_latest_map_from_file(MN_STATE_FILE)
     if not map:
         # Try to get the map from solr if it can't be load from the file
         map = get_mn_latest_map_from_solr()
@@ -453,20 +836,42 @@ def get_full_mn_latest_map():
                 map[node_id] = DEFAULT_DATE
                 changed = True
     if changed:
-        save_mn_latest_map(map)
+        save_mn_latest_map(map, MN_STATE_FILE)
+    return map
+
+"""
+Get a full map of the node_id and latest_modification_date by checking the stored file, and the full node_id list.
+"""
+def get_notification_mn_latest_map():
+    changed = False
+    node_ids = get_node_ids_from_systemmetadata()
+    # Loaded the map from the stored file first
+    map = load_mn_latest_map_from_file(MN_NOTIFICATION_STATE_FILE)
+    if not map:
+        map = {}
+        changed = True
+    # Check if all node_id in the systemmetadata table is in the map. If not, add it.
+    # This can handle a fresh start as well.
+    for node_id in node_ids:
+            if node_id not in map:
+                logger.debug(f"Adding missing node: {node_id} to the map of node_id and latest_modification_date in {MN_NOTIFICATION_STATE_FILE}")
+                map[node_id] = datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+                changed = True
+    if changed:
+        save_mn_latest_map(map, MN_NOTIFICATION_STATE_FILE)
     return map
 
 """
 Get a  map of the node_id and latest_modification_date from the stored file. An empty map will be
 returned if the file doesn't exist, is empty, corrupted, or not well-formatted.
 """
-def load_mn_latest_map_from_file():
+def load_mn_latest_map_from_file(file_name):
     data = {}
-    if os.path.exists(MN_STATE_FILE):
+    if os.path.exists(file_name):
         try:
-            with open(MN_STATE_FILE, "r") as f:
+            with open(file_name, "r") as f:
                 data = json.load(f)
-            logger.debug(f"Loaded MN state from {MN_STATE_FILE}")
+            logger.debug(f"Loaded MN state from {file_name}")
         except Exception as e:
             logger.warning(f"[WARN] Failed to load MN state file, starting fresh: {e}")
     return data
@@ -474,14 +879,14 @@ def load_mn_latest_map_from_file():
 """
 Save the given map into a file
 """
-def save_mn_latest_map(mn_map):
-    tmp = MN_STATE_FILE + ".tmp"
+def save_mn_latest_map(mn_map, file_name):
+    tmp = file_name + ".tmp"
     with open(tmp, "w") as f:
         fcntl.flock(f, fcntl.LOCK_EX)
         json.dump(mn_map, f, indent=2, sort_keys=True)
         f.flush()
         os.fsync(f.fileno())
-    os.replace(tmp, MN_STATE_FILE)
+    os.replace(tmp, file_name)
 
 """
     Fetch DataONE format XML and return a list of formatId values
@@ -576,7 +981,7 @@ def lookup_docid_with_retry(conn, guid):
        1 Construct the rabbitmq message
        2 Publish the message to the rabbitmq service
 """
-def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
+def process_pid_wrapper(channel_pool, guid, object_format, doc_id, system_metadata_xml):
     thread_name = threading.current_thread().name
     try:
         index_type = 'create'
@@ -586,13 +991,14 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
         if guid:
             logger.debug(f"[{thread_name}] Processing PID: {guid} with type: {index_type}, docid: {doc_id}, priority: {priority}")
             headers = {'index_type': index_type, 'id': guid, 'doc_id': doc_id}
-            message = ''
+            message = {SYSMETA: system_metadata_xml}
+            message_body = json.dumps(message).encode("utf-8")
             channel = None
             wait_for_docid(doc_id)
             try:
                 channel = channel_pool.acquire_channel()
                 channel.basic.publish(
-                    body=message,
+                    body=message_body,
                     routing_key=ROUTING_KEY,
                     exchange=EXCHANGE_NAME,
                     properties={'headers': headers, 'priority': priority}
@@ -616,12 +1022,172 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
     return None
 
 """
-   Periodically to pull new modified records from the systemmetadata table and submit the index
-   tasks for them
+   Query the system metadata table and submit the index tasks
 """
-def poll_and_submit(non_data_formats):
+def submit_index_tasks(payload, executor):
     global pg_pool
     global channel_pool
+    global futures
+    futures = []
+    global batch_max_time
+    batch_max_time = {}
+    # Single Postgres query
+    conn = None
+    try:
+        conn = pg_pool.getconn()
+        with conn.cursor() as cur:
+            cur.execute(f"""
+                SELECT
+                    sm.guid,
+                    sm.series_id,
+                    sm.serial_version,
+                    sm.date_uploaded,
+                    sm.rights_holder,
+                    sm.checksum,
+                    sm.checksum_algorithm,
+                    sm.origin_member_node,
+                    sm.authoritive_member_node,
+                    sm.date_modified,
+                    sm.submitter,
+                    sm.object_format,
+                    sm.size,
+                    sm.archived,
+                    sm.replication_allowed,
+                    sm.number_replicas,
+                    sm.obsoletes,
+                    sm.obsoleted_by,
+                    sm.media_type,
+                    sm.file_name,
+                    i.docid || '.' || i.rev AS doc_id
+                FROM systemmetadata sm
+                LEFT JOIN identifier i
+                    ON sm.guid = i.guid
+                JOIN (
+                    SELECT *
+                    FROM json_to_recordset(%s::json)
+                    AS t(amn text, last_time timestamptz)
+                ) AS latest
+                  ON sm.authoritive_member_node = latest.amn
+                 AND sm.date_modified > latest.last_time
+                ORDER BY sm.date_modified ASC
+                LIMIT {MAX_ROWS};
+            """, (payload,))
+
+            rows = cur.fetchall()
+            length = len(rows)
+
+            if not rows:
+                logger.info("No new records. Sleeping.")
+                shutdown_event.wait(PULL_INTERVAL)
+                return
+
+            # Process rows
+            for values in rows:
+                try:
+                    # Turn the main query row into a dictionary.
+                    row = dict(zip(SYSTEM_METADATA_COLUMNS, values))
+                    guid = row["guid"]
+                    object_format = row["object_format"]
+                    doc_id = row["doc_id"]
+                    modified_time = row["date_modified"]
+                    amn = row["authoritive_member_node"]
+                    logger.debug(f"Start to process {guid}:")
+                    # docId retry logic
+                    if object_format in non_data_formats and not doc_id:
+                        doc_id = lookup_docid_with_retry(conn, guid)
+                    # After multiple retries, we have to skip it if the docid still
+                    # cannot be found
+                    if object_format in non_data_formats and not doc_id:
+                        logger.info(f"Skipping guid {guid}: doc_id not found after {DOCID_MAX_RETRIES} retries")
+                        # Event though the guid is skipped, we still need to set its
+                        # date as the last modified_time
+                        batch_max_time[amn] = max(batch_max_time.get(amn, modified_time),
+                            modified_time
+                        )
+                        continue
+
+                    # Build SystemMetadata XML
+                    system_metadata_xml = build_system_metadata_for_guid(conn, row)
+
+                    # Submit task to thread pool
+                    shutdown_event.wait(EVERY_SUBMIT_WAIT_TIME_SEC)
+                    futures.append(
+                        executor.submit(
+                            process_pid_wrapper,
+                            channel_pool,
+                            guid,
+                            object_format,
+                            doc_id,
+                            system_metadata_xml
+                        )
+                    )
+                    batch_max_time[amn] = max(
+                        batch_max_time.get(amn, modified_time),
+                        modified_time
+                    )
+                except Exception as error:
+                    logger.error(f"[ERROR] Process {guid}: {error}")
+    finally:
+        if conn:
+            pg_pool.putconn(conn)
+
+"""
+   Query the solr service and submit the notification tasks
+"""
+def submit_notification_tasks(notification_mn_latest_map, executor):
+    # Build the MN/date conditions.
+    mn_queries = []
+    for mn, date_modified in notification_mn_latest_map.items():
+        mn_queries.append(
+            f'(authoritativeMN:"{mn}" '
+            f'AND dateModified:{{{date_modified} TO *}})'
+        )
+    if not mn_queries:
+        return
+    # Combine all MN/date conditions with OR.
+    mn_date_query = "(" + " OR ".join(mn_queries) + ")"
+    # Add the common conditions.
+    q = (
+        f"{mn_date_query} "
+        "AND obsoletedBy:[* TO *] "
+        'AND (formatType:"RESOURCE" OR formatType:"METADATA")'
+    )
+    # cursorMark requires a deterministic sort.
+    params = {
+        "q": q,
+        "fl": "id,authoritativeMN",
+        "sort": "id asc",
+        "cursorMark": "*",
+        "rows": 1000,
+    }
+    while True:
+        response = requests.post(
+            SOLR_URL,
+            data=params,
+            timeout=60,
+        )
+        response.raise_for_status()
+        result = response.json()
+        documents = result["response"]["docs"]
+        # Process this batch.
+        for doc in documents:
+            print(
+                f"id={doc.get('id')}, "
+                f"authoritativeMN={doc.get('authoritativeMN')}"
+            )
+        # Solr returns the cursor to use for the next request.
+        next_cursor_mark = result["nextCursorMark"]
+        # No more results.
+        if next_cursor_mark == params["cursorMark"]:
+            break
+        # Use the returned cursor for the next batch.
+        params["cursorMark"] = next_cursor_mark
+
+"""
+   Periodically to pull new modified records from the systemmetadata table and submit the index
+   tasks for them; Also pull new modified records from Solr and submit the notification.
+"""
+def poll_and_submit(non_data_formats):
     worker_timeout_sec = MAX_ROWS/MAX_WORKERS * 0.25
     logger.debug(f"The timeout for workers to completed jobs for a batch is {worker_timeout_sec}")
 
@@ -652,82 +1218,15 @@ def poll_and_submit(non_data_formats):
                     {"amn": k, "last_time": v}  # use string directly
                     for k, v in mn_latest_map.items()
                 ])
-
-                # Single Postgres query
-                futures = []
-                conn = None
-                try:
-                    conn = pg_pool.getconn()
-                    with conn.cursor() as cur:
-                        cur.execute(f"""
-                            SELECT
-                                sm.guid,
-                                sm.object_format,
-                                i.docid || '.' || i.rev AS doc_id,
-                                sm.date_modified,
-                                sm.authoritive_member_node
-                            FROM systemmetadata sm
-                            LEFT JOIN identifier i
-                                ON sm.guid = i.guid
-                            JOIN (
-                                SELECT *
-                                FROM json_to_recordset(%s::json)
-                                AS t(amn text, last_time timestamptz)
-                            ) AS latest
-                              ON sm.authoritive_member_node = latest.amn
-                             AND sm.date_modified > latest.last_time
-                            ORDER BY sm.date_modified ASC
-                            LIMIT {MAX_ROWS};
-                        """, (payload,))
-
-                        rows = cur.fetchall()
-                        length = len(rows)
-
-                        if not rows:
-                            logger.info("No new records. Sleeping.")
-                            shutdown_event.wait(PULL_INTERVAL)
-                            continue
-
-                        # Process rows
-                        batch_max_time = {}
-                        for guid, object_format, doc_id, modified_time, amn in rows:
-                            try:
-                                logger.debug(f"Start to process {guid}:")
-                                # docId retry logic
-                                if object_format in non_data_formats and not doc_id:
-                                    doc_id = lookup_docid_with_retry(conn, guid)
-                                # After multiple retries, we have to skip it if the docid still
-                                # cannot be found
-                                if object_format in non_data_formats and not doc_id:
-                                    logger.info(f"Skipping guid {guid}: doc_id not found after {DOCID_MAX_RETRIES} retries")
-                                    # Event though the guid is skipped, we still need to set its
-                                    # date as the last modified_time
-                                    batch_max_time[amn] = max(batch_max_time.get(amn, modified_time),
-                                        modified_time
-                                    )
-                                    continue
-
-                                # Submit task to thread pool
-                                shutdown_event.wait(EVERY_SUBMIT_WAIT_TIME_SEC)
-                                futures.append(
-                                    executor.submit(
-                                        process_pid_wrapper,
-                                        channel_pool,
-                                        guid,
-                                        object_format,
-                                        doc_id
-                                    )
-                                )
-                                batch_max_time[amn] = max(
-                                    batch_max_time.get(amn, modified_time),
-                                    modified_time
-                                )
-                            except Exception as error:
-                                logger.error(f"[ERROR] Process {guid}: {error}")
-                finally:
-                    if conn:
-                        pg_pool.putconn(conn)
-
+                if ENABLE_INDEXER:
+                    submit_index_tasks(payload, executor)
+                else:
+                    logger.warning("The index submission is disabled.")
+                if ENABLE_NOTIFICATION:
+                    notification_mn_latest_map = get_notification_mn_latest_map()
+                    submit_notification_tasks(notification_mn_latest_map, executor)
+                else:
+                    logger.warning("The notification service submission is disabled.")
                 # Wait for all workers
                 disconnectionHappened = None
                 if futures:
@@ -751,7 +1250,7 @@ def poll_and_submit(non_data_formats):
                     continue
                 for amn, ts in batch_max_time.items():
                     mn_latest_map[amn] = ts.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-                save_mn_latest_map(mn_latest_map)
+                save_mn_latest_map(mn_latest_map, MN_STATE_FILE)
                 logger.info("Cycle completed.")
 
             except KeyboardInterrupt:
@@ -771,6 +1270,8 @@ def poll_and_submit(non_data_formats):
         channel_pool.close()
         if pg_pool:
             pg_pool.closeall()
+
+
 
 if __name__ == "__main__":
     setup_logging()
