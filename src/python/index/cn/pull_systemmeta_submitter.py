@@ -12,7 +12,6 @@ import aiohttp
 import concurrent.futures
 import configparser
 import fcntl
-import psycopg2
 import json
 import logging
 import logging.config
@@ -23,14 +22,12 @@ import time
 import threading
 import xml.etree.ElementTree as ET
 
-from collections import defaultdict
 from lxml import etree
 
 from amqpstorm import Connection, AMQPError, AMQPConnectionError, AMQPChannelError
-from concurrent.futures import wait, ALL_COMPLETED
+from concurrent.futures import wait
 from datetime import date, datetime, timezone
 from logging.handlers import RotatingFileHandler
-from pathlib import Path
 from psycopg2 import pool
 from queue import Empty
 from urllib.parse import urljoin
@@ -1034,9 +1031,6 @@ def submit_index_tasks(payload, executor):
     futures = []
     global batch_max_time
     batch_max_time = {}
-    if not ENABLE_INDEXER:
-        logger.debug("The index submission is disabled.")
-        return
     # Single Postgres query
     conn = None
     try:
@@ -1141,9 +1135,6 @@ def submit_index_tasks(payload, executor):
    Query the solr service and submit the notification tasks
 """
 def submit_notification_tasks(notification_mn_latest_map, executor):
-    if not ENABLE_NOTIFICATION:
-        logger.debug("The notification service submission is disabled.")
-        return
     # Build the MN/date conditions.
     mn_queries = []
     for mn, date_modified in notification_mn_latest_map.items():
@@ -1227,9 +1218,15 @@ def poll_and_submit(non_data_formats):
                     {"amn": k, "last_time": v}  # use string directly
                     for k, v in mn_latest_map.items()
                 ])
-                submit_index_tasks(payload, executor)
-                notification_mn_latest_map = get_notification_mn_latest_map()
-                submit_notification_tasks(notification_mn_latest_map, executor)
+                if ENABLE_INDEXER:
+                    submit_index_tasks(payload, executor)
+                else:
+                    logger.warning("The index submission is disabled.")
+                if ENABLE_NOTIFICATION:
+                    notification_mn_latest_map = get_notification_mn_latest_map()
+                    submit_notification_tasks(notification_mn_latest_map, executor)
+                else:
+                    logger.warning("The notification service submission is disabled.")
                 # Wait for all workers
                 disconnectionHappened = None
                 if futures:
