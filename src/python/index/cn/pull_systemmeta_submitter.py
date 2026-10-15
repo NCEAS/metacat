@@ -533,7 +533,7 @@ class AMQPStormChannelPool:
             else:
                 # Another thread already fixed it → discard extra connection
                 try:
-                    new_conn.close()
+                    conn.close()
                 except Exception:
                     pass
 
