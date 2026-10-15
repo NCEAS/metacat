@@ -87,7 +87,7 @@ MN_STATE_FILE = ".mn_latest_modified_map.json"
 MN_NOTIFICATION_STATE_FILE = ".notification_mn_latest_modification_map.json"
 LOG_LEVEL = logging.DEBUG
 LOGGER_NAME = "pull_systemmeta_submitter"
-LOG_FILE = f"log/{LOGGER_NAME}.log"
+LOG_FILE = f"/var/log/dataone/event-submitter/{LOGGER_NAME}.log"
 shutdown_event = threading.Event()
 logger = logging.getLogger(LOGGER_NAME)
 

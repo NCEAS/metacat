@@ -41,7 +41,7 @@ RECONNECT_DELAY = 5
 MAX_RECONNECT_DELAY = 60
 
 log_name = "delete_systemmeta_listener"
-log_file = f"log/{log_name}.log"
+log_file = f"/var/log/dataone/event-submitter/{log_name}.log"
 
 """
     Note: this method only handles the delete actions.

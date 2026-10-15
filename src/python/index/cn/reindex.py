@@ -38,7 +38,7 @@ from pull_systemmeta_submitter import (
 DEFAULT_IDS_FILE_PATH = "/var/metacat/.metacat/reindex-script/pids_to_process.txt"
 
 log_name = "reindex"
-log_file = f"log/{log_name}.log"
+log_file = f"/var/log/dataone/event-submitter/{log_name}.log"
 
 """
    Read ids from a file to and array
