@@ -1084,10 +1084,10 @@ def submit_index_tasks(payload, executor):
                 idle_counter += 1
                 logger.info("No new records. Sleeping.")
                 if (idle_counter > 3):
-                    logger.debug(f"Since the process is idle for {idle_counter} times. It will wait a longer time: {PULL_LONG_INTERVAL}")
+                    logger.debug(f"Since the process is idle for {idle_counter} times. It will wait a longer time: {PULL_LONG_INTERVAL} seconds.")
                     shutdown_event.wait(PULL_LONG_INTERVAL)
                 else:
-                    logger.debug(f"Since the process is only idle for {idle_counter} times. It will wait a shorter time: {PULL_INTERVAL}")
+                    logger.debug(f"Since the process is only idle for {idle_counter} times. It will wait a shorter time: {PULL_INTERVAL} seconds.")
                     shutdown_event.wait(PULL_INTERVAL)
                 return
             # Reset the idle counter since there is a result
