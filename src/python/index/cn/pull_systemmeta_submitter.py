@@ -52,8 +52,9 @@ ENABLE_INDEXER = config["services"].getboolean("enable_indexer")
 ENABLE_NOTIFICATION = config["services"].getboolean("enable_notification")
 
 # --- Configuration ---
-PULL_INTERVAL = 50  # second
-MAX_ROWS = 4000
+PULL_INTERVAL = 120  # seconds
+PULL_LONG_INTERVAL = 600 # seconds
+MAX_ROWS = 20000
 EVERY_SUBMIT_WAIT_TIME_SEC = 0.01
 # Number of worker threads to submit index tasks to RabbitMQ
 # The pool_size of the rabbitmq channel pool is using it as well.
@@ -70,7 +71,7 @@ DATA_DIR = "/var/metacat/data"
 CHECK_FILE_WAIT_MILLISECONDS = 50
 CHECK_FILE_MAX_ATTEMPTS = 200
 DOCID_WAIT_SEC = 0.1   # 100 milliseconds
-DOCID_MAX_RETRIES = 20
+DOCID_MAX_RETRIES = 50
 # RabbitMQ queue configuration. They shouldn't be changed
 QUEUE_NAME = "index"
 ROUTING_KEY = "index"
@@ -91,6 +92,8 @@ logger = logging.getLogger(LOGGER_NAME)
 DATAONE_V1_NS = "http://ns.dataone.org/service/types/v1"
 DATAONE_V2_NS = "http://ns.dataone.org/service/types/v2.0"
 SYSMETA = "sysmeta"
+# The counter to count how many times the pull gets the zero result (idle)
+idle_counter = 0
 
 NSMAP = {
     "d1v1": DATAONE_V1_NS,
@@ -1025,6 +1028,7 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id, system_metada
    Query the system metadata table and submit the index tasks
 """
 def submit_index_tasks(payload, executor):
+    global idle_counter
     global pg_pool
     global channel_pool
     global futures
@@ -1077,10 +1081,17 @@ def submit_index_tasks(payload, executor):
             length = len(rows)
 
             if not rows:
+                idle_counter += 1
                 logger.info("No new records. Sleeping.")
-                shutdown_event.wait(PULL_INTERVAL)
+                if (idle_counter > 3):
+                    logger.debug(f"Since the process is idle for {idle_counter} times. It will wait a longer time: {PULL_LONG_INTERVAL}")
+                    shutdown_event.wait(PULL_LONG_INTERVAL)
+                else:
+                    logger.debug(f"Since the process is only idle for {idle_counter} times. It will wait a shorter time: {PULL_INTERVAL}")
+                    shutdown_event.wait(PULL_INTERVAL)
                 return
-
+            # Reset the idle counter since there is a result
+            idle_counter = 0
             # Process rows
             for values in rows:
                 try:
