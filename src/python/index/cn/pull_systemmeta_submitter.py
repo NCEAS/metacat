@@ -924,7 +924,7 @@ def load_non_data_format_ids():
 """
     Use the wait-try mechanism to make sure that the given docid exists in the file system
 """
-def wait_for_docid(docid: str):
+def wait_for_docid_file(docid: str):
     """
     Wait until a file for the given docid exists under either
     DOCUMENTS_DIR or DATA_DIR.
@@ -997,7 +997,7 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id, system_metada
             message = {SYSMETA: system_metadata_xml}
             message_body = json.dumps(message).encode("utf-8")
             channel = None
-            wait_for_docid(doc_id)
+            wait_for_docid_file(doc_id)
             try:
                 channel = channel_pool.acquire_channel()
                 channel.basic.publish(
