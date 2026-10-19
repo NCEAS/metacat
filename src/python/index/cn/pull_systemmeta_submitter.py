@@ -700,8 +700,8 @@ class DocumentNotFoundError(Exception):
 # --- memory cache for the node list---
 _last_node_cache = None
 _last_node_fetch = 0
-# two minutes
-NODE_TTL = 5 * 60
+# twenty minutes
+NODE_TTL = 20 * 60
 # -------------------
 
 """
@@ -1032,6 +1032,7 @@ def submit_index_tasks(payload, executor):
     global pg_pool
     global channel_pool
     global futures
+    global _last_node_fetch
     futures = []
     global batch_max_time
     batch_max_time = {}
@@ -1084,11 +1085,13 @@ def submit_index_tasks(payload, executor):
                 idle_counter += 1
                 logger.info("No new records. Sleeping.")
                 if (idle_counter > 3):
-                    logger.debug(f"Since the process is idle for {idle_counter} times. It will wait a longer time: {PULL_LONG_INTERVAL} seconds.")
+                    logger.debug(f"Since the process is idle for {idle_counter} times. It will sleep a longer time: {PULL_LONG_INTERVAL} seconds.")
                     shutdown_event.wait(PULL_LONG_INTERVAL)
                 else:
-                    logger.debug(f"Since the process is only idle for {idle_counter} times. It will wait a shorter time: {PULL_INTERVAL} seconds.")
+                    logger.debug(f"Since the process is only idle for {idle_counter} times. It will sleep a shorter time: {PULL_INTERVAL} seconds.")
                     shutdown_event.wait(PULL_INTERVAL)
+                # Reset the time for fetching the node list since now objects were added, which means no node id can be added
+                _last_node_fetch = time.time()
                 return
             # Reset the idle counter since there is a result
             idle_counter = 0
