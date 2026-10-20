@@ -13,6 +13,18 @@
 >    - CloudNative PG Operator to deploy your PostgreSQL cluster - see [Appendix 5 of the helm/README.md](./helm/README.md#appendix-5-initial-creation-of-a-postgresql-cluster-using-cloudnative-pg)
 >    - RabbitMQ Cluster Operator to deploy your RabbitMQ cluster - see [Appendix 6 of the helm/README.md](./helm/README.md#appendix-6-the-rabbitmq-cluster-operator)
 
+## Release Notes for Helm Chart 4.3.3
+
+**Release date: 2026-10-20**
+
+This chart uses the same Metacat 3.5.1 source code as the previous release - the only changes are to the chart functionality, and to the container startup command (hence the new `3.5.1-rev1` image tag). The changes are as follows:
+
+- Introduced the value `ingress.keepTlsOptionAfterUninstall` for Traefik ingresses, which optionally allows Metacat's mutual TLS (client cert) TLSOption to remain in place after the chart is uninstalled, for deployments where other charts share this same TLSOption.
+- Improvements to startup speed to reduce downtime during helm upgrades:
+  - The probes have been tuned to reduce downtime
+  - The image startup command has changed so that kubernetes sigkill events (e.g. when a pod is being terminated) are now handled gracefully, allowing the container to shut down more quickly, and also to avoid errors and data corruption during shutdown.
+
+
 ## Release Notes for Metacat 3.5.1
 
 **Release date: 2026-09-24**
