@@ -60,7 +60,7 @@ EVERY_SUBMIT_WAIT_TIME_SEC = 0.01
 # The pool_size of the rabbitmq channel pool is using it as well.
 # The number must be less than those settings:
 # the max number of channels connection to rabbitmq (2047) and the number of the processor core number.
-MAX_WORKERS = 5
+MAX_WORKERS = 10
 DB_DATABASE_NAME = "metacat"
 DB_HOST_NAME = "localhost"
 DB_PORT_NUMBER = 5432
