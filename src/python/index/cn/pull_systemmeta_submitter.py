@@ -1077,10 +1077,8 @@ def submit_index_tasks(payload, executor):
                 ORDER BY sm.date_modified ASC
                 LIMIT {MAX_ROWS};
             """, (payload,))
-
             rows = cur.fetchall()
-            length = len(rows)
-
+            logger.debug("Completed the query process to look new records.")
             if not rows:
                 idle_counter += 1
                 logger.info("No new records. Sleeping.")
