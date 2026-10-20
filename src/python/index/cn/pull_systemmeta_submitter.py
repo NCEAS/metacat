@@ -1041,6 +1041,10 @@ def submit_index_tasks(payload, executor):
     try:
         conn = pg_pool.getconn()
         with conn.cursor() as cur:
+            #cur.execute("SHOW enable_nestloop")
+            #print("enable_nestloop =", cur.fetchone()[0])
+            logger.debug("Start the query process to look new records.")
+            cur.execute("SET LOCAL enable_nestloop = off")
             cur.execute(f"""
                 SELECT
                     sm.guid,
