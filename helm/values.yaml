@@ -269,6 +269,10 @@ metacat:
   ## 3. You DO NOT need to configure the Member Node client cert location. Instead, simply add it as
   ##    a secret: https://github.com/NCEAS/metacat/tree/develop/helm#install-the-client-certificate
   ##
+  ## 4. (Traefik only): If dataone wordpress and/or apache data svc charts are co-deployed (like we
+  ##    do at arcticdata.io), also enable 'ingress.keepTlsOptionAfterUninstall', otherwise mutual
+  ##    TLS will break for metacat
+  ##
   dataone.certificate.fromHttpHeader.enabled: false
 
   ## @param metacat.dataone.autoRegisterMemberNode Automatically push MN updates to CN? (yyyy-MM-dd)
@@ -522,6 +526,19 @@ image:
   ## * * WARNING - FOR TESTING ONLY! * * May result in secrets being printed to logs in plain text.
   ##
   debug: false
+
+## @param initContainer.image.repository Image for the 'deps' init container (checks dependencies)
+## @param initContainer.image.tag Tag for the 'deps' init container image
+## @param initContainer.image.pullPolicy Pull policy for the 'deps' init container image
+##
+## NOTE: using busybox:latest makes k8s pull the latest busybox image every time, which causes
+## slow startup and therefore longer downtime when upgrading. Use a specific version tag instead.
+##
+initContainer:
+  image:
+    repository: busybox
+    tag: "1.38"
+    pullPolicy: IfNotPresent
 
 ## @param imagePullSecrets [array] Optional list of references to secrets in the same namespace
 ## to use for pulling any of the images used by this chart
@@ -809,6 +826,16 @@ ingress:
   ##
   middlewareChainAdditions: []
 
+  ## @param ingress.keepTlsOptionAfterUninstall keep {{ .Release.Name }}-mtls-policy when chart uninstalled?
+  ## Ignored unless metacat.dataone.certificate.fromHttpHeader.enabled is true and ingress.className
+  ## is "traefik"
+  ## This is useful if you have other charts that depend on the same TLSOption (e.g. when deploying
+  ## metacat for arcticdata.io, alongside the dataone wordpress and apache data service charts)
+  ## In the dataone charts that share the ingress, Ensure 'ingress.metacatMtlsPolicyName' is set
+  ## to match metacat's '{{ .Release.Name }}-mtls-policy'
+  ##
+  keepTlsOptionAfterUninstall: false
+
   ## @param ingress.configurationSnippet (NGINX ONLY; DEPRECATED) additional nginx config snippets
   ## This block will be added verbatim to the ingress definition section, in addition to any
   ## existing rewrite rules (see ingress.rewriteRules).
@@ -924,8 +951,8 @@ startupProbe:
   ## @param startupProbe.periodSeconds Interval (in seconds) between startup checks
   ## @param startupProbe.timeoutSeconds Timeout (in seconds) for each startup check
   successThreshold: 1
-  failureThreshold: 30
-  periodSeconds: 10
+  failureThreshold: 150
+  periodSeconds: 2
   timeoutSeconds: 5
 
 ## @param livenessProbe.enabled Enable livenessProbe for Metacat container
@@ -953,10 +980,10 @@ livenessProbe:
 ##
 readinessProbe:
   enabled: true
-  periodSeconds: 15
+  periodSeconds: 5
   timeoutSeconds: 10
   successThreshold: 1
-  failureThreshold: 6
+  failureThreshold: 18
   httpGet:
     path: /metacat/d1/mn/v2/monitor/ping
     port: metacat-web

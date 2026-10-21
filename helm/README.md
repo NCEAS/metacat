@@ -237,6 +237,9 @@ These scenarios will be covered in future releases. In the meantime, please refe
 | `image.pullPolicy`                       | Metacat image pull policy                                                    | `IfNotPresent`          |
 | `image.tag`                              | Overrides the image tag. Will default to the chart appVersion if set to ""   | `""`                    |
 | `image.debug`                            | Specify if container debugging should be enabled (sets log level to "DEBUG") | `false`                 |
+| `initContainer.image.repository`         | Image for the 'deps' init container (checks dependencies)                    | `busybox`               |
+| `initContainer.image.tag`                | Tag for the 'deps' init container image                                      | `1.38`                  |
+| `initContainer.image.pullPolicy`         | Pull policy for the 'deps' init container image                              | `IfNotPresent`          |
 | `imagePullSecrets`                       | Optional list of references to secrets in the same namespace                 | `[]`                    |
 | `container.ports`                        | Optional list of additional container ports to expose within the cluster     | `[]`                    |
 | `serviceAccount.create`                  | Should a service account be created to run Metacat?                          | `false`                 |
@@ -269,39 +272,40 @@ These scenarios will be covered in future releases. In the meantime, please refe
 
 ### Networking & Monitoring
 
-| Name                               | Description                                                              | Value                            |
-| ---------------------------------- | ------------------------------------------------------------------------ | -------------------------------- |
-| `ingress.enabled`                  | Enable or disable the ingress                                            | `true`                           |
-| `ingress.className`                | ClassName of the ingress provider in your cluster                        | `nginx`                          |
-| `ingress.annotations`              | Optional additional ingress annotations (typically not needed)           | `{}`                             |
-| `ingress.defaultBackend.enabled`   | Enable the optional defaultBackend                                       | `false`                          |
-| `ingress.rewriteRules`             | IMPORTANT! Nginx & Traefik rewrite rule syntaxes differ; see below       | `[]`                             |
-| `ingress.ipAllowList`              | Access limited to these IP addresses/ranges. Empty = no restrictions     | `[]`                             |
-| `ingress.corsEnabled`              | Enable CORS headers for cross-origin requests. Defaults to true          | `true`                           |
-| `ingress.middlewareChainAdditions` | Optional list of traefik Middlewares to be added                         | `[]`                             |
-| `ingress.configurationSnippet`     | (NGINX ONLY; DEPRECATED) additional nginx config snippets                | `""`                             |
-| `ingress.tls`                      | The TLS configuration                                                    | `[]`                             |
-| `ingress.rules`                    | The Ingress rules can be defined here or left blank to be auto-populated | `[]`                             |
-| `ingress.d1CaCertSecretName`       | Name of Secret containing DataONE CA certificate chain                   | `d1-ca-chain`                    |
-| `service.enabled`                  | Enable another optional service in addition to headless svc              | `false`                          |
-| `service.type`                     | Kubernetes Service type. Defaults to ClusterIP if not set                | `LoadBalancer`                   |
-| `service.clusterIP`                | IP address of the service. Auto-generated if not set                     | `""`                             |
-| `service.ports`                    | The port(s) to be exposed                                                | `[]`                             |
-| `startupProbe.enabled`             | Enable startupProbe for the Metacat container                            | `true`                           |
-| `startupProbe.httpGet.path`        | The url path to probe during startup                                     | `/metacat/d1/mn/v2/monitor/ping` |
-| `startupProbe.httpGet.port`        | The named containerPort to probe                                         | `metacat-web`                    |
-| `startupProbe.successThreshold`    | Min consecutive successes for probe to be successful                     | `1`                              |
-| `startupProbe.failureThreshold`    | No. of consecutive failures before the container restarted               | `30`                             |
-| `startupProbe.periodSeconds`       | Interval (in seconds) between startup checks                             | `10`                             |
-| `startupProbe.timeoutSeconds`      | Timeout (in seconds) for each startup check                              | `5`                              |
-| `livenessProbe.enabled`            | Enable livenessProbe for Metacat container                               | `false`                          |
-| `readinessProbe.enabled`           | Enable readinessProbe for Metacat container                              | `true`                           |
-| `readinessProbe.httpGet.path`      | The url path to probe.                                                   | `/metacat/d1/mn/v2/monitor/ping` |
-| `readinessProbe.httpGet.port`      | The named containerPort to probe                                         | `metacat-web`                    |
-| `readinessProbe.periodSeconds`     | Period seconds for readinessProbe                                        | `15`                             |
-| `readinessProbe.timeoutSeconds`    | Timeout seconds for readinessProbe                                       | `10`                             |
-| `readinessProbe.successThreshold`  | Min consecutive successes for probe to be successful                     | `1`                              |
-| `readinessProbe.failureThreshold`  | No. consecutive failures before container marked unhealthy               | `6`                              |
+| Name                                  | Description                                                              | Value                            |
+| ------------------------------------- | ------------------------------------------------------------------------ | -------------------------------- |
+| `ingress.enabled`                     | Enable or disable the ingress                                            | `true`                           |
+| `ingress.className`                   | ClassName of the ingress provider in your cluster                        | `nginx`                          |
+| `ingress.annotations`                 | Optional additional ingress annotations (typically not needed)           | `{}`                             |
+| `ingress.defaultBackend.enabled`      | Enable the optional defaultBackend                                       | `false`                          |
+| `ingress.rewriteRules`                | IMPORTANT! Nginx & Traefik rewrite rule syntaxes differ; see below       | `[]`                             |
+| `ingress.ipAllowList`                 | Access limited to these IP addresses/ranges. Empty = no restrictions     | `[]`                             |
+| `ingress.corsEnabled`                 | Enable CORS headers for cross-origin requests. Defaults to true          | `true`                           |
+| `ingress.middlewareChainAdditions`    | Optional list of traefik Middlewares to be added                         | `[]`                             |
+| `ingress.keepTlsOptionAfterUninstall` | keep {{ .Release.Name }}-mtls-policy when chart uninstalled?             | `false`                          |
+| `ingress.configurationSnippet`        | (NGINX ONLY; DEPRECATED) additional nginx config snippets                | `""`                             |
+| `ingress.tls`                         | The TLS configuration                                                    | `[]`                             |
+| `ingress.rules`                       | The Ingress rules can be defined here or left blank to be auto-populated | `[]`                             |
+| `ingress.d1CaCertSecretName`          | Name of Secret containing DataONE CA certificate chain                   | `d1-ca-chain`                    |
+| `service.enabled`                     | Enable another optional service in addition to headless svc              | `false`                          |
+| `service.type`                        | Kubernetes Service type. Defaults to ClusterIP if not set                | `LoadBalancer`                   |
+| `service.clusterIP`                   | IP address of the service. Auto-generated if not set                     | `""`                             |
+| `service.ports`                       | The port(s) to be exposed                                                | `[]`                             |
+| `startupProbe.enabled`                | Enable startupProbe for the Metacat container                            | `true`                           |
+| `startupProbe.httpGet.path`           | The url path to probe during startup                                     | `/metacat/d1/mn/v2/monitor/ping` |
+| `startupProbe.httpGet.port`           | The named containerPort to probe                                         | `metacat-web`                    |
+| `startupProbe.successThreshold`       | Min consecutive successes for probe to be successful                     | `1`                              |
+| `startupProbe.failureThreshold`       | No. of consecutive failures before the container restarted               | `150`                            |
+| `startupProbe.periodSeconds`          | Interval (in seconds) between startup checks                             | `2`                              |
+| `startupProbe.timeoutSeconds`         | Timeout (in seconds) for each startup check                              | `5`                              |
+| `livenessProbe.enabled`               | Enable livenessProbe for Metacat container                               | `false`                          |
+| `readinessProbe.enabled`              | Enable readinessProbe for Metacat container                              | `true`                           |
+| `readinessProbe.httpGet.path`         | The url path to probe.                                                   | `/metacat/d1/mn/v2/monitor/ping` |
+| `readinessProbe.httpGet.port`         | The named containerPort to probe                                         | `metacat-web`                    |
+| `readinessProbe.periodSeconds`        | Period seconds for readinessProbe                                        | `5`                              |
+| `readinessProbe.timeoutSeconds`       | Timeout seconds for readinessProbe                                       | `10`                             |
+| `readinessProbe.successThreshold`     | Min consecutive successes for probe to be successful                     | `1`                              |
+| `readinessProbe.failureThreshold`     | No. consecutive failures before container marked unhealthy               | `18`                             |
 
 ### PostgreSQL Database Connection Parameters
 
