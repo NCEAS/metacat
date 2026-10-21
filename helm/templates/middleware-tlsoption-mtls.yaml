@@ -17,6 +17,10 @@ kind: TLSOption
 metadata:
   name: {{ .Release.Name }}-mtls-policy
   namespace: {{ .Release.Namespace }}
+  {{- if .Values.ingress.keepTlsOptionAfterUninstall }}
+  annotations:
+    helm.sh/resource-policy: keep
+  {{- end }}
 spec:
   clientAuth:
     clientAuthType: VerifyClientCertIfGiven

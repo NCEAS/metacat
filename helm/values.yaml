@@ -269,6 +269,10 @@ metacat:
   ## 3. You DO NOT need to configure the Member Node client cert location. Instead, simply add it as
   ##    a secret: https://github.com/NCEAS/metacat/tree/develop/helm#install-the-client-certificate
   ##
+  ## 4. (Traefik only): If dataone wordpress and/or apache data svc charts are co-deployed (like we
+  ##    do at arcticdata.io), also enable 'ingress.keepTlsOptionAfterUninstall', otherwise mutual
+  ##    TLS will break for metacat
+  ##
   dataone.certificate.fromHttpHeader.enabled: false
 
   ## @param metacat.dataone.autoRegisterMemberNode Automatically push MN updates to CN? (yyyy-MM-dd)
@@ -821,6 +825,16 @@ ingress:
   ##   - myrelease-my-custom-thing
   ##
   middlewareChainAdditions: []
+
+  ## @param ingress.keepTlsOptionAfterUninstall keep {{ .Release.Name }}-mtls-policy when chart uninstalled?
+  ## Ignored unless metacat.dataone.certificate.fromHttpHeader.enabled is true and ingress.className
+  ## is "traefik"
+  ## This is useful if you have other charts that depend on the same TLSOption (e.g. when deploying
+  ## metacat for arcticdata.io, alongside the dataone wordpress and apache data service charts)
+  ## In the dataone charts that share the ingress, Ensure 'ingress.metacatMtlsPolicyName' is set
+  ## to match metacat's '{{ .Release.Name }}-mtls-policy'
+  ##
+  keepTlsOptionAfterUninstall: false
 
   ## @param ingress.configurationSnippet (NGINX ONLY; DEPRECATED) additional nginx config snippets
   ## This block will be added verbatim to the ingress definition section, in addition to any
