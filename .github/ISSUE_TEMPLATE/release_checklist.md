@@ -70,20 +70,53 @@ hidden: true    # do NOT show in template picker every time someone creates a ne
 ### Release of helm Chart Only
 
 - [ ] `git checkout <TAG NUMBER OF EXISTING RELEASE>`
-- [ ] create branch from this tag: `feature-<issueNum>-<releaseVer>-release-prep`
+- Create branch from this tag, that will be merged to `develop`:
+- [ ] `git checkout -b task-<issueNum>-release-<releaseVer>-prep`
   - [ ] Chart.yaml: Update chart version and any other details necessary
   - [ ] grep for previous release number, just in case
   - [ ] RELEASE-NOTES.md:
     - [ ] Update for new version(s).
     - [ ] DON'T FORGET TO SET CORRECT RELEASE DATE!
   - [ ] `git cherry-pick` any commits that need to be included from develop
-  - [ ] PR & merge to develop
-  - [ ] PR & merge to main
-  - [ ] Merge `main` back to `develop`
-    ```shell
-    git checkout develop; git merge main --ff-only
-    git push
-    ```
+  - [ ] Create a PR to merge the branch to `develop`. If there are no conflicts, merge the PR
+> [!IMPORTANT]
+> - If there are conflicts:
+>   ```shell
+>   # first make a copy of the branch, to be used later, for the merge to main:
+>   git checkout -b task-<issueNum>-release-<releaseVer>-main
+>
+>   # then switch back to the original branch and merge develop into it
+>   git checkout -
+>   git merge --no-commit --no-ff origin/develop
+>   ```
+>   ...and finally, resolve the conflicts, commit, push, and merge the PR.
+
+- Create a PR to merge the release prep branch to `main`:
+  - [ ] If there were NO CONFLICTS merging to `develop`, create a PR to merge `task-<issueNum>-release-<releaseVer>-prep` to `main`
+  - [ ] If there WERE CONFLICTS merging to `develop`, create a PR to merge the new branch `task-<issueNum>-release-<releaseVer>-main` to `main`
+    - If there are conflicts with this new PR, do a `git merge --no-commit --no-ff origin/main` into this branch and resolve them, then commit & push
+  - [ ] When no conflicts remain, merge the PR to `main`
+
+- [ ] Merge `main` back to `develop`
+  ```shell
+  git checkout develop; git merge main --ff-only
+  git push
+  ```
+
+> [!TIP]
+> if you've had to resolve conflicts, you'll likely see a message like this:
+> ```
+> $ git merge main --ff-only
+> hint: Diverging branches can't be fast-forwarded, you need to either:
+> hint: 	git merge --no-ff
+> hint: or:
+> hint: 	git rebase
+> hint: Disable this message with "git config set advice.diverging false"
+> fatal: Not possible to fast-forward, aborting.
+> ```
+> 
+> If so, do a `git merge --no-ff` instead
+
 - [ ] **(Mac)** package and push helm chart
   ```shell
   helm package -u ./helm
