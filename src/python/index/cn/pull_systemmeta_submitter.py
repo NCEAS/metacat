@@ -60,7 +60,7 @@ EVERY_SUBMIT_WAIT_TIME_SEC = 0.01
 # The pool_size of the rabbitmq channel pool is using it as well.
 # The number must be less than those settings:
 # the max number of channels connection to rabbitmq (2047) and the number of the processor core number.
-MAX_WORKERS = 5
+MAX_WORKERS = 10
 DB_DATABASE_NAME = "metacat"
 DB_HOST_NAME = "localhost"
 DB_PORT_NUMBER = 5432
@@ -700,8 +700,8 @@ class DocumentNotFoundError(Exception):
 # --- memory cache for the node list---
 _last_node_cache = None
 _last_node_fetch = 0
-# two minutes
-NODE_TTL = 5 * 60
+# twenty minutes
+NODE_TTL = 20 * 60
 # -------------------
 
 """
@@ -924,7 +924,7 @@ def load_non_data_format_ids():
 """
     Use the wait-try mechanism to make sure that the given docid exists in the file system
 """
-def wait_for_docid(docid: str):
+def wait_for_docid_file(docid: str):
     """
     Wait until a file for the given docid exists under either
     DOCUMENTS_DIR or DATA_DIR.
@@ -997,7 +997,7 @@ def process_pid_wrapper(channel_pool, guid, object_format, doc_id, system_metada
             message = {SYSMETA: system_metadata_xml}
             message_body = json.dumps(message).encode("utf-8")
             channel = None
-            wait_for_docid(doc_id)
+            wait_for_docid_file(doc_id)
             try:
                 channel = channel_pool.acquire_channel()
                 channel.basic.publish(
@@ -1032,6 +1032,7 @@ def submit_index_tasks(payload, executor):
     global pg_pool
     global channel_pool
     global futures
+    global _last_node_fetch
     futures = []
     global batch_max_time
     batch_max_time = {}
@@ -1040,6 +1041,10 @@ def submit_index_tasks(payload, executor):
     try:
         conn = pg_pool.getconn()
         with conn.cursor() as cur:
+            #cur.execute("SHOW enable_nestloop")
+            #print("enable_nestloop =", cur.fetchone()[0])
+            logger.debug("Start the query process to look new records.")
+            cur.execute("SET LOCAL enable_nestloop = off")
             cur.execute(f"""
                 SELECT
                     sm.guid,
@@ -1076,19 +1081,19 @@ def submit_index_tasks(payload, executor):
                 ORDER BY sm.date_modified ASC
                 LIMIT {MAX_ROWS};
             """, (payload,))
-
             rows = cur.fetchall()
-            length = len(rows)
-
+            logger.debug("Completed the query process to look new records.")
             if not rows:
                 idle_counter += 1
                 logger.info("No new records. Sleeping.")
                 if (idle_counter > 3):
-                    logger.debug(f"Since the process is idle for {idle_counter} times. It will wait a longer time: {PULL_LONG_INTERVAL} seconds.")
+                    logger.debug(f"Since the process is idle for {idle_counter} times. It will sleep a longer time: {PULL_LONG_INTERVAL} seconds.")
                     shutdown_event.wait(PULL_LONG_INTERVAL)
                 else:
-                    logger.debug(f"Since the process is only idle for {idle_counter} times. It will wait a shorter time: {PULL_INTERVAL} seconds.")
+                    logger.debug(f"Since the process is only idle for {idle_counter} times. It will sleep a shorter time: {PULL_INTERVAL} seconds.")
                     shutdown_event.wait(PULL_INTERVAL)
+                # Reset the time for fetching the node list since now objects were added, which means no node id can be added
+                _last_node_fetch = time.time()
                 return
             # Reset the idle counter since there is a result
             idle_counter = 0
