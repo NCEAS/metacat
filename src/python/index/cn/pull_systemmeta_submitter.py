@@ -94,6 +94,8 @@ DATAONE_V2_NS = "http://ns.dataone.org/service/types/v2.0"
 SYSMETA = "sysmeta"
 # The counter to count how many times the pull gets the zero result (idle)
 idle_counter = 0
+futures = []
+batch_max_time = {}
 
 NSMAP = {
     "d1v1": DATAONE_V1_NS,
