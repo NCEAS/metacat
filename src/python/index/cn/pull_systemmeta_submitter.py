@@ -76,6 +76,8 @@ DOCID_MAX_RETRIES = 50
 QUEUE_NAME = "index"
 ROUTING_KEY = "index"
 EXCHANGE_NAME = "dataone-index"
+NOTIFICATION_QUEUE_NAME = "notification"
+NOTIFICATION_ROUTING_KEY = "notification"
 resourcemap_format_list = ["http://www.openarchives.org/ore/terms", "http://www.w3.org/TR/rdf-syntax-grammar"]
 pg_pool = None
 DEFAULT_DATE = "2000-01-01 00:00:00.000"
@@ -571,7 +573,9 @@ class AMQPStormChannelPool:
     def ensure_topology(self, channel):
         channel.exchange.declare(EXCHANGE_NAME, durable=True)
         channel.queue.declare(QUEUE_NAME, durable=True, arguments={"x-max-priority": 10})
+        channel.queue.declare(NOTIFICATION_QUEUE_NAME, durable=True, arguments={"x-max-priority": 10})
         channel.queue.bind(QUEUE_NAME, EXCHANGE_NAME, ROUTING_KEY)
+        channel.queue.bind(NOTIFICATION_QUEUE_NAME, EXCHANGE_NAME, NOTIFICATION_ROUTING_KEY)
 
 
     # Acquire channel (core)
