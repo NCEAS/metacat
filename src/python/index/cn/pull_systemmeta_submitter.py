@@ -1039,7 +1039,6 @@ def submit_index_tasks(payload, executor):
     global channel_pool
     global futures
     global _last_node_fetch
-    futures = []
     global batch_max_time
     batch_max_time = {}
     # Single Postgres query
@@ -1154,9 +1153,51 @@ def submit_index_tasks(payload, executor):
             pg_pool.putconn(conn)
 
 """
+    Processes a single PID for the notification service
+       1 Construct the rabbitmq message
+       2 Publish the message to the rabbitmq service
+"""
+def process_notification_wrapper(channel_pool, guid, node_id):
+    thread_name = threading.current_thread().name
+    try:
+        priority = 4
+        if guid:
+            logger.debug(f"[{thread_name}] Processing PID for notification: {guid} with node id {node_id}, priority: {priority}")
+            headers = {'id': guid, 'authoritative_node_id': node_id}
+            message = ''
+            channel = None
+            try:
+                channel = channel_pool.acquire_channel()
+                channel.basic.publish(
+                    body=message,
+                    routing_key=NOTIFICATION_ROUTING_KEY,
+                    exchange=EXCHANGE_NAME,
+                    properties={'headers': headers, 'priority': priority}
+                )
+                logger.debug(f"Published guid {guid} into RabbitMQ for notification")
+            finally:
+                if channel:
+                    try:
+                        channel_pool.release_channel(channel)
+                    except Exception:
+                        pass
+        else:
+            logger.warning(f"[{thread_name}] No GUID found for notification processing")
+    except (AMQPConnectionError, AMQPChannelError, AMQPError) as amqp_err:
+        logger.error(f"[ERROR] [{thread_name}] AMQPStorm error while processing PID {guid}: {amqp_err}")
+        channel_pool.mark_unhealthy()
+        raise
+    except Exception as e:
+        logger.error(f"[ERROR] [{thread_name}] Unexpected error while processing PID {guid}: {e}")
+        raise
+    return None
+
+"""
    Query the solr service and submit the notification tasks
 """
 def submit_notification_tasks(notification_mn_latest_map, executor):
+    global channel_pool
+    global futures
     # Build the MN/date conditions.
     mn_queries = []
     for mn, date_modified in notification_mn_latest_map.items():
@@ -1193,9 +1234,15 @@ def submit_notification_tasks(notification_mn_latest_map, executor):
         documents = result["response"]["docs"]
         # Process this batch.
         for doc in documents:
-            print(
-                f"id={doc.get('id')}, "
-                f"authoritativeMN={doc.get('authoritativeMN')}"
+            guid = doc.get('id')
+            node_id = doc.get('authoritativeMN')
+            futures.append(
+                executor.submit(
+                    process_notification_wrapper,
+                    channel_pool,
+                    guid,
+                    node_id
+                )
             )
         # Solr returns the cursor to use for the next request.
         next_cursor_mark = result["nextCursorMark"]
