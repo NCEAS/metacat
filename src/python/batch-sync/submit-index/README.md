@@ -12,23 +12,43 @@ Reads a list of object PIDs from a file, and publishes them to a RabbitMQ servic
   ```shell
   pip3 install pika
   ```
-- Required files (see `PIDS_FILE_PATH` for location)
+- Required files (location set by `--pids-file`)
   - `pids_to_process.txt`: a file containing the list of identifiers to be processed
 
 ### Configuration
-Edit the following variables in the Python script before running:
-- `RABBITMQ_HOST`, The hostname of the RabbitMQ service (alternatively pass as the third argument)
-- `RABBITMQ_PORT_NUMBER`, The port number of the RabbitMQ service
+Settings are given on the command line. Every option has a default, so the usual run needs
+only the username, the host and the password:
+
+| Option | Default | Meaning |
+|---|---|---|
+| `--host` | `localhost` | RabbitMQ hostname |
+| `--port` | `5672` | RabbitMQ port |
+| `--queue` | `index` | Queue to declare and bind |
+| `--exchange` | `dataone-index` | Exchange to declare and publish to |
+| `--routing-key` | `index` | Routing key for binding and publishing |
+| `--pids-file` | `/var/metacat/.metacat/reindex-script/pids_to_process.txt` | PIDs to submit, one per line |
+| `--results-basepath` | `/var/metacat/.metacat/reindex-script/sysmeta-processed` | Results file; `_<UTC timestamp>.txt` is appended |
+
+The password is read from the `RMQ_PASSWORD` environment variable. This keeps it out of the
+process list and shell history. Run `python3 submit_index_task_to_rabbitmq.py --help` for
+the full usage.
 
 ### Running
 Place the Python script on a host with access to the RabbitMQ service, then run:
 ```shell
-python3 submit_index_task_to_rabbitmq.py rabbitmq_username rabbitmq_password rabbitmq_hostname
+read -rs RMQ_PASSWORD && export RMQ_PASSWORD    # type the password; it is not echoed
+python3 submit_index_task_to_rabbitmq.py rabbitmq_username --host rabbitmq_hostname
 ```
 To run the script in the background, time the execution, and redirect both standard output and error to a log file, use:
 ```shell
-{ date; time python3 -u submit_index_task_to_rabbitmq.py rabbitmq_username rabbitmq_password rabbitmq_hostname; } > output.log 2>&1 &
+{ date; time python3 -u submit_index_task_to_rabbitmq.py rabbitmq_username --host rabbitmq_hostname; } > output.log 2>&1 &
 ```
+
+**Legacy form:** the password and hostname can still be given as the second and third
+arguments: `python3 submit_index_task_to_rabbitmq.py rabbitmq_username rabbitmq_password
+rabbitmq_hostname`. If both a password argument and a different `RMQ_PASSWORD` are given,
+the argument is used and a warning is printed. When using `RMQ_PASSWORD`, give the host with
+`--host`, because a second argument is always read as the password.
 
 To run the script against a rabbitmq pod in a kubernetes cluster, first ensure you are in the correct k8s context, then use:
 ```shell

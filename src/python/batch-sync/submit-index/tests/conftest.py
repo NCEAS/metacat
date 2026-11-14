@@ -1,9 +1,31 @@
 """Shared fixtures. pika is mocked, so no RabbitMQ broker is needed."""
+import dataclasses
 from unittest import mock
 
 import pytest
 
 import submit_index_task_to_rabbitmq as submit
+
+
+@pytest.fixture(autouse=True)
+def no_password_env(monkeypatch):
+    """Make sure a RMQ_PASSWORD set in the developer's shell does not affect any test."""
+    monkeypatch.delenv(submit.PASSWORD_ENV_VAR, raising=False)
+
+
+@pytest.fixture
+def make_config():
+    """Factory for a Config with the default settings, overridden by keyword arguments."""
+    def _make(**overrides):
+        config = submit.parse_args(["user", "pw"], environ={})
+        return dataclasses.replace(config, **overrides)
+    return _make
+
+
+@pytest.fixture
+def config(make_config):
+    """A Config with the default settings (user "user", password "pw", host localhost)."""
+    return make_config()
 
 
 @pytest.fixture
