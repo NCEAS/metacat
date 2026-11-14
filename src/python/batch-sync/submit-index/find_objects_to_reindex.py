@@ -254,6 +254,26 @@ def needs_catchup(results_path, start_time):
 
     return None
 
+
+def catchup_from_date(last_run, delay_minutes):
+    """
+    Return the start of a catch-up run's window, as "%Y-%m-%dT%H:%M:%S" in UTC.
+
+    last_run (from needs_catchup()) is when the previous run wrote its results file, but that
+    run's window ended delay_minutes earlier. Starting the catch-up window at last_run would
+    leave those delay_minutes unchecked, so this goes back delay_minutes, plus
+    CATCHUP_MARGIN_SEC to allow for how long the previous run took.
+
+    :param last_run: UTC time of the previous run's results file, as returned by
+        needs_catchup()
+    :param delay_minutes: the --delay value
+    """
+    start = parse_iso_to_utc(last_run)
+    if start is None:
+        raise ValueError(f"Invalid last_run: {last_run!r}")
+    start -= timedelta(minutes=delay_minutes, seconds=CATCHUP_MARGIN_SEC)
+    return start.strftime("%Y-%m-%dT%H:%M:%S")
+
 def priority_arg(text):
     """argparse type for --priority: an integer from 0 to MAX_PRIORITY."""
     try:
@@ -336,8 +356,10 @@ def main():
 
     catchup_date = needs_catchup(RESULTS_FILE_PATH, from_date)
     if (catchup_date):
-        print("Needs a catch-up run; adjusting from_date to last run time: ", catchup_date)
-        from_date = catchup_date
+        from_date = catchup_from_date(catchup_date, args.delay)
+        print(f"Needs a catch-up run; last run was at {catchup_date}, so adjusting from_date "
+              f"to {from_date} (last run - delay - {CATCHUP_MARGIN_SEC}s), where the last "
+              f"run's window ended")
     else:
         print("Up to date - no catch-up needed.")
 
