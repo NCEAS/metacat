@@ -109,6 +109,19 @@ Current time | window start time<br/>(now - interval - delay) | window end time<
 
 In each case, the database is queried from the window start time to the window end time, but solr is queried from the window start time to the current time, to allow for indexing lag.
 
+**Catch-up runs.** At the end of each completed run, the window end time is saved in
+`last_audited_to_date.txt`, in the same directory as the results files. Each run starts at
+the earlier of its normal start time and that saved time. So if runs are missed or skipped
+(for example, while the pod is down, or because a slow run made the CronJob skip the next
+one), the next run widens its window to cover the whole gap. The time is only saved after
+the queries, and the submission if `--submit` is used, succeed, so a failed run's window is
+checked again by the next run. If the file can't be written (for example, the disk is full),
+the run still finishes with a warning, and the next run re-checks from the older saved time.
+The file only helps where this directory persists between runs, as on the CronJob's PVC; in
+a container with no persistent storage, each run simply uses its normal window. If the file doesn't exist yet (the first run after upgrading),
+the start is estimated from the newest archived results file. Delete the file to stop a
+catch-up after a long outage.
+
 ### Option 1: run manually (either locally, using port forwarding, or on K8s, in an existing pod):
 
 ```shell
