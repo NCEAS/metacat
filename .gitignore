@@ -45,3 +45,11 @@ src/perl/Metacat/blib/
 src/perl/Metacat/pm_to_blib
 docs/user/metacat/source/_build
 helm/charts
+
+# Python build artifacts
+.venv/
+*.egg-info/
+build/
+.pytest_cache/
+__pycache__/
+dist/

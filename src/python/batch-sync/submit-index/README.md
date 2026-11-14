@@ -7,7 +7,7 @@ These Python scripts are for auditing and submitting indexing tasks
 Reads a list of object PIDs from a file, and publishes them to a RabbitMQ service
 
 ### Dependencies
-- Python 3.10.0
+- Python 3.11 or later
 - Required package
   ```shell
   pip3 install pika
@@ -90,4 +90,27 @@ export CMD_ARGS="--metacat-host arcticdata.io --solr-host metacatarctic-solr --i
 
 # run the script to create the cronjob
 ./k8s-index-audit.sh
+```
+
+## Development
+
+The scripts are described by `pyproject.toml`, as the `dataone-index-submit` package. Each
+script still runs on its own as a single file, as shown above. Unit tests are in `tests/`
+and need no RabbitMQ broker, because they mock `pika`.
+
+Dependencies are managed with [uv](https://docs.astral.sh/uv/), and `uv.lock` pins the
+versions used. From this directory:
+
+```shell
+uv sync          # creates .venv, installs the package, its dependencies and the dev group
+uv run pytest    # runs the unit tests
+uv build         # optional: builds a wheel and an sdist into dist/
+```
+
+Without uv, pip (25.1 or later) also works:
+
+```shell
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e . --group dev
+pytest
 ```
