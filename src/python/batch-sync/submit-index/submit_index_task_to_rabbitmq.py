@@ -3,9 +3,10 @@ import threading
 import concurrent.futures
 import os
 import pika
+import pika.exceptions
 import sys
 import time  # For potential delays or timeouts
-from datetime import datetime
+from datetime import datetime, timezone
 
 # --- Configuration ---
 # If the type of the index task is systemMetacat_change_only
@@ -18,7 +19,8 @@ RABBITMQ_HOST = "localhost"
 RABBITMQ_PORT_NUMBER = 5672
 # The time gap between two submission in seconds
 SUBMISSION_GAP_SEC = 0.5
-# Number of worker threads
+# Number of worker threads. Must stay 1: all workers share one pika channel, and pika's
+# BlockingConnection is not thread-safe.
 MAX_WORKERS = 1
 # Path to the input file containing PIDs, one PID per line
 PIDS_FILE_PATH = "/var/metacat/.metacat/reindex-script/pids_to_process.txt"
@@ -36,7 +38,15 @@ EXCHANGE_NAME = "dataone-index"
 # Lock for thread-safe writing to the results file
 results_file_lock = threading.Lock()
 
-def get_rabbitmq_channel(username, password, hostname):
+def open_rabbitmq_channel(username, password, hostname):
+    """
+    Connect to RabbitMQ and declare the exchange and queue that index tasks are published to.
+
+    Returns a (connection, channel) tuple. The caller must close the connection when done.
+    If setup fails after the connection is opened, the connection is closed before the
+    exception is re-raised.
+    """
+    connection = None
     try:
         credentials = pika.PlainCredentials(username, password)
         rmq_host = hostname if hostname else RABBITMQ_HOST
@@ -46,14 +56,19 @@ def get_rabbitmq_channel(username, password, hostname):
             pika.ConnectionParameters(host=rmq_host, port=RABBITMQ_PORT_NUMBER,
                                       credentials=credentials))
         channel = connection.channel()
+        # Declare the exchange before binding to it; on a fresh broker it does not exist yet.
+        # The arguments must match those used by Metacat and dataone-indexer.
+        channel.exchange_declare(exchange=EXCHANGE_NAME, exchange_type="direct", durable=True)
         channel.queue_declare(queue=QUEUE_NAME, durable=True, arguments={'x-max-priority': 10})
         channel.queue_bind(exchange=EXCHANGE_NAME,
                            queue=QUEUE_NAME,
                            routing_key=ROUTING_KEY)
     except Exception as e:
-        print(f"[ERROR] Could not create a RabbitMQ channel: {e}")
-        raise e
-    return channel
+        print(f"[ERROR] Could not create a RabbitMQ channel: {e!r}")
+        if connection is not None and connection.is_open:
+            connection.close()
+        raise
+    return connection, channel
 
 def process_pid_wrapper(pid, channel):
     """
@@ -91,14 +106,13 @@ def process_pid_wrapper(pid, channel):
             print(f"[ERROR] [{thread_name}] Could not write to results file {RESULTS_FILE_PATH} for PID {pid}: {ioe}")
             os._exit(1)
 
-    except channel.exceptions.HTTPError as http_err:
-        print(f"[ERROR] [{thread_name}] HTTP error for PID {pid} at URL {http_err.request.url}: {http_err}")
-    except channel.exceptions.ConnectionError as conn_err:
-        print(f"[ERROR] [{thread_name}] Connection error for PID {pid} (URL: {conn_err.request.url if conn_err.request else 'N/A'}): {conn_err}")
-    except channel.exceptions.Timeout as timeout_err:
-        print(f"[ERROR] [{thread_name}] Timeout for PID {pid} (URL: {timeout_err.request.url if timeout_err.request else 'N/A'}): {timeout_err}")
-    except channel.exceptions.RequestException as req_err:
-        print(f"[ERROR] [{thread_name}] General request error for PID {pid}: {req_err}")
+    # repr() is used because str() of many pika exceptions is empty.
+    except pika.exceptions.AMQPConnectionError as conn_err:
+        print(f"[ERROR] [{thread_name}] RabbitMQ connection error for PID {pid}: {conn_err!r}")
+    except pika.exceptions.AMQPChannelError as chan_err:
+        print(f"[ERROR] [{thread_name}] RabbitMQ channel error for PID {pid}: {chan_err!r}")
+    except pika.exceptions.AMQPError as amqp_err:
+        print(f"[ERROR] [{thread_name}] RabbitMQ error for PID {pid}: {amqp_err!r}")
     except Exception as e:
         print(f"[ERROR] [{thread_name}] An unexpected error occurred while processing PID {pid}: {e}")
 
@@ -122,7 +136,7 @@ def main():
         sys.exit()
 
     # Add timestamp to results filename
-    run_ts = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
+    run_ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
     safe_ts = run_ts.replace(":", "-")
     RESULTS_FILE_PATH = f"{RESULTS_FILE_BASEPATH}_{safe_ts}.txt"
 
@@ -151,9 +165,9 @@ def main():
         print(f"[ERROR] Could not read PIDs file {PIDS_FILE_PATH}: {e}")
         return
 
-    # Use a session object for connection pooling and default headers if needed
-    # with requests.Session() as session:
-    with get_rabbitmq_channel(rabbitmq_username, rabbitmq_password, rabbitmq_hostname) as channel:
+    connection, channel = open_rabbitmq_channel(rabbitmq_username, rabbitmq_password,
+                                                rabbitmq_hostname)
+    try:
         processed_count = 0
         failed_count = 0
         total_pids = len(all_pids)
@@ -183,6 +197,9 @@ def main():
                 current_done = processed_count + failed_count
                 if current_done % (MAX_WORKERS * 2) == 0 or current_done == total_pids:
                     print(f"Progress: {current_done}/{total_pids} PIDs handled. Success: {processed_count}, Failed: {failed_count}")
+    finally:
+        if connection.is_open:
+            connection.close()
 
     print(f"\n--- Processing Complete ---")
     print(f"Total PIDs from file: {total_pids}")

@@ -18,9 +18,12 @@ DELAY_MINUTES = 10
 ERROR_UNSET = "ERROR_NOT_SET"
 RESULTS_FILE_PATH = "/var/metacat/.metacat/reindex-script/pids_to_process.txt"
 REINDEX_SCRIPT_PATH = "submit_index_task_to_rabbitmq.py"
+# How much older than the start of this run's window the previous results file may be
+# before a catch-up run is needed, in seconds.
+CATCHUP_MARGIN_SEC = 60
 
 def get_iso_date(minutes_ago):
-    dt = datetime.utcnow() - timedelta(minutes=minutes_ago)
+    dt = datetime.now(timezone.utc) - timedelta(minutes=minutes_ago)
     return dt.strftime("%Y-%m-%dT%H:%M:%S")
 
 def fetch_db_results(from_date, to_date, retries=3, timeout=10):
@@ -171,7 +174,7 @@ def archive_old_results():
     rename the previous results by appending "_" + run_ts (sanitize colons)
     """
     src = RESULTS_FILE_PATH
-    run_ts = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
+    run_ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
     if os.path.exists(src):
         dirn, base = os.path.split(src)
         safe_ts = run_ts.replace(":", "-")
@@ -212,8 +215,10 @@ def needs_catchup(results_path, start_time):
     return None.
     Used to determine whether a "catch-up" run is needed, to reindex any that were missed
     :param results_path: base path, e.g. `RESULTS_FILE_PATH`
-    :param start_time: epoch timestamp calculated from (current time - interval - delay)
-    :return: timestamp of most-recent log file if older than start_time, else None
+    :param start_time: UTC time (current time - interval - delay), as an ISO-8601 string; a
+        string without an offset (as returned by get_iso_date()) is read as UTC
+    :return: UTC timestamp of most-recent log file, as "%Y-%m-%dT%H:%M:%S", if it is more
+        than CATCHUP_MARGIN_SEC older than start_time, else None
     """
     pattern = f"{results_path}_*"
     matching_files = [
@@ -233,10 +238,16 @@ def needs_catchup(results_path, start_time):
     except (OSError, ValueError):
         return None
 
-    start_timestamp = datetime.fromisoformat(start_time.replace('Z', '+00:00')).timestamp()
+    # Read start_time as UTC. (A plain datetime.fromisoformat() would read a string without an
+    # offset as local time.)
+    start_dt = parse_iso_to_utc(start_time)
+    if start_dt is None:
+        raise ValueError(f"Invalid start_time: {start_time!r}")
+    start_timestamp = start_dt.timestamp()
     print("start_timestamp: ", start_timestamp)
-    if most_recent_mtime < (start_timestamp - 60000):  # 1 minute error margin (60,000mS)
-        dt = datetime.utcfromtimestamp(most_recent_mtime)
+    # Both timestamps are in seconds.
+    if most_recent_mtime < (start_timestamp - CATCHUP_MARGIN_SEC):
+        dt = datetime.fromtimestamp(most_recent_mtime, timezone.utc)
         return dt.strftime("%Y-%m-%dT%H:%M:%S")
 
     return None
