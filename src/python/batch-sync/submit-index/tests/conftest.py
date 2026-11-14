@@ -26,8 +26,20 @@ def mock_connection(monkeypatch):
 
 
 @pytest.fixture
-def results_file(monkeypatch, tmp_path):
-    """Point the module-level results file (normally set by main()) at a temporary file."""
-    path = tmp_path / "results.txt"
-    monkeypatch.setattr(submit, "RESULTS_FILE_PATH", str(path), raising=False)
-    return path
+def results_file(tmp_path):
+    """A results file path in a temporary directory (not created)."""
+    return tmp_path / "results.txt"
+
+
+@pytest.fixture
+def run_env(monkeypatch, tmp_path):
+    """Point main()'s PIDs file and results files at tmp_path, and remove the submission gap.
+
+    Returns the PIDs file path; write PIDs to it before calling main(). Results files are
+    written as tmp_path / "processed_<timestamp>.txt".
+    """
+    pids_file = tmp_path / "pids.txt"
+    monkeypatch.setattr(submit, "PIDS_FILE_PATH", str(pids_file))
+    monkeypatch.setattr(submit, "RESULTS_FILE_BASEPATH", str(tmp_path / "processed"))
+    monkeypatch.setattr(submit, "SUBMISSION_GAP_SEC", 0)
+    return pids_file

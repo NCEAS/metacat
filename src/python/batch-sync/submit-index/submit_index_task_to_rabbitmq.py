@@ -1,10 +1,10 @@
+import argparse
 import io
 import threading
 import concurrent.futures
 import os
 import pika
 import pika.exceptions
-import sys
 import time  # For potential delays or timeouts
 from datetime import datetime, timezone
 
@@ -70,12 +70,14 @@ def open_rabbitmq_channel(username, password, hostname):
         raise
     return connection, channel
 
-def process_pid_wrapper(pid, channel):
+def process_pid_wrapper(pid, channel, results_path):
     """
     Processes a single PID:
     1. Construct the rabbitmq message
     2. Publish the message to the rabbitmq service
-    3. Add PID to results file
+    3. Add PID to the results file at results_path
+
+    Returns the PID on success, or None if publishing failed.
     """
     thread_name = threading.current_thread().name
     try:
@@ -98,12 +100,12 @@ def process_pid_wrapper(pid, channel):
         # 3. Add PID to results file (thread-safe)
         try:
             with results_file_lock:
-                with open(RESULTS_FILE_PATH, "a") as f:
+                with open(results_path, "a") as f:
                     f.write(f"{pid}\n")
             print(f"  [{thread_name}] Successfully processed and logged PID: {pid}")
             return pid
         except IOError as ioe:
-            print(f"[ERROR] [{thread_name}] Could not write to results file {RESULTS_FILE_PATH} for PID {pid}: {ioe}")
+            print(f"[ERROR] [{thread_name}] Could not write to results file {results_path} for PID {pid}: {ioe}")
             os._exit(1)
 
     # repr() is used because str() of many pika exceptions is empty.
@@ -118,42 +120,76 @@ def process_pid_wrapper(pid, channel):
 
     return None  # Return None if any step failed
 
-def main():
+def parse_args(argv=None):
+    """
+    Parse command-line arguments.
+
+    :param argv: the arguments, excluding the program name; defaults to sys.argv[1:]
+    :return: an argparse.Namespace with rabbitmq_username, rabbitmq_password and
+        rabbitmq_hostname (RABBITMQ_HOST if not given)
+    """
+    parser = argparse.ArgumentParser(
+        description=f"Publish an index task to RabbitMQ for each PID in {PIDS_FILE_PATH}.")
+    parser.add_argument("rabbitmq_username", help="RabbitMQ username")
+    parser.add_argument("rabbitmq_password", help="RabbitMQ password")
+    parser.add_argument("rabbitmq_hostname", nargs="?", default=RABBITMQ_HOST,
+                        help=f"RabbitMQ hostname (default: {RABBITMQ_HOST})")
+    return parser.parse_args(argv)
+
+
+def build_results_path(basepath, now=None):
+    """
+    Return the results file path for a run: basepath + "_" + the UTC time + ".txt".
+    Colons in the time are replaced by dashes, e.g. "<basepath>_2026-11-13T10-00-00.txt".
+
+    :param basepath: the results file path without the timestamp suffix
+    :param now: the run time, a timezone-aware datetime (default: the current time)
+    """
+    now = now or datetime.now(timezone.utc)
+    safe_ts = now.astimezone(timezone.utc).strftime("%Y-%m-%dT%H-%M-%S")
+    return f"{basepath}_{safe_ts}.txt"
+
+
+def read_pids(path):
+    """
+    Read PIDs from a file, one per line. Surrounding whitespace is stripped, and blank lines
+    are skipped.
+
+    :param path: path to the PIDs file
+    :return: list of PIDs, in file order
+    :raises OSError: if the file cannot be read (FileNotFoundError if it does not exist)
+    """
+    with open(path, "r") as f:
+        return [line.strip() for line in f if line.strip()]
+
+
+def main(argv=None):
     """
     Main function to read PIDs from a file and process them using a thread pool.
+
+    :param argv: command-line arguments, excluding the program name; defaults to sys.argv[1:]
     """
-    global RESULTS_FILE_PATH
+    args = parse_args(argv)
+    rabbitmq_username = args.rabbitmq_username
+    rabbitmq_password = args.rabbitmq_password
+    rabbitmq_hostname = args.rabbitmq_hostname
+    print(f"RabbitMQ username: {rabbitmq_username}")
+    print(f"RabbitMQ hostname: {rabbitmq_hostname}")
 
-    arguments = sys.argv[1:]
-    if len(arguments) >= 2:
-        rabbitmq_username, rabbitmq_password, *rest = arguments
-        rabbitmq_hostname = rest[0] if rest else RABBITMQ_HOST  # optional hostname
-        print(f"RabbitMQ username: {rabbitmq_username}")
-        print(f"RabbitMQ hostname: {rabbitmq_hostname}")
-    else:
-        print("Usage: python3 submit_index_task_to_rabbitmq.py rabbitmq_username "
-              "rabbitmq_password [rabbitmq_hostname optional; default localhost]")
-        sys.exit()
+    results_path = build_results_path(RESULTS_FILE_BASEPATH)
 
-    # Add timestamp to results filename
-    run_ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
-    safe_ts = run_ts.replace(":", "-")
-    RESULTS_FILE_PATH = f"{RESULTS_FILE_BASEPATH}_{safe_ts}.txt"
-
-    # Ensure the directory for results_file_path exists
+    # Ensure the directory for results_path exists
     try:
-        results_dir = os.path.dirname(RESULTS_FILE_PATH)
-        if results_dir:  # Ensure it's not an empty string if RESULTS_FILE_PATH is just a filename
+        results_dir = os.path.dirname(results_path)
+        if results_dir:  # Ensure it's not an empty string if results_path is just a filename
             os.makedirs(results_dir, exist_ok=True)
-        print(f"Results will be logged to: {RESULTS_FILE_PATH}")
+        print(f"Results will be logged to: {results_path}")
     except OSError as e:
-        print(f"[ERROR] Could not create directory for results file {RESULTS_FILE_PATH}: {e}. Please check permissions.")
+        print(f"[ERROR] Could not create directory for results file {results_path}: {e}. Please check permissions.")
         return
 
-    all_pids = []
     try:
-        with open(PIDS_FILE_PATH, "r") as f:
-            all_pids = [line.strip() for line in f if line.strip()]
+        all_pids = read_pids(PIDS_FILE_PATH)
         if not all_pids:
             print(f"No PIDs found in {PIDS_FILE_PATH}. Exiting.")
             return
@@ -177,7 +213,7 @@ def main():
             # Submit all PIDs to the executor
             future_to_pid = {}
             for pid in all_pids:
-                future = executor.submit(process_pid_wrapper, pid, channel)
+                future = executor.submit(process_pid_wrapper, pid, channel, results_path)
                 future_to_pid[future] = pid
                 time.sleep(SUBMISSION_GAP_SEC)
 
@@ -206,7 +242,7 @@ def main():
     print(f"Successfully processed and logged: {processed_count}")
     print(f"Failed to process: {failed_count}")
     if processed_count > 0:
-        print(f"Successfully processed PIDs have been logged to: {RESULTS_FILE_PATH}")
+        print(f"Successfully processed PIDs have been logged to: {results_path}")
 
 if __name__ == "__main__":
     main()

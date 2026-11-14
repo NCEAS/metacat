@@ -17,15 +17,10 @@ def test_finder_get_iso_date_is_utc_without_offset():
     assert abs(parsed - expected) < timedelta(seconds=5)
 
 
-def test_submit_results_file_name_has_utc_timestamp(mock_connection, monkeypatch, tmp_path):
-    pids_file = tmp_path / "pids.txt"
-    pids_file.write_text("pid-1\n")
-    monkeypatch.setattr(submit, "PIDS_FILE_PATH", str(pids_file))
-    monkeypatch.setattr(submit, "RESULTS_FILE_BASEPATH", str(tmp_path / "processed"))
-    monkeypatch.setattr(submit, "SUBMISSION_GAP_SEC", 0)
-    monkeypatch.setattr("sys.argv", ["submit", "user", "pw"])
+def test_submit_results_file_name_has_utc_timestamp(mock_connection, run_env, tmp_path):
+    run_env.write_text("pid-1\n")
 
-    submit.main()
+    submit.main(["user", "pw"])
 
     [results] = list(tmp_path.glob("processed_*.txt"))
     stamp = results.name[len("processed_"):-len(".txt")]

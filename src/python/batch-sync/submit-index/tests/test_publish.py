@@ -10,7 +10,7 @@ import submit_index_task_to_rabbitmq as submit
 def test_publish_success_logs_pid(results_file):
     channel = mock.MagicMock(name="channel")
 
-    assert submit.process_pid_wrapper("urn:uuid:1234", channel) == "urn:uuid:1234"
+    assert submit.process_pid_wrapper("urn:uuid:1234", channel, results_file) == "urn:uuid:1234"
 
     kwargs = channel.basic_publish.call_args.kwargs
     assert kwargs["exchange"] == "dataone-index"
@@ -30,7 +30,7 @@ def test_publish_failure_is_reported(results_file, capsys, error, label):
     channel = mock.MagicMock(name="channel")
     channel.basic_publish.side_effect = error
 
-    assert submit.process_pid_wrapper("urn:uuid:1234", channel) is None
+    assert submit.process_pid_wrapper("urn:uuid:1234", channel, results_file) is None
 
     out = capsys.readouterr().out
     assert label in out
@@ -40,15 +40,10 @@ def test_publish_failure_is_reported(results_file, capsys, error, label):
     assert not results_file.exists()
 
 
-def test_main_closes_connection(mock_connection, monkeypatch, tmp_path):
-    pids_file = tmp_path / "pids.txt"
-    pids_file.write_text("pid-1\n\npid-2\n")
-    monkeypatch.setattr(submit, "PIDS_FILE_PATH", str(pids_file))
-    monkeypatch.setattr(submit, "RESULTS_FILE_BASEPATH", str(tmp_path / "processed"))
-    monkeypatch.setattr(submit, "SUBMISSION_GAP_SEC", 0)
-    monkeypatch.setattr("sys.argv", ["submit", "user", "pw", "rmq.example"])
+def test_main_closes_connection(mock_connection, run_env):
+    run_env.write_text("pid-1\n\npid-2\n")
 
-    submit.main()
+    submit.main(["user", "pw", "rmq.example"])
 
     channel = mock_connection.channel.return_value
     assert channel.basic_publish.call_count == 2
