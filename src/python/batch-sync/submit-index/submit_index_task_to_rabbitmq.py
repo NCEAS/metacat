@@ -24,10 +24,11 @@ SUBMISSION_GAP_SEC = 0.5
 # Number of worker threads. Must stay 1: all workers share one pika channel, and pika's
 # BlockingConnection is not thread-safe.
 MAX_WORKERS = 1
-# Path to the input file containing PIDs, one PID per line
+# Path to the input file of PIDs: one "PID [priority]" entry per line
 PIDS_FILE_PATH = "/var/metacat/.metacat/reindex-script/pids_to_process.txt"
-# Priority of the message. We set it 0, which is the lowest one, since this should be run in background
-PRIORITY = 0
+# Default message priority (--priority). 1 is Metacat's LOW_PRIORITY, the level Metacat uses
+# for bulk reindexing, so batch runs wait behind Metacat's live updates (priorities 3-4).
+PRIORITY = 1
 # Request timeout in seconds
 REQUEST_TIMEOUT = 30
 # RabbitMQ queue configuration (defaults for --queue, --routing-key and --exchange). The
@@ -56,6 +57,10 @@ class Config:
     routing_key: str
     pids_file: str
     results_basepath: str
+    # Default priority, for --pid PIDs and PID-file lines without a priority
+    priority: int
+    # PIDs from --pid; when not empty, pids_file is not read
+    pids: tuple = ()
 
 # Lock for thread-safe writing to the results file
 results_file_lock = threading.Lock()
@@ -94,12 +99,12 @@ def open_rabbitmq_channel(config):
         raise
     return connection, channel
 
-def process_pid_wrapper(pid, channel, results_path, config):
+def process_pid_wrapper(pid, priority, channel, results_path, config):
     """
     Processes a single PID:
-    1. Construct the rabbitmq message
+    1. Construct the rabbitmq message, with the given priority
     2. Publish the message to config.exchange with config.routing_key
-    3. Add PID to the results file at results_path
+    3. Add "PID<TAB>priority" to the results file at results_path
 
     Returns the PID on success, or None if publishing failed.
     """
@@ -110,9 +115,10 @@ def process_pid_wrapper(pid, channel, results_path, config):
             index_type = "sysmeta"
         else:
             index_type = "create"
-        print(f"[{thread_name}] Processing PID: {pid} with the type of index task: {index_type}")
+        print(f"[{thread_name}] Processing PID: {pid} with the type of index task: {index_type}"
+              f" and priority: {priority}")
         headers={'index_type': index_type, 'id': pid}
-        properties = pika.BasicProperties(headers=headers, priority=PRIORITY)
+        properties = pika.BasicProperties(headers=headers, priority=priority)
         message = ''
         # 2 Publish the message to the rabbitmq service
         channel.basic_publish(
@@ -125,7 +131,8 @@ def process_pid_wrapper(pid, channel, results_path, config):
         try:
             with results_file_lock:
                 with open(results_path, "a") as f:
-                    f.write(f"{pid}\n")
+                    # Same format as the PIDs file, so a results file can be used as input.
+                    f.write(f"{pid}\t{priority}\n")
             print(f"  [{thread_name}] Successfully processed and logged PID: {pid}")
             return pid
         except IOError as ioe:
@@ -144,14 +151,53 @@ def process_pid_wrapper(pid, channel, results_path, config):
 
     return None  # Return None if any step failed
 
+def parse_priority(text):
+    """
+    Parse a message priority: an integer from 0 to MAX_PRIORITY.
+
+    Out-of-range values are rejected rather than clamped, because RabbitMQ silently treats any
+    priority above the queue's x-max-priority as the maximum, which would hide typos.
+
+    :raises ValueError: if text is not an integer in range
+    """
+    try:
+        value = int(text)
+    except (TypeError, ValueError):
+        raise ValueError(
+            f"priority must be an integer from 0 to {MAX_PRIORITY}, not {text!r}") from None
+    if not 0 <= value <= MAX_PRIORITY:
+        raise ValueError(f"priority must be from 0 to {MAX_PRIORITY}, not {value}")
+    return value
+
+
+def _priority_arg(text):
+    """argparse type for --priority."""
+    try:
+        return parse_priority(text)
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(str(e))
+
+
+def _pid_arg(text):
+    """argparse type for --pid: a non-empty PID without whitespace."""
+    if not text or any(c.isspace() for c in text):
+        raise argparse.ArgumentTypeError(f"PID must be non-empty, without whitespace: {text!r}")
+    return text
+
+
 def make_parser():
     """
     Build the command-line parser. Defaults are read from the module constants each time it
     is called.
     """
     parser = argparse.ArgumentParser(
-        description="Publish an index task to RabbitMQ for each PID in a file.",
-        epilog=f"The password is read from the {PASSWORD_ENV_VAR} environment variable if it "
+        description="Publish an index task to RabbitMQ for each PID in a file, or for PIDs "
+                    "given with --pid.",
+        epilog=f"PIDs file format: one 'PID [priority]' entry per line. Lines without a "
+               f"priority use --priority. Blank lines and lines starting with '#' are "
+               f"skipped. A PID listed more than once is submitted once, at its highest "
+               f"priority. PIDs are submitted highest priority first. "
+               f"The password is read from the {PASSWORD_ENV_VAR} environment variable if it "
                f"is not given as an argument. {PASSWORD_ENV_VAR} is preferred: it keeps the "
                f"password out of the process list and shell history. When using it, give the "
                f"host with --host.")
@@ -170,8 +216,15 @@ def make_parser():
                         help="exchange to declare and publish to (default: %(default)s)")
     parser.add_argument("--routing-key", default=ROUTING_KEY,
                         help="routing key for binding and publishing (default: %(default)s)")
+    parser.add_argument("--priority", type=_priority_arg, default=PRIORITY,
+                        help=f"priority (0-{MAX_PRIORITY}) for --pid PIDs and for PIDs-file "
+                             f"lines without one (default: %(default)s)")
+    parser.add_argument("--pid", dest="pids", action="append", type=_pid_arg, default=[],
+                        metavar="PID",
+                        help="submit this PID at --priority; may be repeated. When given, "
+                             "the PIDs file is not read")
     parser.add_argument("--pids-file", default=PIDS_FILE_PATH,
-                        help="file of PIDs to submit, one per line (default: %(default)s)")
+                        help="file of 'PID [priority]' lines to submit (default: %(default)s)")
     parser.add_argument("--results-basepath", default=RESULTS_FILE_BASEPATH,
                         help="results file path, to which '_<UTC timestamp>.txt' is "
                              "appended (default: %(default)s)")
@@ -226,6 +279,8 @@ def parse_args(argv=None, environ=None):
         routing_key=args.routing_key,
         pids_file=args.pids_file,
         results_basepath=args.results_basepath,
+        priority=args.priority,
+        pids=tuple(args.pids),
     )
 
 
@@ -242,17 +297,55 @@ def build_results_path(basepath, now=None):
     return f"{basepath}_{safe_ts}.txt"
 
 
-def read_pids(path):
+def load_pid_priorities(path, default_priority):
     """
-    Read PIDs from a file, one per line. Surrounding whitespace is stripped, and blank lines
-    are skipped.
+    Read "PID [priority]" entries from a file, one per line, split on whitespace.
+
+    DataONE identifiers cannot contain whitespace, so a second token is always the priority.
+    A line with one token uses default_priority. Blank lines and lines starting with "#" are
+    skipped. Any other line (three or more tokens, or a priority that is not an integer from
+    0 to MAX_PRIORITY) is reported with its line number and skipped.
 
     :param path: path to the PIDs file
-    :return: list of PIDs, in file order
+    :param default_priority: priority for lines without one
+    :return: list of (pid, priority) tuples, in file order
     :raises OSError: if the file cannot be read (FileNotFoundError if it does not exist)
     """
+    entries = []
     with open(path, "r") as f:
-        return [line.strip() for line in f if line.strip()]
+        for line_number, line in enumerate(f, start=1):
+            tokens = line.split()
+            if not tokens or tokens[0].startswith("#"):
+                continue
+            if len(tokens) > 2:
+                print(f"[WARNING] {path}:{line_number}: expected 'PID [priority]', "
+                      f"skipping: {line.strip()!r}")
+                continue
+            if len(tokens) == 1:
+                entries.append((tokens[0], default_priority))
+                continue
+            try:
+                entries.append((tokens[0], parse_priority(tokens[1])))
+            except ValueError as e:
+                print(f"[WARNING] {path}:{line_number}: {e}, skipping PID {tokens[0]}")
+    return entries
+
+
+def order_submissions(entries):
+    """
+    Remove duplicate PIDs and order the entries for submission.
+
+    A PID listed more than once is kept once, at its highest priority, in the position of its
+    first appearance. Entries are then sorted by descending priority, keeping their order
+    within the same priority, so high-priority PIDs are published first.
+
+    :param entries: iterable of (pid, priority) tuples
+    :return: list of (pid, priority) tuples
+    """
+    best = {}  # dicts keep insertion order, so this keeps each PID's first position
+    for pid, priority in entries:
+        best[pid] = max(priority, best.get(pid, priority))
+    return sorted(best.items(), key=lambda entry: entry[1], reverse=True)
 
 
 def main(argv=None, environ=None):
@@ -278,32 +371,42 @@ def main(argv=None, environ=None):
         print(f"[ERROR] Could not create directory for results file {results_path}: {e}. Please check permissions.")
         return
 
-    try:
-        all_pids = read_pids(config.pids_file)
-        if not all_pids:
-            print(f"No PIDs found in {config.pids_file}. Exiting.")
+    if config.pids:
+        entries = [(pid, config.priority) for pid in config.pids]
+        source = "--pid"
+        print(f"Using {len(entries)} PID(s) from --pid; {config.pids_file} is not read.")
+    else:
+        source = config.pids_file
+        try:
+            entries = load_pid_priorities(config.pids_file, config.priority)
+        except FileNotFoundError:
+            print(f"[ERROR] PIDs file not found: {config.pids_file}. Please create it with one PID per line.")
             return
-        print(f"Found {len(all_pids)} PIDs to process from {config.pids_file}.")
-    except FileNotFoundError:
-        print(f"[ERROR] PIDs file not found: {config.pids_file}. Please create it with one PID per line.")
+        except Exception as e:
+            print(f"[ERROR] Could not read PIDs file {config.pids_file}: {e}")
+            return
+
+    all_entries = order_submissions(entries)
+    if not all_entries:
+        print(f"No PIDs found in {source}. Exiting.")
         return
-    except Exception as e:
-        print(f"[ERROR] Could not read PIDs file {config.pids_file}: {e}")
-        return
+    if len(all_entries) < len(entries):
+        print(f"Removed {len(entries) - len(all_entries)} duplicate PID entries.")
+    print(f"Found {len(all_entries)} PIDs to process from {source}.")
 
     connection, channel = open_rabbitmq_channel(config)
     try:
         processed_count = 0
         failed_count = 0
-        total_pids = len(all_pids)
+        total_pids = len(all_entries)
 
         print(f"Starting processing with {MAX_WORKERS} worker threads...")
         with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS, thread_name_prefix='PIDProcessor') as executor:
-            # Submit all PIDs to the executor
+            # Submit all PIDs to the executor, highest priority first
             future_to_pid = {}
-            for pid in all_pids:
-                future = executor.submit(process_pid_wrapper, pid, channel, results_path,
-                                         config)
+            for pid, priority in all_entries:
+                future = executor.submit(process_pid_wrapper, pid, priority, channel,
+                                         results_path, config)
                 future_to_pid[future] = pid
                 time.sleep(SUBMISSION_GAP_SEC)
 
@@ -328,7 +431,7 @@ def main(argv=None, environ=None):
             connection.close()
 
     print(f"\n--- Processing Complete ---")
-    print(f"Total PIDs from file: {total_pids}")
+    print(f"Total PIDs from {source}: {total_pids}")
     print(f"Successfully processed and logged: {processed_count}")
     print(f"Failed to process: {failed_count}")
     if processed_count > 0:

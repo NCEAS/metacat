@@ -12,8 +12,9 @@ Reads a list of object PIDs from a file, and publishes them to a RabbitMQ servic
   ```shell
   pip3 install pika
   ```
-- Required files (location set by `--pids-file`)
-  - `pids_to_process.txt`: a file containing the list of identifiers to be processed
+- Required files (location set by `--pids-file`; not needed when using `--pid`)
+  - `pids_to_process.txt`: the identifiers to be processed, one per line, each optionally
+    followed by a priority (see [Priorities](#priorities-and-the-pids-file))
 
 ### Configuration
 Settings are given on the command line. Every option has a default, so the usual run needs
@@ -26,7 +27,9 @@ only the username, the host and the password:
 | `--queue` | `index` | Queue to declare and bind |
 | `--exchange` | `dataone-index` | Exchange to declare and publish to |
 | `--routing-key` | `index` | Routing key for binding and publishing |
-| `--pids-file` | `/var/metacat/.metacat/reindex-script/pids_to_process.txt` | PIDs to submit, one per line |
+| `--priority` | `1` | Priority (0–10) for `--pid` PIDs and for PIDs-file lines without one |
+| `--pid` | | Submit this PID at `--priority`; may be repeated. When given, the PIDs file is not read |
+| `--pids-file` | `/var/metacat/.metacat/reindex-script/pids_to_process.txt` | `PID [priority]` lines to submit |
 | `--results-basepath` | `/var/metacat/.metacat/reindex-script/sysmeta-processed` | Results file; `_<UTC timestamp>.txt` is appended |
 
 The password is read from the `RMQ_PASSWORD` environment variable. This keeps it out of the
@@ -43,6 +46,41 @@ To run the script in the background, time the execution, and redirect both stand
 ```shell
 { date; time python3 -u submit_index_task_to_rabbitmq.py rabbitmq_username --host rabbitmq_hostname; } > output.log 2>&1 &
 ```
+
+### Priorities and the PIDs file
+The index queue delivers higher-priority tasks first, on a scale of 0 to 10. Metacat itself
+publishes ordinary changes at 4, resource maps at 3, and bulk reindexing at 1. Suggested
+ranges for this script:
+
+| Priority | Use |
+|---|---|
+| 0–1 | Bulk reindexing (the default is 1, so batch runs wait behind Metacat's live updates) |
+| 3–4 | The same as Metacat's normal operations |
+| 5–9 | Moving specific PIDs ahead of the queue |
+| 10 | Emergencies |
+
+Each line of the PIDs file is a PID, optionally followed by whitespace and a priority:
+```text
+# Lines starting with '#' and blank lines are skipped. Comments can't follow a PID.
+# No priority given, so this uses --priority (default 1):
+urn:uuid:0e5c...
+doi:10.18739/A2...  8
+resource_map_doi:10.18739/A2...  6
+```
+- A line with a priority outside 0–10, a priority that isn't a whole number, or more than two
+  values is reported with its line number and skipped; the run continues.
+- A PID listed more than once is submitted once, at its highest priority.
+- PIDs are submitted highest priority first, keeping file order within each priority.
+- The results file uses the same `PID<TAB>priority` format, so it can be passed back in with
+  `--pids-file`.
+
+To move a few PIDs to the front of the queue without a file:
+```shell
+python3 submit_index_task_to_rabbitmq.py rabbitmq_username --host rabbitmq_hostname \
+    --priority 8 --pid doi:10.18739/A2... --pid urn:uuid:0e5c...
+```
+This only affects new messages: a PID that is already queued keeps its old message, which is
+reindexed again later.
 
 **Legacy form:** the password and hostname can still be given as the second and third
 arguments: `python3 submit_index_task_to_rabbitmq.py rabbitmq_username rabbitmq_password

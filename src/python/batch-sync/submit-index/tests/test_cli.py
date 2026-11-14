@@ -1,4 +1,4 @@
-"""Tests for command-line parsing, PID file reading, results paths, and a full main() run."""
+"""Tests for command-line parsing, results paths, and full main() runs."""
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -25,7 +25,8 @@ def test_two_positionals_use_defaults():
         username="user", password="pw", host="localhost", port=5672, queue="index",
         exchange="dataone-index", routing_key="index",
         pids_file="/var/metacat/.metacat/reindex-script/pids_to_process.txt",
-        results_basepath="/var/metacat/.metacat/reindex-script/sysmeta-processed")
+        results_basepath="/var/metacat/.metacat/reindex-script/sysmeta-processed",
+        priority=1, pids=())
 
 
 def test_three_positionals():
@@ -125,19 +126,6 @@ def test_invalid_port(port, capsys):
     parse_error(["user", "pw", f"--port={port}"], capsys)
 
 
-# --- read_pids ---
-
-def test_read_pids_strips_whitespace_and_skips_blank_lines(tmp_path):
-    path = tmp_path / "pids.txt"
-    path.write_text("  pid-1  \n\n\t\npid-2\n   \npid-3")
-    assert submit.read_pids(path) == ["pid-1", "pid-2", "pid-3"]
-
-
-def test_read_pids_missing_file(tmp_path):
-    with pytest.raises(FileNotFoundError):
-        submit.read_pids(tmp_path / "missing.txt")
-
-
 # --- build_results_path ---
 
 def test_build_results_path_format():
@@ -164,7 +152,7 @@ def test_main_publishes_each_pid_and_writes_results(mock_connection, run_env, tm
     assert published == ["pid-1", "pid-2", "pid-3"]
 
     [results] = list(tmp_path.glob("processed_*.txt"))
-    assert results.read_text() == "pid-1\npid-2\npid-3\n"
+    assert results.read_text() == "pid-1\t1\npid-2\t1\npid-3\t1\n"
     out = capsys.readouterr().out
     assert "Successfully processed and logged: 3" in out
     assert str(results) in out
@@ -204,4 +192,4 @@ def test_main_with_env_password_and_switches(mock_connection, tmp_path):
     assert (kwargs["exchange"], kwargs["routing_key"]) == ("x", "rk")
     # The results directory is created if needed.
     [results] = list((tmp_path / "out").glob("custom-results_*.txt"))
-    assert results.read_text() == "pid-1\n"
+    assert results.read_text() == "pid-1\t1\n"
