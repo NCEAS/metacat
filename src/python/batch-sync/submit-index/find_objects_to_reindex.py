@@ -18,6 +18,8 @@ DELAY_MINUTES = 10
 ERROR_UNSET = "ERROR_NOT_SET"
 RESULTS_FILE_PATH = "/var/metacat/.metacat/reindex-script/pids_to_process.txt"
 REINDEX_SCRIPT_PATH = "submit_index_task_to_rabbitmq.py"
+# Highest message priority accepted by --priority (the index queue's x-max-priority)
+MAX_PRIORITY = 10
 # How much older than the start of this run's window the previous results file may be
 # before a catch-up run is needed, in seconds.
 CATCHUP_MARGIN_SEC = 60
@@ -252,6 +254,48 @@ def needs_catchup(results_path, start_time):
 
     return None
 
+def priority_arg(text):
+    """argparse type for --priority: an integer from 0 to MAX_PRIORITY."""
+    try:
+        value = int(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            f"priority must be an integer from 0 to {MAX_PRIORITY}, not {text!r}") from None
+    if not 0 <= value <= MAX_PRIORITY:
+        raise argparse.ArgumentTypeError(f"priority must be from 0 to {MAX_PRIORITY}, not {value}")
+    return value
+
+
+def build_submit_command(rmq_user, rmq_host=None, priority=None):
+    """
+    Build the command that runs the submit script on RESULTS_FILE_PATH.
+
+    The password is not included: submit_reindex_tasks() passes it to the child process in
+    the RMQ_PASSWORD environment variable, so it does not appear in the process list.
+
+    :param rmq_user: RabbitMQ username
+    :param rmq_host: RabbitMQ host, or None for the submit script's default
+    :param priority: priority for the index tasks, or None for the submit script's default
+    :return: the command, as a list of strings
+    """
+    command = [sys.executable, REINDEX_SCRIPT_PATH, rmq_user, "--pids-file", RESULTS_FILE_PATH]
+    if rmq_host:
+        command += ["--host", rmq_host]
+    if priority is not None:
+        command += ["--priority", str(priority)]
+    return command
+
+
+def submit_reindex_tasks(rmq_user, rmq_pwd, rmq_host=None, priority=None):
+    """
+    Run the submit script on RESULTS_FILE_PATH, passing the password in RMQ_PASSWORD.
+
+    :raises subprocess.CalledProcessError: if the submit script fails
+    """
+    env = dict(os.environ, RMQ_PASSWORD=rmq_pwd)
+    subprocess.run(build_submit_command(rmq_user, rmq_host, priority), env=env, check=True)
+
+
 def main():
     """
     Main function to find objects to reindex and optionally submit them.
@@ -270,6 +314,9 @@ def main():
     parser.add_argument("--submit", action="store_true", help="Call RabbitMQ submit script after writing file")
     parser.add_argument("--rmq-user", dest="rmq_user", help="RabbitMQ username")
     parser.add_argument("--rmq-host", default=None, help="Host for RabbitMQ (overrides default)")
+    parser.add_argument("--priority", type=priority_arg, default=None,
+                        help=f"Priority (0-{MAX_PRIORITY}) for submitted index tasks (default: "
+                             f"the submit script's default, 1)")
     parser.add_argument("--debug", action="store_true", help="Print debug output")
     parser.add_argument("--metacat-host", default=ERROR_UNSET, help="Host for Metacat")
     parser.add_argument("--solr-host", default=ERROR_UNSET, help="Host for Solr")
@@ -332,13 +379,7 @@ def main():
         if not (args.rmq_user and rmq_pwd):
             print("RabbitMQ username and password required for submission.")
             sys.exit(1)
-        subprocess.run([
-            sys.executable,
-            REINDEX_SCRIPT_PATH,
-            args.rmq_user,
-            rmq_pwd,
-            RABBITMQ_HOST
-        ], check=True)
+        submit_reindex_tasks(args.rmq_user, rmq_pwd, RABBITMQ_HOST, args.priority)
     else:
         print("Not calling RabbitMQ submission script (use --submit to enable).")
 

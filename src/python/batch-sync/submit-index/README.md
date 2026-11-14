@@ -123,10 +123,17 @@ $ python3 find_objects_to_reindex.py \
 If you want the script to submit the tasks to RabbitMQ, set the `RMQ_PASSWORD` environment variable, add the `--submit` flag, and provide the RabbitMQ username and host:
 
 ```shell
-export RMQ_PASSWORD="<your-rmq-password>"
+read -rs RMQ_PASSWORD && export RMQ_PASSWORD    # type the password; it is not echoed
 # then add the following flags to the command above:
 python3 [...etc...] --rmq-user <your_rmq_user> --rmq-host <your_non_ssl_rmq_host> --submit
 ```
+
+The script runs `submit_index_task_to_rabbitmq.py` on the identifiers it found, passing the
+password to it in `RMQ_PASSWORD` rather than on its command line. If `--rmq-host` is
+omitted, the submit script's default (`localhost`) is used. The tasks are submitted at
+priority 1 unless you add `--priority N` (0–10), for example `--priority 3` to have
+catch-up reindexing go ahead of bulk reindexing; see
+[Priorities](#priorities-and-the-pids-file).
 
 ### Option 2: install as a Kubernetes `Cronjob` in using the provided `k8s-index-audit.sh` file:
 
@@ -143,7 +150,8 @@ export RMQ_SECRET_NAME="your-rmq-secret"
 export RMQ_SECRET_KEY="rabbitmq-password"
 
 # CMD_ARGS - see above for available command-line args to pass
-# to the find_objects_to_reindex.py script
+# to the find_objects_to_reindex.py script (add --priority N to change the priority
+# of submitted tasks from the default of 1)
 export CMD_ARGS="--metacat-host arcticdata.io --solr-host metacatarctic-solr --interval 10 --delay 10 --debug"
 
 # run the script to create the cronjob
