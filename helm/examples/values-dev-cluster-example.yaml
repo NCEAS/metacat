@@ -76,6 +76,10 @@ tomcat:
   ##
   jmxEnabled: true
 
+  extraCatalinaOpts:
+    - -XX:-UseBASE64Intrinsics
+    - -XX:MaxRAMPercentage=75
+
 ingress:
   className: "traefik"
   annotations:
@@ -117,6 +121,10 @@ dataone-indexer:
     # this actually puts container in debug loop mode - no indexer running
     debug: false
 
+    extraJavaOpts:
+      - -XX:MaxRAMPercentage=75
+      - -XX:-UseBASE64Intrinsics
+
   rabbitmq:
     persistence:
       storageClassName: "csi-cephfs-sc-ephemeral"
@@ -129,6 +137,9 @@ dataone-indexer:
         memory: 1Gi
 
   solr:
+    extraEnvVars:
+      - name: SOLR_OPTS
+        value: "-Dsolr.autoCommit.maxTime=120000 -Dsolr.autoSoftCommit.maxTime=1000 -XX:-UseBASE64Intrinsics"
     javaMem: "-XX:MaxRAMPercentage=75.0"
     resources:
       requests:
