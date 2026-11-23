@@ -163,6 +163,7 @@ fi
 docker buildx build $DEV_BUILD_OPTS \
     --file      Dockerfile \
     --platform  $ARCH \
+    --pull \
     --tag ghcr.io/nceas/metacat:"$TAG" \
     --build-arg MC_VERSION="$MC_VERSION" \
     --build-arg ENVIRONMENT="$ENVIRONMENT" \
