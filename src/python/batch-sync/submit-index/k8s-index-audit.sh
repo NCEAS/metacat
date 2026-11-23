@@ -9,14 +9,15 @@
 #   # RMQ_SECRET_KEY (optional - defaults to: 'password'): the key associated with the password, in
 #   # the existing metacat Secret. (e.g. Bitnami used 'rabbitmq-password' for this key)
 #   export RMQ_SECRET_KEY="rabbitmq-password"
-#   # See find_objects_to_reindex.py for available CMD_ARGS
+#   # See find_objects_to_reindex.py for available CMD_ARGS. Add "--priority N" (0-10) to submit
+#   # the index tasks at a priority other than the submit script's default of 1.
 #   export CMD_ARGS="--metacat-host arcticdata.io --solr-host metacatarctic-solr --rmq-host \
 #           localhost --rmq-user metacat-rmq-guest --interval 10 --delay 10 --submit --debug" \
 #               ./k8s-index-audit.sh
 #
 # Or pass CMD_ARGS as first argument:
 #   export PVC_NAME="your-pvc"
-#   ./k8s-index-audit.sh "--rabbitmq-host localhost --interval ...etc"
+#   ./k8s-index-audit.sh "--rmq-host localhost --interval ...etc"
 #
 # Optional environment variables:
 #   CONFIGMAP_NAME="your-configmap-name" (default: <namespace>-idxaudit-conf)

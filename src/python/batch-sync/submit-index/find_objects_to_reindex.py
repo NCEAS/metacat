@@ -18,9 +18,19 @@ DELAY_MINUTES = 10
 ERROR_UNSET = "ERROR_NOT_SET"
 RESULTS_FILE_PATH = "/var/metacat/.metacat/reindex-script/pids_to_process.txt"
 REINDEX_SCRIPT_PATH = "submit_index_task_to_rabbitmq.py"
+# Highest message priority accepted by --priority (the index queue's x-max-priority)
+MAX_PRIORITY = 10
+# Gaps (in seconds) between the last completed window and this run's normal window that are
+# larger than this are reported as a catch-up run. (Smaller gaps, such as a CronJob starting a
+# few seconds late, are closed too, just without the message.) Also the allowance for how long
+# a run takes, when the last window's end has to be estimated (see catchup_from_date()).
+CATCHUP_MARGIN_SEC = 60
+# File, in the same directory as RESULTS_FILE_PATH, that records the end (to_date) of the last
+# completed audit window. Catch-up runs resume from it. See audit_state_path().
+AUDIT_STATE_FILENAME = "last_audited_to_date.txt"
 
 def get_iso_date(minutes_ago):
-    dt = datetime.utcnow() - timedelta(minutes=minutes_ago)
+    dt = datetime.now(timezone.utc) - timedelta(minutes=minutes_ago)
     return dt.strftime("%Y-%m-%dT%H:%M:%S")
 
 def fetch_db_results(from_date, to_date, retries=3, timeout=10):
@@ -171,7 +181,7 @@ def archive_old_results():
     rename the previous results by appending "_" + run_ts (sanitize colons)
     """
     src = RESULTS_FILE_PATH
-    run_ts = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
+    run_ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
     if os.path.exists(src):
         dirn, base = os.path.split(src)
         safe_ts = run_ts.replace(":", "-")
@@ -206,40 +216,153 @@ def clean_old_result_files(results_path, days=30):
 
     return removed
 
-def needs_catchup(results_path, start_time):
+def audit_state_path():
     """
-    If the most-recent log file is older than 'start_time', return its timestamp. Otherwise
-    return None.
-    Used to determine whether a "catch-up" run is needed, to reindex any that were missed
-    :param results_path: base path, e.g. `RESULTS_FILE_PATH`
-    :param start_time: epoch timestamp calculated from (current time - interval - delay)
-    :return: timestamp of most-recent log file if older than start_time, else None
+    Path of the file recording the end (to_date) of the last completed audit window. It is
+    next to RESULTS_FILE_PATH, and its name does not match the archived results files
+    (RESULTS_FILE_PATH + "_*"), so clean_old_result_files() never removes it.
     """
-    pattern = f"{results_path}_*"
-    matching_files = [
-        path for path in glob.glob(pattern)
-        if os.path.isfile(path)
-    ]
+    return os.path.join(os.path.dirname(RESULTS_FILE_PATH), AUDIT_STATE_FILENAME)
 
+
+def read_last_audited(state_path):
+    """
+    Return the to_date recorded by the last completed run, as "%Y-%m-%dT%H:%M:%S" in UTC, or
+    None if there is no state file (for example, the first run after upgrading). An unreadable
+    or invalid state file is reported and treated as missing.
+    """
+    try:
+        with open(state_path, "r", encoding="utf-8") as f:
+            text = f.read().strip()
+    except FileNotFoundError:
+        return None
+    except OSError as e:
+        print(f"[WARNING] Could not read {state_path}: {e}; ignoring it")
+        return None
+    value = parse_iso_to_utc(text)
+    if value is None:
+        print(f"[WARNING] Invalid timestamp {text!r} in {state_path}; ignoring it")
+        return None
+    return value.strftime("%Y-%m-%dT%H:%M:%S")
+
+
+def write_last_audited(state_path, to_date):
+    """
+    Record to_date as the end of the last completed audit window. The file is replaced
+    atomically, so an interrupted write cannot leave it half-written.
+    """
+    os.makedirs(os.path.dirname(state_path) or ".", exist_ok=True)
+    tmp_path = f"{state_path}.tmp"
+    try:
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            f.write(f"{to_date}\n")
+        os.replace(tmp_path, state_path)
+    except OSError:
+        # Don't leave a partial temporary file behind; the existing state file is unchanged.
+        try:
+            os.remove(tmp_path)
+        except OSError:
+            pass
+        raise
+
+
+def catchup_from_date(last_run, delay_minutes):
+    """
+    Estimate where the previous run's window ended, as "%Y-%m-%dT%H:%M:%S" in UTC, from when
+    that run wrote its results file (last_run). Only used when there is no state file yet.
+
+    The previous run's window ended delay_minutes before it started, and last_run is a little
+    after it started, so this goes back delay_minutes plus CATCHUP_MARGIN_SEC. If the previous
+    run took longer than CATCHUP_MARGIN_SEC, the estimate is late by the difference, which is
+    why the recorded to_date (read_last_audited()) is used whenever it is available.
+
+    :param last_run: UTC time of the previous run's results file
+    :param delay_minutes: the --delay value
+    """
+    start = parse_iso_to_utc(last_run)
+    if start is None:
+        raise ValueError(f"Invalid last_run: {last_run!r}")
+    start -= timedelta(minutes=delay_minutes, seconds=CATCHUP_MARGIN_SEC)
+    return start.strftime("%Y-%m-%dT%H:%M:%S")
+
+
+def estimate_last_audited(results_path, delay_minutes):
+    """
+    Estimate where the last run's window ended from the newest archived results file
+    (results_path + "_*"), for when there is no state file yet. Returns None if there are no
+    archived results files.
+    """
+    matching_files = [path for path in glob.glob(f"{results_path}_*") if os.path.isfile(path)]
     if not matching_files:
         return None
-
-    # Sort by modification time, newest first
     try:
-        most_recent_file = max(matching_files, key=os.path.getmtime)
-        print("most_recent_file: ", most_recent_file)
-        most_recent_mtime = os.path.getmtime(most_recent_file)
-        print("most_recent_mtime: ", most_recent_mtime)
+        newest = max(matching_files, key=os.path.getmtime)
+        mtime = os.path.getmtime(newest)
     except (OSError, ValueError):
         return None
+    last_run = datetime.fromtimestamp(mtime, timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+    print(f"No audit state file; estimating from {newest} (written at {last_run})")
+    return catchup_from_date(last_run, delay_minutes)
 
-    start_timestamp = datetime.fromisoformat(start_time.replace('Z', '+00:00')).timestamp()
-    print("start_timestamp: ", start_timestamp)
-    if most_recent_mtime < (start_timestamp - 60000):  # 1 minute error margin (60,000mS)
-        dt = datetime.utcfromtimestamp(most_recent_mtime)
-        return dt.strftime("%Y-%m-%dT%H:%M:%S")
 
-    return None
+def choose_from_date(normal_from, last_audited):
+    """
+    Choose the start of this run's window, so it begins no later than where the last completed
+    window ended.
+
+    :param normal_from: the usual start, current time - interval - delay (from get_iso_date())
+    :param last_audited: where the last completed window ended, or None if unknown
+    :return: (from_date, gap_seconds): last_audited and how far it is before normal_from if it
+        is earlier, otherwise normal_from and 0
+    """
+    if last_audited is None:
+        return normal_from, 0
+    gap = (parse_iso_to_utc(normal_from) - parse_iso_to_utc(last_audited)).total_seconds()
+    if gap > 0:
+        return last_audited, gap
+    return normal_from, 0
+
+def priority_arg(text):
+    """argparse type for --priority: an integer from 0 to MAX_PRIORITY."""
+    try:
+        value = int(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            f"priority must be an integer from 0 to {MAX_PRIORITY}, not {text!r}") from None
+    if not 0 <= value <= MAX_PRIORITY:
+        raise argparse.ArgumentTypeError(f"priority must be from 0 to {MAX_PRIORITY}, not {value}")
+    return value
+
+
+def build_submit_command(rmq_user, rmq_host=None, priority=None):
+    """
+    Build the command that runs the submit script on RESULTS_FILE_PATH.
+
+    The password is not included: submit_reindex_tasks() passes it to the child process in
+    the RMQ_PASSWORD environment variable, so it does not appear in the process list.
+
+    :param rmq_user: RabbitMQ username
+    :param rmq_host: RabbitMQ host, or None for the submit script's default
+    :param priority: priority for the index tasks, or None for the submit script's default
+    :return: the command, as a list of strings
+    """
+    command = [sys.executable, REINDEX_SCRIPT_PATH, rmq_user, "--pids-file", RESULTS_FILE_PATH]
+    if rmq_host:
+        command += ["--host", rmq_host]
+    if priority is not None:
+        command += ["--priority", str(priority)]
+    return command
+
+
+def submit_reindex_tasks(rmq_user, rmq_pwd, rmq_host=None, priority=None):
+    """
+    Run the submit script on RESULTS_FILE_PATH, passing the password in RMQ_PASSWORD.
+
+    :raises subprocess.CalledProcessError: if the submit script fails
+    """
+    env = dict(os.environ, RMQ_PASSWORD=rmq_pwd)
+    subprocess.run(build_submit_command(rmq_user, rmq_host, priority), env=env, check=True)
+
 
 def main():
     """
@@ -259,6 +382,9 @@ def main():
     parser.add_argument("--submit", action="store_true", help="Call RabbitMQ submit script after writing file")
     parser.add_argument("--rmq-user", dest="rmq_user", help="RabbitMQ username")
     parser.add_argument("--rmq-host", default=None, help="Host for RabbitMQ (overrides default)")
+    parser.add_argument("--priority", type=priority_arg, default=None,
+                        help=f"Priority (0-{MAX_PRIORITY}) for submitted index tasks (default: "
+                             f"the submit script's default, 1)")
     parser.add_argument("--debug", action="store_true", help="Print debug output")
     parser.add_argument("--metacat-host", default=ERROR_UNSET, help="Host for Metacat")
     parser.add_argument("--solr-host", default=ERROR_UNSET, help="Host for Solr")
@@ -274,16 +400,22 @@ def main():
         "q=dateModified:[{date}Z%20TO%20NOW]&fl=id,dateModified&rows=1000000&wt=json"
     )
 
-    from_date = get_iso_date(args.interval + args.delay)
+    normal_from = get_iso_date(args.interval + args.delay)
+    to_date = get_iso_date(args.delay)
 
-    catchup_date = needs_catchup(RESULTS_FILE_PATH, from_date)
-    if (catchup_date):
-        print("Needs a catch-up run; adjusting from_date to last run time: ", catchup_date)
-        from_date = catchup_date
+    # Start where the last completed window ended, if that is earlier than the normal start
+    # (after missed, skipped or slow runs), so no period goes unchecked.
+    state_path = audit_state_path()
+    last_audited = read_last_audited(state_path)
+    if last_audited is None:
+        last_audited = estimate_last_audited(RESULTS_FILE_PATH, args.delay)
+    from_date, gap = choose_from_date(normal_from, last_audited)
+    if gap > CATCHUP_MARGIN_SEC:
+        print(f"Needs a catch-up run; the last completed window ended at {last_audited}, "
+              f"{gap / 60:.1f} minutes before the normal start ({normal_from}), so from_date "
+              f"is {from_date}")
     else:
         print("Up to date - no catch-up needed.")
-
-    to_date = get_iso_date(args.delay)
 
     if args.debug:
         print("from_date:", from_date)
@@ -321,15 +453,20 @@ def main():
         if not (args.rmq_user and rmq_pwd):
             print("RabbitMQ username and password required for submission.")
             sys.exit(1)
-        subprocess.run([
-            sys.executable,
-            REINDEX_SCRIPT_PATH,
-            args.rmq_user,
-            rmq_pwd,
-            RABBITMQ_HOST
-        ], check=True)
+        submit_reindex_tasks(args.rmq_user, rmq_pwd, RABBITMQ_HOST, args.priority)
     else:
         print("Not calling RabbitMQ submission script (use --submit to enable).")
+
+    # Record where this window ended, so the next run resumes from here. Not reached if the
+    # queries or the submission failed, so the next run will check this window again. A failed
+    # write is only a warning: the tasks are already submitted, and the next run will simply
+    # start from the older recorded time, re-checking this window.
+    try:
+        write_last_audited(state_path, to_date)
+        print(f"Recorded the end of this window ({to_date}) in {state_path}")
+    except OSError as e:
+        print(f"[WARNING] Could not record the end of this window in {state_path}: {e}. "
+              f"The next run will check this window again.")
 
     # Archive the reindex script by renaming it with a timestamp
     archive_old_results()
